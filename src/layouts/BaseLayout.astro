@@ -30,6 +30,17 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		{/*
+			Gates the `.reveal` entrance animation. Only added when the observer
+			that triggers it can exist, so the hidden state is never left on
+			without something to clear it. Inline and first, so the class is on
+			<html> before the first paint and nothing flashes.
+		*/}
+		<script is:inline>
+			if ('IntersectionObserver' in window) document.documentElement.classList.add('reveal-ready');
+		</script>
+
 		<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
 		<meta name="generator" content={Astro.generator} />
 		<title>{pageTitle}</title>
@@ -72,5 +83,30 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 		<SiteFooter />
 
 		<BackToTop />
+
+		{/*
+			Reveal on arrival. The bottom margin means an element has to be a
+			little way in before it counts, so it animates where you can see it
+			rather than finishing off-screen. Each one is unobserved once shown.
+		*/}
+		<script is:inline>
+			(() => {
+				const items = document.querySelectorAll('.reveal');
+				if (!items.length || !('IntersectionObserver' in window)) return;
+
+				const observer = new IntersectionObserver(
+					(entries) => {
+						for (const entry of entries) {
+							if (!entry.isIntersecting) continue;
+							entry.target.classList.add('is-visible');
+							observer.unobserve(entry.target);
+						}
+					},
+					{ rootMargin: '0px 0px -12% 0px' }
+				);
+
+				for (const item of items) observer.observe(item);
+			})();
+		</script>
 	</body>
 </html>

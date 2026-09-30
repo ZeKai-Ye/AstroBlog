@@ -22,3 +22,17 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Editing sources kept next to the pictures they produce.
+#
+# src/assets/ is globbed at build time and only jpg/jpeg/png/webp/avif/gif are
+# read, so a .psd there does nothing for the site — it just sits in git forever,
+# in every clone. Drop your working file in this folder and name the exported
+# png/jpg in settings.json instead.
+#
+# If you really do want one tracked, `git add -f src/assets/whatever.psd`.
+src/assets/*.psd
+src/assets/*.psb
+src/assets/*.ai
+src/assets/*.xcf
+src/assets/*.sketch

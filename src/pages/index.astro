@@ -44,7 +44,7 @@ const daysCover = asset(SITE.images.heroDays) ?? posts[1]?.data.cover;
 	<section class="hero" aria-label="工作">
 		<div class="container hero__grid">
 			<Figure
-				class="hero__media"
+				class="hero__media reveal"
 				src={heroCover}
 				alt="首页主图"
 				label="图片"
@@ -65,7 +65,7 @@ const daysCover = asset(SITE.images.heroDays) ?? posts[1]?.data.cover;
 	<WaveBand class="band">
 		<div class="container band-inner feature">
 			<Figure
-				class="feature__media"
+				class="feature__media reveal"
 				src={daysCover}
 				alt="时日主图"
 				label="图片"
@@ -114,6 +114,18 @@ const daysCover = asset(SITE.images.heroDays) ?? posts[1]?.data.cover;
 	.hero {
 		/* The mockup starts the hero shot 24px under the 301px masthead. */
 		padding-block: clamp(0.75rem, 1.4vw, 1.5rem) 0;
+	}
+
+	/*
+		The two shots sit on the band like prints laid on paper: a wide warm
+		shadow for the lift, plus a tight one so the bottom edge still reads as
+		touching. Tinted brown rather than black so it stays in the palette.
+	*/
+	.hero__grid :global(.hero__media),
+	.feature :global(.feature__media) {
+		box-shadow:
+			0 1.6rem 3rem -1.2rem rgb(74 48 26 / 0.32),
+			0 0.3rem 0.85rem -0.3rem rgb(74 48 26 / 0.18);
 	}
 
 	.hero__grid {

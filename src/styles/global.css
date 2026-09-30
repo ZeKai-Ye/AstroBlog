@@ -183,6 +183,31 @@ body.surface--cream {
 }
 
 /* ==========================================================================
+   Entrance
+
+   Anything marked `.reveal` fades up as it arrives, so a photograph is placed
+   on the page rather than snapping into it.
+
+   The hiding rule is scoped to `.reveal-ready`, a class an inline script adds
+   to <html> only when IntersectionObserver exists. So if that script never runs
+   — JS off, an old browser, a stripped-down renderer — nothing is ever hidden
+   and the page is simply static. The hidden state must never be the default.
+   ========================================================================== */
+
+.reveal-ready .reveal {
+	opacity: 0;
+	translate: 0 1.75rem;
+}
+
+.reveal-ready .reveal.is-visible {
+	opacity: 1;
+	translate: 0 0;
+	transition:
+		opacity 0.9s var(--ease),
+		translate 0.9s var(--ease);
+}
+
+/* ==========================================================================
    Shared primitives
    ========================================================================== */
 
