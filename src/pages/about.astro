@@ -1,0 +1,95 @@
+---
+/**
+ * 关于 / περί.
+ *
+ * The mockup only reserves this band and drops the 关于 label into its right
+ * half, so the copy below is a placeholder to replace.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import WaveBand from '../components/WaveBand.astro';
+import { SITE } from '../config';
+---
+
+<BaseLayout title="关于" surface="tan">
+	<div class="container intro">
+		<h1 class="section-label section-label--peach intro__label">关于</h1>
+	</div>
+
+	<WaveBand class="band">
+		<div class="container band-inner about">
+			<div class="prose about__body">
+				<p>
+					{SITE.title} 是一个个人站点。这里放三样东西：正在做的工作、读到的和想到的、以及一些没有归类的日子。
+				</p>
+				<p>
+					写作对我来说更像整理——把散落的东西摆到光底下，看清楚它们本来的形状。所以这里的文字偏长，更新也偏慢。
+				</p>
+				<h2>联系</h2>
+				<ul>
+					<li>邮箱：<a href="mailto:hello@example.com">hello@example.com</a></li>
+					<li>GitHub：<a href="https://github.com/" rel="me noopener">@your-handle</a></li>
+				</ul>
+				<p class="about__note">以上信息均为占位内容，请替换为你自己的。</p>
+			</div>
+
+			<aside class="about__aside">
+				<p class="about__name">{SITE.author.name}</p>
+				<p class="about__bio">{SITE.author.bio}</p>
+				<p class="about__tagline">{SITE.description}</p>
+			</aside>
+		</div>
+	</WaveBand>
+</BaseLayout>
+
+<style>
+	.intro {
+		padding-block: var(--section-pad);
+	}
+
+	.intro__label {
+		text-align: center;
+	}
+
+	.about {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 16rem;
+		gap: clamp(2rem, 5vw, 4rem);
+		align-items: start;
+	}
+
+	.about__body {
+		max-width: 42ch;
+	}
+
+	.about__note {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+	}
+
+	.about__aside {
+		display: grid;
+		gap: 0.4rem;
+		text-align: end;
+	}
+
+	.about__name {
+		font-size: var(--fs-lead);
+		line-height: 1.25;
+	}
+
+	.about__bio,
+	.about__tagline {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+	}
+
+	@media (max-width: 48rem) {
+		.about {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.about__aside {
+			text-align: start;
+		}
+	}
+</style>

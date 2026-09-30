@@ -1,0 +1,118 @@
+---
+/**
+ * The hero pill from the home page: a rounded capsule with a bilingual label
+ * and a dotted arrow at its inboard end.
+ *
+ * Design (`ui设计.jpg`, frame 1):
+ *   工作 / Ἔργα   capsule x 1111–1600, y 979–1069, fill #FFF1D4, radius 54
+ *                 arrow  x~1485–1573, y~990–1054, drawn as pink dots
+ *   时日 / Ἡμέραι capsule x  320–809,  y 1870–1960, fill #F0D9C7, orange dots
+ *
+ * The arrow is the `t8RS9QqzNZG3` icon the file references — a "→" built out of
+ * round dots, not the filled circle the raw layer data suggests. The capsule
+ * always takes the colour opposite the band it sits on: cream on the tan hero,
+ * tan on the cream band.
+ */
+interface Props {
+	href: string;
+	zh: string;
+	greek: string;
+	/** Capsule fill. */
+	tone?: 'cream' | 'tan';
+	/** Arrow colour, from the design's accent set. */
+	accent?: 'rose' | 'orange';
+	class?: string;
+}
+
+const {
+	href,
+	zh,
+	greek,
+	tone = 'cream',
+	accent = 'orange',
+	class: className = '',
+} = Astro.props;
+
+/**
+ * Dot centres in a 96x74 box, traced from the export: an 11-dot shaft with a
+ * three-dot chevron above and below it, all converging on the tip.
+ */
+const SHAFT = [5, 13, 21, 29, 37, 45, 53, 61, 69, 77, 85].map((x) => [x, 37]);
+const HEAD = [
+	[61, 8],
+	[70, 18],
+	[79, 28],
+	[61, 66],
+	[70, 56],
+	[79, 46],
+];
+const DOTS = [...SHAFT, ...HEAD];
+---
+
+<a
+	class:list={['pill', `pill--${tone}`, `pill--${accent}`, className]}
+	href={href}
+>
+	<span class="pill__label bilingual">
+		<span>{zh}</span>
+		<span class="bilingual__greek">{greek}</span>
+	</span>
+
+	<svg
+		class="pill__arrow"
+		viewBox="0 0 96 74"
+		aria-hidden="true"
+		focusable="false"
+	>
+		{DOTS.map(([cx, cy]) => <circle cx={cx} cy={cy} r="3.8"></circle>)}
+	</svg>
+</a>
+
+<style>
+	.pill {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		align-items: center;
+		width: min(100%, 30.5rem); /* 489px at 1920 */
+		height: 2.5em; /* two 36px lines — 90px in the design */
+		padding-inline-end: 0.64em;
+		font-size: var(--fs-lead);
+		color: var(--c-ink-muted);
+		background: var(--pill-bg);
+		border-radius: var(--radius-pill);
+		transition:
+			color 0.2s var(--ease),
+			transform 0.2s var(--ease);
+	}
+
+	.pill--cream {
+		--pill-bg: var(--c-cream);
+	}
+
+	.pill--tan {
+		--pill-bg: var(--c-tan);
+	}
+
+	.pill--rose {
+		--pill-accent: var(--c-rose);
+	}
+
+	.pill--orange {
+		--pill-accent: var(--c-orange);
+	}
+
+	.pill:hover {
+		color: var(--c-ink);
+		transform: translateY(-2px);
+	}
+
+	.pill__label {
+		justify-self: center;
+	}
+
+	.pill__arrow {
+		width: 2.67em;
+		height: 2.06em;
+		fill: var(--pill-accent);
+	}
+</style>

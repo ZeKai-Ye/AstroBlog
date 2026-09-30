@@ -1,0 +1,94 @@
+---
+/**
+ * Search field from the post page sidebar.
+ *
+ * Design: 448x96 at x 1440, y 478 — a 10px-radius box, 1px #808080 border on
+ * the page's #FCF4E3 fill, the label 搜索 at the left and a 53px magnifier at
+ * the right. A static site has no server to query, so the field posts a `q`
+ * parameter to /search/ and that page filters a build-time index in the browser.
+ */
+---
+
+<form class="search" action="/search/" method="get" role="search">
+	<label class="sr-only" for="site-search">搜索</label>
+	<input
+		class="search__input"
+		id="site-search"
+		type="search"
+		name="q"
+		placeholder="搜索"
+		autocomplete="off"
+	/>
+	<button class="search__button" type="submit">
+		<span class="sr-only">提交搜索</span>
+		<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+			<circle cx="10.5" cy="10.5" r="7" stroke="currentColor" stroke-width="2"></circle>
+			<path d="M15.6 15.6 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+			></path>
+		</svg>
+	</button>
+</form>
+
+<style>
+	.search {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		min-height: 4.5rem; /* 96px at 1920 */
+		padding-inline: clamp(0.9rem, 2.6%, 1.6rem);
+		background: var(--c-cream-soft);
+		border: 1px solid var(--c-rule);
+		border-radius: var(--radius);
+	}
+
+	.search__input {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+		background: none;
+		font-size: var(--fs-meta);
+		color: var(--c-ink);
+	}
+
+	.search__input::placeholder {
+		color: var(--c-ink-muted);
+		opacity: 1;
+	}
+
+	.search__input:focus {
+		outline: none;
+	}
+
+	.search:focus-within {
+		outline: 2px solid var(--c-ink);
+		outline-offset: 3px;
+	}
+
+	/* Hides the WebKit clear affordance so the magnifier keeps its place. */
+	.search__input::-webkit-search-cancel-button {
+		appearance: none;
+	}
+
+	.search__button {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 2.2rem;
+		height: 2.2rem;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--c-ink-muted);
+		cursor: pointer;
+		transition: color 0.2s var(--ease);
+	}
+
+	.search__button:hover {
+		color: var(--c-ink);
+	}
+
+	.search__button svg {
+		width: 100%;
+		height: 100%;
+	}
+</style>

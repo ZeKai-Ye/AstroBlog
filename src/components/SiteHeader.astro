@@ -1,0 +1,121 @@
+---
+/**
+ * Masthead — the top 301px of both frames in `ui设计.free`.
+ *
+ * The mockup stacks two things on the tan background:
+ *   y 0–181    a centred 960px-wide block holding the wordmark
+ *              (drawn as a grey placeholder box: "待添加的标题主图标位置")
+ *   y 211–301  four 320px nav columns, each two lines — Chinese over Greek
+ *
+ * Greys in the mockup mark positions only, so the wordmark is set as type
+ * rather than as a filled box.
+ */
+import { SITE } from '../config';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+---
+
+<header class="masthead">
+	<div class="masthead__logo">
+		<a class="masthead__wordmark" href="/">{SITE.title}</a>
+	</div>
+
+	<nav class="masthead__nav" aria-label="主导航">
+		<ul class="masthead__list">
+			{
+				SITE.nav.map((item) => (
+					<li>
+						<a
+							class:list={['masthead__link', { 'is-active': isActive(item.href) }]}
+							href={item.href}
+							aria-current={isActive(item.href) ? 'page' : undefined}
+						>
+							<span>{item.zh}</span>
+							<span class="masthead__greek">{item.greek}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+</header>
+
+<style>
+	.masthead {
+		/*
+			The mockup paints this plate in the *cream* band colour and gives it a
+			0/6/4 25%-black shadow (Lunacy: `fill:"FFF1D4"`, `shadows:[{radius:4,
+			offset:[0,6],color:"40000000"}]`) — it is a raised plate sitting over the
+			tan frame, not a strip of the tan itself. Post pages swap in the
+			translucent variant (`CCFFF1D4`) over their own cream fill.
+		*/
+		background: var(--masthead-bg, var(--c-cream));
+		box-shadow: 0 6px 4px rgb(0 0 0 / 0.25);
+	}
+
+	/*
+		Scaled down from the mockup's 301px/181px masthead, which ate a quarter
+		of the first screen. At 1920 this lands at roughly 178px: a 100px
+		wordmark block, an 18px gap, then a 60px nav row at the 24px nav size.
+	*/
+	.masthead__logo {
+		display: grid;
+		place-items: center;
+		min-height: clamp(3rem, 0.75rem + 4.6vw, 6.25rem);
+		padding-inline: var(--gutter);
+	}
+
+	.masthead__wordmark {
+		font-size: clamp(1.125rem, 0.5rem + 1.45vw, 1.75rem);
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		line-height: 1.2;
+		text-align: center;
+		transition: opacity 0.2s var(--ease);
+	}
+
+	.masthead__wordmark:hover {
+		opacity: 0.65;
+	}
+
+	.masthead__nav {
+		padding-block: clamp(0.5rem, 0.95vw, 1.1rem) 0;
+	}
+
+	.masthead__list {
+		width: min(100% - var(--gutter) * 2, var(--content));
+		margin-inline: auto;
+		padding: 0;
+		list-style: none;
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+	}
+
+	.masthead__link {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		font-size: var(--fs-nav);
+		line-height: 1.25;
+		text-align: center;
+		color: var(--c-ink-muted);
+		transition: color 0.2s var(--ease);
+	}
+
+	.masthead__greek {
+		letter-spacing: 0.04em;
+	}
+
+	.masthead__link:hover,
+	.masthead__link.is-active {
+		color: var(--c-ink);
+	}
+
+	@media (max-width: 30rem) {
+		.masthead__list {
+			grid-template-columns: repeat(2, 1fr);
+			row-gap: 1.25rem;
+		}
+	}
+</style>

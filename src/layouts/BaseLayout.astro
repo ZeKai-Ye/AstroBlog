@@ -1,0 +1,76 @@
+---
+/**
+ * Page shell: masthead, slot, footer.
+ *
+ * `surface` picks which of the two frame fills from `ui设计.free` the page sits
+ * on — tan (#F0D9C7) for the home page, cream (#FCF4E3) for post pages.
+ */
+import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import BackToTop from '../components/BackToTop.astro';
+import { SITE } from '../config';
+
+interface Props {
+	/** Page title; the site name is appended automatically. */
+	title?: string;
+	description?: string;
+	/** Frame fill behind the page. */
+	surface?: 'tan' | 'cream';
+}
+
+const { title, description = SITE.description, surface = 'tan' } = Astro.props;
+
+const pageTitle = title ? `${title} — ${SITE.title}` : SITE.title;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined;
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{pageTitle}</title>
+		<meta name="description" content={description} />
+		{canonical && <link rel="canonical" href={canonical.href} />}
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:locale" content="zh_CN" />
+
+		{/*
+			The mockup sets everything in LXGW WenKai Mono TC with Inter for the
+			section labels. Both come from jsDelivr's Fontsource builds, which
+			ship the CJK face as ~130 unicode-ranged woff2 chunks — the browser
+			only fetches the handful a page actually uses.
+		*/}
+		<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/@fontsource/lxgw-wenkai-mono-tc@5.3.0/400.css"
+		/>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/@fontsource/lxgw-wenkai-mono-tc@5.3.0/700.css"
+		/>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/400.css" />
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/500.css" />
+	</head>
+
+	<body class:list={['surface', `surface--${surface}`]}>
+		<a class="skip-link" href="#main">跳到主要内容</a>
+
+		<SiteHeader />
+
+		<main id="main">
+			<slot />
+		</main>
+
+		<SiteFooter />
+
+		<BackToTop />
+	</body>
+</html>

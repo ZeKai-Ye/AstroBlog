@@ -1,12 +1,241 @@
-<html lang="zh-cn">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type ="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content = {Astro.generator} >
-    <title>Astro</title>
-  </head>
-  <body>
-    <h1>My Project</h1>
-  </body>
-</html>
+---
+/**
+ * Home page — frame 1 of `ui设计.free`.
+ *
+ * The mockup is a 1920x4320 canvas that alternates two fills:
+ *
+ *   y    0–1080   tan    masthead (0–301), then a hero shot on the left with
+ *                         the 工作 / Ἔργα pill tucked bottom-right and a
+ *                         circular badge overflowing its end
+ *   y 1080–2160   cream  wavy band 1: the 时日 / Ἡμέραι feature, image right,
+ *                         pill bottom-left
+ *   y 2160–3240   tan    the 推荐 list: label in the left half, four
+ *                         hairline-separated rows in the right half
+ *   y 3240–4320   cream  wavy band 2: the 关于 label, right half
+ *   y 4320–4626   tan    footer
+ *
+ * Grey blocks in the mockup are placeholders, so each one becomes either real
+ * copy (the pills, the headings) or an image slot that accepts a real cover.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Figure from '../components/Figure.astro';
+import HeroPill from '../components/HeroPill.astro';
+import PostRow from '../components/PostRow.astro';
+import WaveBand from '../components/WaveBand.astro';
+import { SITE } from '../config';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const recommended = posts.slice(0, 4);
+const [featureWork, featureDays] = SITE.features;
+
+const heroCover = posts[0]?.data.cover;
+const daysCover = posts[1]?.data.cover;
+---
+
+<BaseLayout surface="tan">
+	<h1 class="sr-only">{SITE.title} — {SITE.description}</h1>
+
+	<!-- Hero: tan band, image left, 工作 pill bottom-right. -->
+	<section class="hero" aria-label="工作">
+		<div class="container hero__grid">
+			<Figure
+				class="hero__media"
+				src={heroCover}
+				alt="首页主图"
+				label="图片"
+				ratio="640 / 755"
+			/>
+			<HeroPill
+				class="hero__pill"
+				href={featureWork.href}
+				zh={featureWork.zh}
+				greek={featureWork.greek}
+				tone="cream"
+				accent="rose"
+			/>
+		</div>
+	</section>
+
+	<!-- Cream band 1: image right, 时日 pill bottom-left. -->
+	<WaveBand class="band">
+		<div class="container band-inner feature">
+			<Figure
+				class="feature__media"
+				src={daysCover}
+				alt="时日主图"
+				label="图片"
+				ratio="640 / 755"
+			/>
+			<HeroPill
+				class="feature__pill"
+				href={featureDays.href}
+				zh={featureDays.zh}
+				greek={featureDays.greek}
+				tone="tan"
+				accent="orange"
+			/>
+		</div>
+	</WaveBand>
+
+	<!-- 推荐: label left half, list right half. -->
+	<section class="recommend" aria-labelledby="recommend-heading">
+		<div class="container recommend__grid">
+			<h2 id="recommend-heading" class="section-label section-label--rose recommend__label">推荐</h2>
+
+			<ol class="recommend__list">
+				{recommended.map((post) => <PostRow post={post} />)}
+			</ol>
+		</div>
+	</section>
+
+	<!-- Cream band 2: the 关于 label lives in the right half in the mockup. -->
+	<WaveBand class="band">
+		<div class="container band-inner about">
+			<div class="about__body">
+				<p>
+					这里放着一部分工作、一部分阅读，和一些没有归类的日子。写作对我来说更像整理：把散落的东西摆到光底下，看清楚它们本来的形状。
+				</p>
+				<p>
+					如果你想说点什么，<a href="/about/">关于</a>那一页有联系方式。
+				</p>
+			</div>
+			<h2 class="section-label section-label--peach about__label">关于</h2>
+		</div>
+	</WaveBand>
+</BaseLayout>
+
+<style>
+	/* --- Hero (tan) ------------------------------------------------------- */
+	.hero {
+		/* The mockup starts the hero shot 24px under the 301px masthead. */
+		padding-block: clamp(0.75rem, 1.4vw, 1.5rem) 0;
+	}
+
+	.hero__grid {
+		position: relative;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+	}
+
+	/*
+		Figure and HeroPill render the elements that carry these classes, so they
+		keep their own scope id instead of this page's. `:global()` lets the
+		parent half of each selector stay scoped to this page.
+	*/
+
+	/* Left half, 640px wide on the design's 1280px column. */
+	.hero__grid :global(.hero__media) {
+		grid-column: 1;
+	}
+
+	/* 工作 pill: last 489px of the right half, sitting on the image's baseline. */
+	.hero__grid :global(.hero__pill) {
+		position: absolute;
+		right: 0;
+		bottom: clamp(0.4rem, 0.6vw, 0.75rem);
+	}
+
+	/* --- Cream band 1 ----------------------------------------------------- */
+	.feature {
+		position: relative;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.feature :global(.feature__media) {
+		grid-column: 2;
+	}
+
+	.feature :global(.feature__pill) {
+		position: absolute;
+		left: 0;
+		bottom: calc(var(--band-pad) + clamp(0.4rem, 0.6vw, 0.75rem));
+	}
+
+	/* --- 推荐 (tan) ------------------------------------------------------- */
+	.recommend {
+		padding-block: var(--section-pad);
+	}
+
+	.recommend__grid {
+		display: grid;
+		/* Column gap 0 so the halves meet exactly on the centre line: the
+		   mockup's list starts at x 960 of 1920, i.e. dead centre. */
+		grid-template-columns: 1fr 1fr;
+		align-items: start;
+		gap: 2rem 0;
+	}
+
+	.recommend__label {
+		/* The mockup puts the label's left edge at x 494 — 27% into the left
+		   half — rather than centring it. */
+		padding-inline-start: 27%;
+		text-align: start;
+	}
+
+	.recommend__list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	/* --- 关于 (cream band 2) ---------------------------------------------- */
+	.about {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		align-items: start;
+		gap: 2rem 0;
+	}
+
+	.about__body {
+		display: grid;
+		gap: 1.1em;
+		max-width: 34ch;
+	}
+
+	.about__body a {
+		text-decoration: underline;
+		text-underline-offset: 0.25em;
+	}
+
+	.about__label {
+		text-align: center;
+	}
+
+	/* --- Narrow screens --------------------------------------------------- */
+	@media (max-width: 48rem) {
+		.hero__grid,
+		.feature,
+		.recommend__grid,
+		.about {
+			grid-template-columns: 1fr;
+		}
+
+		/* Pills stop being absolutely placed and simply follow the image. */
+		.hero__grid :global(.hero__media),
+		.feature :global(.feature__media) {
+			grid-column: 1;
+		}
+
+		.feature :global(.feature__media) {
+			order: -1;
+		}
+
+		.hero__grid :global(.hero__pill),
+		.feature :global(.feature__pill) {
+			position: static;
+			margin-block-start: 1.25rem;
+			margin-inline: auto;
+		}
+
+		.recommend__label,
+		.about__label {
+			padding-inline-start: 0;
+			text-align: start;
+		}
+	}
+</style>

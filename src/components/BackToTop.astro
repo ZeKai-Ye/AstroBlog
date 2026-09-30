@@ -1,0 +1,93 @@
+---
+/**
+ * Back to top.
+ *
+ * The design has no such control, so this borrows its vocabulary: a round cream
+ * plate with the masthead's own 0/6/4 shadow, holding an ink arrow. It is kept
+ * out of the tab order and the accessibility tree (via `visibility: hidden`)
+ * until the reader is past the first screen.
+ */
+---
+
+<button class="to-top" type="button" data-to-top>
+	<span class="sr-only">回到顶部</span>
+	<svg class="to-top__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+		<path
+			d="M12 19V5M12 5 6 11M12 5l6 6"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.8"
+			stroke-linecap="round"
+			stroke-linejoin="round"></path>
+	</svg>
+</button>
+
+<style>
+	.to-top {
+		position: fixed;
+		z-index: 5;
+		inset-block-end: clamp(1rem, 2.2vw, 2rem);
+		inset-inline-end: clamp(1rem, 2.2vw, 2rem);
+		display: grid;
+		place-items: center;
+		width: clamp(2.75rem, 3.4vw, 3.25rem);
+		aspect-ratio: 1;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: var(--c-cream);
+		color: var(--c-ink);
+		box-shadow: 0 6px 4px rgb(0 0 0 / 0.25);
+		cursor: pointer;
+
+		/* Hidden until the reader is past the first screen. */
+		opacity: 0;
+		visibility: hidden;
+		translate: 0 0.5rem;
+		transition:
+			opacity 0.25s var(--ease),
+			translate 0.25s var(--ease),
+			visibility 0.25s;
+	}
+
+	.to-top.is-visible {
+		opacity: 1;
+		visibility: visible;
+		translate: 0 0;
+	}
+
+	.to-top:hover {
+		background: var(--c-tan);
+	}
+
+	.to-top__icon {
+		width: 55%;
+		height: 55%;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.to-top {
+			translate: 0;
+		}
+	}
+</style>
+
+<script>
+	const button = document.querySelector<HTMLButtonElement>('[data-to-top]');
+
+	if (button) {
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+		const THRESHOLD = 600;
+
+		const sync = () => {
+			button.classList.toggle('is-visible', window.scrollY > THRESHOLD);
+		};
+
+		sync();
+		window.addEventListener('scroll', sync, { passive: true });
+
+		button.addEventListener('click', () => {
+			window.scrollTo({ top: 0, behavior: reduced.matches ? 'auto' : 'smooth' });
+		});
+	}
+</script>

@@ -1,0 +1,57 @@
+---
+/**
+ * Author card, right-hand sidebar of the post page.
+ *
+ * Design: 448x635 at x 1440, y 689 — 10px radius, 1px #808080 border on the
+ * #FCF4E3 fill. Inside: a 294x266 image slot (51px in from the top, 294 wide,
+ * so 65.6% of the card) captioned 头像, then a centred two-line block — the
+ * name at 36px and the bio at 24px — and 136px of breathing room below.
+ */
+import Figure from './Figure.astro';
+import { SITE } from '../config';
+
+interface Props {
+	name?: string;
+	bio?: string;
+	avatar?: ImageMetadata;
+}
+
+const { name = SITE.author.name, bio = SITE.author.bio, avatar } = Astro.props;
+---
+
+<aside class="author">
+	<div class="author__avatar">
+		<Figure src={avatar} alt={`${name} 的头像`} label="头像" ratio="294 / 266" />
+	</div>
+	<p class="author__name">{name}</p>
+	{bio && <p class="author__bio">{bio}</p>}
+</aside>
+
+<style>
+	.author {
+		/* 51 / 448 top+side, 136 / 448 bottom. */
+		padding: 11.4% 11.4% 30%;
+		background: var(--c-cream-soft);
+		border: 1px solid var(--c-rule);
+		border-radius: var(--radius);
+		text-align: center;
+	}
+
+	.author__avatar {
+		width: 85%;
+		margin-inline: auto;
+	}
+
+	.author__name {
+		margin-block-start: 15.6%;
+		font-size: var(--fs-lead);
+		line-height: 1.25;
+	}
+
+	.author__bio {
+		margin-block-start: 0.35em;
+		font-size: var(--fs-meta);
+		line-height: 1.5;
+		color: var(--c-ink-muted);
+	}
+</style>

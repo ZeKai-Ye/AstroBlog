@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import WaveBand from '../components/WaveBand.astro';
+---
+
+<BaseLayout title="页面不存在" surface="tan">
+	<div class="container notfound">
+		<p class="section-label section-label--rose">404</p>
+		<p class="notfound__text">这一页不在册子上。</p>
+	</div>
+
+	<WaveBand class="band">
+		<div class="container band-inner notfound__links">
+			<a href="/">回到首页</a>
+			<a href="/blog/">看看时日</a>
+		</div>
+	</WaveBand>
+</BaseLayout>
+
+<style>
+	.notfound {
+		display: grid;
+		justify-items: center;
+		gap: 1rem;
+		padding-block: var(--section-pad);
+	}
+
+	.notfound__text {
+		font-size: var(--fs-lead);
+		color: var(--c-ink-muted);
+	}
+
+	.notfound__links {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 1.5rem;
+		font-size: var(--fs-lead);
+	}
+
+	.notfound__links a {
+		text-decoration: underline;
+		text-decoration-color: var(--c-divider);
+		text-underline-offset: 0.25em;
+		transition: text-decoration-color 0.2s var(--ease);
+	}
+
+	.notfound__links a:hover {
+		text-decoration-color: currentColor;
+	}
+</style>

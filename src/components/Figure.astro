@@ -1,0 +1,72 @@
+---
+/**
+ * An image slot.
+ *
+ * Every picture in `ui设计.free` is a flat #ABA4A4 rectangle. That grey means
+ * "an image goes here" — it is not a colour from the design's palette — so when
+ * no source is supplied this paints a soft warm tint and keeps the design's
+ * 图片 caption instead of a grey block.
+ */
+import { Image } from 'astro:assets';
+
+interface Props {
+	src?: ImageMetadata;
+	alt: string;
+	/** Caption for the empty state. The mockup writes 图片 / 头像. */
+	label?: string;
+	/** CSS `aspect-ratio` value. The design's hero shot is 640x755. */
+	ratio?: string;
+	class?: string;
+}
+
+const {
+	src,
+	alt,
+	label = '图片',
+	ratio = '640 / 755',
+	class: className = '',
+} = Astro.props;
+---
+
+<figure class:list={['slot', className]} style={`--slot-ratio: ${ratio}`}>
+	{
+		src ? (
+			<Image src={src} alt={alt} widths={[480, 800, 1200]} sizes="(max-width: 48rem) 100vw, 50vw" />
+		) : (
+			<span class="slot__empty" role="img" aria-label={alt}>
+				<span class="slot__label">{label}</span>
+			</span>
+		)
+	}
+</figure>
+
+<style>
+	/* The figure owns the ratio; the image or the empty state fills it. */
+	.slot {
+		margin: 0;
+		aspect-ratio: var(--slot-ratio);
+		overflow: hidden;
+	}
+
+	.slot :global(img) {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.slot__empty {
+		display: grid;
+		place-items: center;
+		width: 100%;
+		height: 100%;
+		background: var(--c-image-slot);
+		color: var(--c-ink);
+	}
+
+	/* The mockup sets these captions at 64px. */
+	.slot__label {
+		font-size: var(--fs-label);
+		line-height: 1.2;
+		letter-spacing: 0.04em;
+	}
+</style>

@@ -1,0 +1,81 @@
+---
+/**
+ * One row of the 推荐 list on the home page.
+ *
+ * The mockup draws four stacked placeholders at x 960–1677, each 169px tall
+ * with a 1px #BDBDBD rule along its top edge — a hairline-separated list rather
+ * than boxed cards. Nothing inside the blocks is specified, so the row carries
+ * a title, a one-line excerpt and a date.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { formatDateParts } from '../config';
+
+interface Props {
+	post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { data } = post;
+const date = formatDateParts(data.pubDate);
+---
+
+<li class="row">
+	<a class="row__link" href={`/blog/${post.id}/`}>
+		<span class="row__head">
+			<span class="row__title">{data.title}</span>
+			<time class="row__date" datetime={date.iso}>
+				{date.year}.{String(data.pubDate.getMonth() + 1).padStart(2, '0')}
+			</time>
+		</span>
+		{data.description && <span class="row__excerpt">{data.description}</span>}
+	</a>
+</li>
+
+<style>
+	.row {
+		border-block-start: 1px solid var(--c-divider);
+	}
+
+	.row__link {
+		display: grid;
+		gap: 0.35em;
+		/*
+			The mockup's rows run on a 206px pitch at 1920 — a 166px block plus a
+			40px gap, each opened by a 1px #BDBDBD rule. Centring the content in a
+			206px box reproduces that rhythm without a separate margin.
+		*/
+		min-height: clamp(5.5rem, 1.5rem + 9vw, 12.5rem);
+		padding-block: 1.15rem;
+		align-content: center;
+		transition: opacity 0.2s var(--ease);
+	}
+
+	.row__link:hover {
+		opacity: 0.6;
+	}
+
+	.row__head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1.5rem;
+	}
+
+	.row__title {
+		font-size: var(--fs-lead);
+		line-height: 1.35;
+	}
+
+	.row__date {
+		flex: none;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.row__excerpt {
+		font-size: var(--fs-meta);
+		line-height: 1.6;
+		color: var(--c-ink-muted);
+	}
+</style>

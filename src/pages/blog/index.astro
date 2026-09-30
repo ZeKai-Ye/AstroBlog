@@ -1,0 +1,74 @@
+---
+/**
+ * 时日 / Ἡμέραι — the blog index.
+ *
+ * The mockup has no listing screen, so this reuses the language it does define:
+ * the 64px section label, the hairline-separated rows from 推荐, and the
+ * post page's cream surface.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostRow from '../../components/PostRow.astro';
+import { SITE } from '../../config';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout title="时日" surface="cream">
+	<div class="container listing">
+		<header class="listing__head">
+			<h1 class="section-label">时日</h1>
+			<p class="listing__sub">Ἡμέραι · 共 {posts.length} 篇</p>
+		</header>
+
+		{
+			posts.length > 0 ? (
+				<ol class="listing__list">
+					{posts.map((post) => (
+						<PostRow post={post} />
+					))}
+				</ol>
+			) : (
+				<p class="listing__empty">还没有文章。把 Markdown 放进 src/content/blog 即可。</p>
+			)
+		}
+	</div>
+
+	<p class="container listing__note">{SITE.description}</p>
+</BaseLayout>
+
+<style>
+	.listing {
+		padding-block: var(--section-pad) 0;
+	}
+
+	.listing__head {
+		display: grid;
+		gap: 0.5rem;
+		margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
+	}
+
+	.listing__sub {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+		letter-spacing: 0.04em;
+	}
+
+	.listing__list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.listing__empty,
+	.listing__note {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+	}
+
+	.listing__note {
+		padding-block: var(--section-pad);
+	}
+</style>

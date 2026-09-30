@@ -1,0 +1,196 @@
+---
+/**
+ * Search.
+ *
+ * The static build has no server to query, so every post's title, description
+ * and tags are inlined as a JSON index and filtered in the browser. The field in
+ * the post sidebar GETs to this page with `?q=`.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchBox from '../components/SearchBox.astro';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const index = posts.map((post) => ({
+	title: post.data.title,
+	description: post.data.description,
+	tags: post.data.tags,
+	href: `/blog/${post.id}/`,
+	date: post.data.pubDate.toISOString().slice(0, 10),
+}));
+
+// `</script>` inside the payload would close the tag early.
+const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
+---
+
+<BaseLayout title="搜索" description="站内搜索" surface="cream">
+	<div class="container search-page">
+		<header class="search-page__head">
+			<h1 class="section-label">搜索</h1>
+			<p class="search-page__sub">在这个站点的 {posts.length} 篇文章里查找</p>
+		</header>
+
+		<div class="search-page__field">
+			<SearchBox />
+		</div>
+
+		<p class="search-page__status" data-search-status aria-live="polite"></p>
+
+		<ol class="search-page__results" data-search-results></ol>
+	</div>
+
+	<script id="search-index" type="application/json" is:inline set:html={indexJson}></script>
+
+	<script>
+		type Entry = {
+			title: string;
+			description: string;
+			tags: string[];
+			href: string;
+			date: string;
+		};
+
+		const indexEl = document.getElementById('search-index');
+		const resultsEl = document.querySelector<HTMLOListElement>('[data-search-results]');
+		const statusEl = document.querySelector<HTMLParagraphElement>('[data-search-status]');
+		const input = document.querySelector<HTMLInputElement>('#site-search');
+
+		if (indexEl && resultsEl && statusEl) {
+			const entries: Entry[] = JSON.parse(indexEl.textContent || '[]');
+			const query = new URLSearchParams(location.search).get('q')?.trim() ?? '';
+
+			if (input) input.value = query;
+
+			const haystack = (entry: Entry) =>
+				[entry.title, entry.description, ...entry.tags].join(' ').toLowerCase();
+
+			const render = (matches: Entry[]) => {
+				resultsEl.replaceChildren(
+					...matches.map((entry) => {
+						const li = document.createElement('li');
+						li.className = 'search-page__row';
+
+						const a = document.createElement('a');
+						a.href = entry.href;
+
+						const head = document.createElement('span');
+						head.className = 'search-page__row-head';
+
+						const title = document.createElement('span');
+						title.className = 'search-page__row-title';
+						title.textContent = entry.title;
+
+						const date = document.createElement('time');
+						date.className = 'search-page__row-date';
+						date.dateTime = entry.date;
+						date.textContent = entry.date;
+
+						head.append(title, date);
+						a.append(head);
+
+						if (entry.description) {
+							const excerpt = document.createElement('span');
+							excerpt.className = 'search-page__row-excerpt';
+							excerpt.textContent = entry.description;
+							a.append(excerpt);
+						}
+
+						li.append(a);
+						return li;
+					})
+				);
+			};
+
+			if (!query) {
+				statusEl.textContent = '输入关键词后回车。';
+				render([]);
+			} else {
+				const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+				const matches = entries.filter((entry) =>
+					terms.every((term) => haystack(entry).includes(term))
+				);
+				statusEl.textContent = matches.length
+					? `找到 ${matches.length} 篇`
+					: `没有匹配「${query}」的文章`;
+				render(matches);
+			}
+		}
+	</script>
+</BaseLayout>
+
+<style>
+	.search-page {
+		padding-block: var(--section-pad);
+	}
+
+	.search-page__head {
+		display: grid;
+		gap: 0.5rem;
+		margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
+	}
+
+	.search-page__sub {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+	}
+
+	.search-page__field {
+		max-width: 32rem;
+	}
+
+	.search-page__status {
+		margin-block-start: 1.5rem;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+	}
+
+	.search-page__results {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	/* Mirrors the 推荐 rows on the home page. */
+	:global(.search-page__row) {
+		border-block-start: 1px solid var(--c-divider);
+	}
+
+	:global(.search-page__row a) {
+		display: grid;
+		gap: 0.35em;
+		padding-block: 1.15rem;
+		transition: opacity 0.2s var(--ease);
+	}
+
+	:global(.search-page__row a:hover) {
+		opacity: 0.6;
+	}
+
+	:global(.search-page__row-head) {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1.5rem;
+	}
+
+	:global(.search-page__row-title) {
+		font-size: var(--fs-lead);
+		line-height: 1.35;
+	}
+
+	:global(.search-page__row-date) {
+		flex: none;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	:global(.search-page__row-excerpt) {
+		font-size: var(--fs-meta);
+		line-height: 1.6;
+		color: var(--c-ink-muted);
+	}
+</style>

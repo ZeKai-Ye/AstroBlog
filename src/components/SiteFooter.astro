@@ -1,0 +1,95 @@
+---
+/**
+ * Footer — the 306px #F0D9C7 bar at the bottom of both frames in the mockup.
+ * The design only reserves the space ("底边栏"), so this fills it with the
+ * wordmark, the same navigation as the masthead, and a colophon.
+ *
+ * The navigation repeats the Chinese labels only. The mockup stacks a Greek
+ * gloss under each one in the masthead; repeating it here just made the footer
+ * noisy.
+ */
+import { SITE } from '../config';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+	<div class="container footer__inner">
+		<p class="footer__title">{SITE.title}</p>
+		<p class="footer__tagline">{SITE.description}</p>
+
+		<nav aria-label="页脚导航">
+			<ul class="footer__list">
+				{
+					SITE.nav.map((item) => (
+						<li>
+							<a class="footer__link" href={item.href}>
+								{item.zh}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+
+		<p class="footer__note">
+			<span class="sr-only">{SITE.footerNote} — </span>© {year} {SITE.title}
+		</p>
+	</div>
+</footer>
+
+<style>
+	.footer {
+		background: var(--c-tan);
+		/* 306px at 1920. */
+		min-height: clamp(11rem, 6rem + 8vw, 19.125rem);
+		display: grid;
+		align-content: center;
+		padding-block: clamp(2.5rem, 1rem + 4vw, 5rem);
+	}
+
+	.footer__inner {
+		display: grid;
+		justify-items: center;
+		gap: 0.9rem;
+		text-align: center;
+	}
+
+	.footer__title {
+		font-size: var(--fs-lead);
+		font-weight: 700;
+		letter-spacing: 0.06em;
+	}
+
+	.footer__tagline {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+		letter-spacing: 0.04em;
+	}
+
+	.footer__list {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.35rem 1.4rem;
+		margin: 0.6rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.footer__link {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+		transition: color 0.2s var(--ease);
+	}
+
+	.footer__link:hover {
+		color: var(--c-ink);
+	}
+
+	.footer__note {
+		margin-block-start: 0.6rem;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+	}
+</style>
