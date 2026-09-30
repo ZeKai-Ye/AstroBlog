@@ -73,6 +73,13 @@ export const withBase = (path: string) => {
  *     drawing the placeholder. A configured-but-missing picture is always a
  *     typo, and a silent fallback is how you end up staring at an empty slot
  *     wondering why nothing happened.
+ *
+ * A file whose name starts with `_` is **held back**: it stays in the repo and
+ * on disk, but is not bundled, so it never reaches the deployed site. Use it for
+ * a photo you have taken but not placed yet. The exclusion has to happen in the
+ * pattern rather than as a filter afterwards — `eager: true` means the glob's
+ * own imports are what emit the files, so by the time you could filter, the
+ * bytes are already in `dist/`.
  */
 const EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'];
 
@@ -80,6 +87,8 @@ const files = import.meta.glob<{ default: ImageMetadata }>(
 	[
 		'/src/assets/**/*.{jpg,jpeg,png,webp,avif,gif}',
 		'/src/assets/**/*.{JPG,JPEG,PNG,WEBP,AVIF,GIF}',
+		'!/src/assets/**/_*',
+		'!/src/assets/**/_*/**',
 	],
 	{ eager: true }
 );
@@ -105,6 +114,7 @@ export const asset = (name?: string): ImageMetadata | undefined => {
 			(available.length
 				? `  In there: ${available.join(', ')}\n`
 				: '  src/assets/ has no images in it yet.\n') +
+			'  Names starting with "_" are held back and never bundled.\n' +
 			`  Supported extensions: ${EXTENSIONS.join(', ')} (any case).`
 	);
 };

@@ -193,6 +193,8 @@
 			.media img { display: block; width: 100%; height: 110px; object-fit: cover; background: #eee; }
 			.media figcaption { padding: 0.4rem 0.5rem; font-size: 12px; word-break: break-all; }
 			.media .used { color: var(--ok); }
+			.media .held { color: var(--muted); font-style: italic; }
+			.media figure.is-held img { opacity: 0.4; filter: grayscale(1); }
 			.media .actions { display: flex; gap: 0.35rem; padding: 0 0.5rem 0.5rem; }
 
 			.drop {
@@ -607,9 +609,12 @@
 								: `<div class="media">${state.media
 										.map((item) => {
 											const used = state.usage[item.name] ?? 0;
-											return `<figure>
+											const status = item.held
+												? '<span class="held">暂存 · 不上线</span>'
+												: `<span class="${used ? 'used' : ''}">${used ? `被引用 ${used} 处` : '未被引用'}</span>`;
+											return `<figure${item.held ? ' class="is-held"' : ''}>
 												<img src="/__edit/media/${encodeURIComponent(item.name)}" alt="" loading="lazy" />
-												<figcaption>${esc(item.name)}<br /><span class="${used ? 'used' : ''}">${used ? `被引用 ${used} 处` : '未被引用'}</span></figcaption>
+												<figcaption>${esc(item.name)}<br />${status}</figcaption>
 												<div class="actions">
 													<button type="button" class="tiny" data-copy="${esc(item.name)}">复制文件名</button>
 													<button type="button" class="tiny danger" data-delete-media="${esc(item.name)}">删除</button>
@@ -816,14 +821,22 @@
 			}
 
 			function pickMedia(callback) {
-				if (state.media.length === 0) {
-					toast('图片库是空的，先去「图片」里上传一张', true);
+				// Held-back files (leading `_`) are not bundled, so offering one would
+				// only produce a build that cannot resolve the name it just wrote.
+				const pickable = state.media.filter((item) => !item.held);
+				if (pickable.length === 0) {
+					toast(
+						state.media.length === 0
+							? '图片库是空的，先去「图片」里上传一张'
+							: '图片库里没有可用的图片（下划线开头的是暂存，不上线）',
+						true
+					);
 					return;
 				}
 				$('modal').innerHTML = `<h2>选一张图片</h2>
 					<button type="button" class="tiny" data-pick-none>不用图片（显示占位块）</button>
 					<div class="grid" style="margin-top:0.8rem">
-						${state.media
+						${pickable
 							.map(
 								(item) => `<figure data-pick-name="${esc(item.name)}">
 									<img src="/__edit/media/${encodeURIComponent(item.name)}" alt="" loading="lazy" />

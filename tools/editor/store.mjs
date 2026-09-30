@@ -257,7 +257,14 @@ export async function listMedia() {
 			const dot = entry.name.lastIndexOf('.');
 			if (dot === -1 || !IMAGE_EXTENSIONS.has(entry.name.slice(dot).toLowerCase())) continue;
 			const info = await stat(join(dir, entry.name));
-			out.push({ name: `${prefix}${entry.name}`, bytes: info.size, modified: info.mtimeMs });
+			out.push({
+				name: `${prefix}${entry.name}`,
+				bytes: info.size,
+				modified: info.mtimeMs,
+				// A leading `_` holds a file back from the build (see src/config.ts),
+				// so the pickers must not offer it.
+				held: entry.name.startsWith('_'),
+			});
 		}
 	};
 
