@@ -3,7 +3,7 @@
  * 工作 / Ἔργα.
  *
  * The mockup links to this section from the hero pill but never draws it. The
- * entries come from `SITE.works` in src/config.ts, so titles and pictures are
+ * entries come from `works` in src/settings.json, so titles and pictures are
  * edited in one place; on its own the list is just sample copy.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -41,7 +41,7 @@ import { SITE, asset } from '../config';
 			</ul>
 
 			<p class="works__note">
-				上面三条是示例。在 <code>src/config.ts</code> 的 <code>SITE.works</code> 里改标题、说明和图片，
+				上面三条是示例。在 <code>src/settings.json</code> 的 <code>works</code> 里改标题、说明和图片，
 				图片写 <code>src/assets/</code> 里的文件名即可；要更多条目就往数组里加。
 			</p>
 		</div>

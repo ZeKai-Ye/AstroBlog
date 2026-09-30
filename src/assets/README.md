@@ -1,35 +1,30 @@
 # 图片放这里
 
-把照片丢进这个文件夹，然后在 `src/config.ts` 的 `SITE.images` 里写**文件名**：
+**站上所有图片都在这个文件夹。** 其它地方只写**文件名**，不写路径。
 
-```ts
-images: {
-  heroWork: 'hero-work.jpg',   // 首页左边那张（工作）
-  heroDays: 'hero-days.jpg',   // 首页奶油色带里那张（时日）
-  avatar:   'avatar.jpg',      // 兜底头像，一般用不到
-},
-```
+最省事的办法是用编辑器（`npm run dev` → http://localhost:4321/__edit）：「图片」页把文件
+拖进来，然后在「站点」/「文章」/「作者」页点「选择…」。手工改的话，文件名写在这几处：
 
-`avatar` 只在作者没有自己的头像时才用到 —— 作者的图片放在
-`src/content/authors/` 里各自那份 `.md` 旁边，见根目录 README 的「作者」一节。
+| 位置 | 写在哪 | 字段 |
+| :-- | :-- | :-- |
+| 顶部站标 | `src/settings.json` | `images.logo` |
+| 首页左边（工作） | `src/settings.json` | `images.heroWork` |
+| 首页右边（时日） | `src/settings.json` | `images.heroDays` |
+| 兜底头像 | `src/settings.json` | `images.avatar` |
+| 工作页卡片 | `src/settings.json` | `works[].image` |
+| 文章封面 | 那篇文章的 frontmatter | `cover` |
+| 作者头像 | 那位作者的 frontmatter | `avatar` |
 
-支持 `jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`。文件名写错时开发服务器会在
-终端里提示，并列出这个文件夹里现有的文件。
+支持 `jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`，**扩展名不区分大小写**，**子目录也认**
+（文件在 `photos/hero.jpg`，就写 `photos/hero.jpg`）。
 
-留空（`''`）就显示设计稿的占位块。首页那两张如果不写，会退回到最新两篇文章的封面。
+留空（`''`）就显示设计稿的占位块；`images.logo` 留空则退回站名文字。
 
-Astro 会为每个用到的地方自动缩放和压缩，所以直接放原图即可，不用自己先裁。
+**文件名写错不会静默失败** —— 构建会直接报错，并列出这个文件夹里现有的文件。`.heic`
+（iPhone 默认）和 `.bmp` 不认，先转成 jpg。
 
-## 文章封面不走这里
+> 设计稿的源文件（`.psd` 之类）不要放这里：构建只读图片格式，放进来对网站没有任何作用，
+> 而且会被 `.gitignore` 忽略。导出 png/jpg 后把文件名填到上面那些位置即可。
 
-文章自己的封面图放在**那篇 Markdown 旁边**，在 frontmatter 里用相对路径引用：
-
-```yaml
----
-title: 标题
-cover: ./cover.jpg      # 与这篇 .md 同目录
-coverAlt: 图片说明
----
-```
-
-详见仓库根目录的 README。
+图片要提交进 Git 才算数 —— Cloudflare 从仓库构建，看不到你本地的文件。原图多大都行，
+Astro 会另生成压缩版本，只是仓库里会留着原图。

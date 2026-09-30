@@ -1,0 +1,103 @@
+---
+/**
+ * The site's mark — the picture when `settings.json` sets `images.logo`, and the
+ * title set as type when it does not.
+ *
+ * Both the masthead and the footer use this. The mockup draws the slot once, at
+ * the top of the frame ("待添加的标题主图标位置"), but the footer reserves the same
+ * block at the bottom, so it wants the same mark rather than the title repeated
+ * in a second size.
+ *
+ * The edges are *masked away* rather than drawn. The picture should melt into
+ * whatever it is sitting on instead of reading as a rectangle pasted over it —
+ * and since the masthead is cream while the footer is tan, a transparent edge is
+ * the only treatment that works on both.
+ */
+import { Image } from 'astro:assets';
+import { SITE, asset } from '../config';
+
+interface Props {
+	/** `masthead` is the large top mark; `footer` is the smaller repeat. */
+	size?: 'masthead' | 'footer';
+	class?: string;
+}
+
+const { size = 'masthead', class: className = '' } = Astro.props;
+const logo = asset(SITE.images.logo);
+
+const widths = size === 'masthead' ? [480, 960] : [240, 480];
+const sizes =
+	size === 'masthead' ? '(max-width: 30rem) 80vw, 30rem' : '(max-width: 30rem) 70vw, 20rem';
+---
+
+{
+	logo ? (
+		<Image
+			class:list={['mark', 'mark--image', `mark--${size}`, className]}
+			src={logo}
+			/* Often the only content of a link, so the alt is what names it. */
+			alt={SITE.title}
+			widths={widths}
+			sizes={sizes}
+			/* Above the fold on every page — never defer the masthead. */
+			loading="eager"
+			fetchpriority="high"
+		/>
+	) : (
+		<span class:list={['mark', 'mark--text', `mark--${size}`, className]}>{SITE.title}</span>
+	)
+}
+
+<style>
+	.mark {
+		display: block;
+	}
+
+	/* --- the picture ------------------------------------------------------ */
+	.mark--image {
+		width: auto;
+		max-width: 100%;
+
+		/*
+			Two gradients crossed with `intersect`: one fades the two ends, the
+			other fades top and bottom. At the edges the mask is transparent, so
+			the page colour comes through and there is no border left to see.
+
+			Where `mask-composite` is unsupported the two layers union instead,
+			which fades a little less — never nothing, so it degrades softly
+			rather than failing.
+		*/
+		-webkit-mask-image:
+			linear-gradient(to right, transparent, #000 15%, #000 85%, transparent),
+			linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+		-webkit-mask-composite: source-in;
+		mask-image:
+			linear-gradient(to right, transparent, #000 15%, #000 85%, transparent),
+			linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+		mask-composite: intersect;
+	}
+
+	.mark--image.mark--masthead {
+		height: clamp(2.5rem, 0.75rem + 4vw, 5rem);
+	}
+
+	.mark--image.mark--footer {
+		height: clamp(2rem, 0.6rem + 2.8vw, 3.6rem);
+	}
+
+	/* --- the type fallback ------------------------------------------------ */
+	.mark--text {
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		line-height: 1.2;
+		text-align: center;
+	}
+
+	.mark--text.mark--masthead {
+		font-size: clamp(1.125rem, 0.5rem + 1.45vw, 1.75rem);
+	}
+
+	.mark--text.mark--footer {
+		font-size: var(--fs-lead);
+	}
+</style>

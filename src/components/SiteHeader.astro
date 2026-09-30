@@ -7,13 +7,11 @@
  *              (drawn as a grey placeholder box: "待添加的标题主图标位置")
  *   y 211–301  four 320px nav columns, each two lines — Chinese over Greek
  *
- * That grey block was a placeholder for the title mark, and it now holds one:
- * set `images.logo` to a file in `src/assets/` and it is drawn there at the
- * mockup's own 960x181 proportions. With no picture set the site title is set as
- * type instead, which is what the grey block looked like when it was empty.
+ * That grey block was a placeholder for the title mark, so the mark is drawn
+ * there by <SiteMark>, which is also what the footer uses.
  */
-import { Image } from 'astro:assets';
-import { SITE, asset, withBase } from '../config';
+import { SITE, withBase } from '../config';
+import SiteMark from './SiteMark.astro';
 
 const path = Astro.url.pathname;
 const home = withBase('/');
@@ -23,30 +21,12 @@ const isActive = (href: string) => {
 	const full = withBase(href);
 	return full === home ? path === home : path.startsWith(full);
 };
-
-const logo = asset(SITE.images.logo);
 ---
 
 <header class="masthead">
 	<div class="masthead__logo">
 		<a class="masthead__wordmark" href={home}>
-			{
-				logo ? (
-					<Image
-						class="masthead__mark"
-						src={logo}
-						/* The link's only content, so the alt is what names it. */
-						alt={SITE.title}
-						widths={[480, 960]}
-						sizes="(max-width: 30rem) 80vw, 30rem"
-						/* Above the fold on every page, so never defer it. */
-						loading="eager"
-						fetchpriority="high"
-					/>
-				) : (
-					SITE.title
-				)
-			}
+			<SiteMark size="masthead" />
 		</a>
 	</div>
 
@@ -95,29 +75,17 @@ const logo = asset(SITE.images.logo);
 		padding-inline: var(--gutter);
 	}
 
+	/*
+		Only the link chrome lives here now — the mark itself (picture or type,
+		and the feathered edge) belongs to <SiteMark>, which the footer shares.
+	*/
 	.masthead__wordmark {
-		font-size: clamp(1.125rem, 0.5rem + 1.45vw, 1.75rem);
-		font-weight: 700;
-		letter-spacing: 0.06em;
-		line-height: 1.2;
-		text-align: center;
+		display: block;
 		transition: opacity 0.2s var(--ease);
 	}
 
 	.masthead__wordmark:hover {
-		opacity: 0.65;
-	}
-
-	/*
-		The picture fills the block by height. `width: auto` plus `max-width`
-		is ratio-safe: when the max-width bites, the browser recomputes the
-		height from the intrinsic ratio rather than squashing it.
-	*/
-	.masthead__mark {
-		display: block;
-		height: clamp(2.5rem, 0.75rem + 4vw, 5rem);
-		width: auto;
-		max-width: 100%;
+		opacity: 0.72;
 	}
 
 	.masthead__nav {

@@ -9,13 +9,14 @@
  * noisy.
  */
 import { SITE, withBase } from '../config';
+import SiteMark from './SiteMark.astro';
 
 const year = new Date().getFullYear();
 ---
 
 <footer class="footer">
 	<div class="container footer__inner">
-		<p class="footer__title">{SITE.title}</p>
+		<SiteMark size="footer" />
 		<p class="footer__tagline">{SITE.description}</p>
 
 		<nav aria-label="页脚导航">
@@ -53,12 +54,6 @@ const year = new Date().getFullYear();
 		justify-items: center;
 		gap: 0.9rem;
 		text-align: center;
-	}
-
-	.footer__title {
-		font-size: var(--fs-lead);
-		font-weight: 700;
-		letter-spacing: 0.06em;
 	}
 
 	.footer__tagline {
