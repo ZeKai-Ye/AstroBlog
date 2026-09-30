@@ -17,8 +17,11 @@ import { Image } from 'astro:assets';
 import { SITE, asset } from '../config';
 
 interface Props {
-	/** `masthead` is the large top mark; `footer` is the smaller repeat. */
-	size?: 'masthead' | 'footer';
+	/**
+	 * `masthead` is the large top mark, `footer` the smaller repeat, and `about`
+	 * fills the 关于 page's narrow right-hand column.
+	 */
+	size?: 'masthead' | 'footer' | 'about';
 	class?: string;
 }
 
@@ -28,6 +31,13 @@ const logo = asset(SITE.images.logo);
 const widths = size === 'masthead' ? [480, 960] : [240, 480];
 const sizes =
 	size === 'masthead' ? '(max-width: 30rem) 80vw, 30rem' : '(max-width: 30rem) 70vw, 20rem';
+
+/*
+	Only the masthead is above the fold on every page, and it is the first thing
+	anyone sees — so it is the only one that should be fetched eagerly. Making the
+	footer and 关于 copies high-priority too would just have them competing with it.
+*/
+const eager = size === 'masthead';
 ---
 
 {
@@ -39,9 +49,8 @@ const sizes =
 			alt={SITE.title}
 			widths={widths}
 			sizes={sizes}
-			/* Above the fold on every page — never defer the masthead. */
-			loading="eager"
-			fetchpriority="high"
+			loading={eager ? 'eager' : 'lazy'}
+			fetchpriority={eager ? 'high' : undefined}
 		/>
 	) : (
 		<span class:list={['mark', 'mark--text', `mark--${size}`, className]}>{SITE.title}</span>
@@ -59,21 +68,52 @@ const sizes =
 		max-width: 100%;
 
 		/*
-			Two gradients crossed with `intersect`: one fades the two ends, the
-			other fades top and bottom. At the edges the mask is transparent, so
-			the page colour comes through and there is no border left to see.
+			The feather is proportional, but bounded at both ends: a plain 20%
+			fade is right on the 89px masthead mark and eats a third of the 48px
+			关于 one, which turns it into a smudge. The floor keeps small marks
+			legible; the ceiling stops large ones from bleeding too far.
+
+			Two gradients crossed with `intersect`: one fades the ends, the other
+			fades top and bottom. At the edges the mask is transparent, so the
+			page colour comes through and there is no border left to see.
 
 			Where `mask-composite` is unsupported the two layers union instead,
-			which fades a little less — never nothing, so it degrades softly
-			rather than failing.
+			which fades a little less — never nothing, so it degrades softly.
 		*/
+		--feather-x: clamp(12px, 15%, 48px);
+		--feather-y: clamp(7px, 17%, 22px);
+
 		-webkit-mask-image:
-			linear-gradient(to right, transparent, #000 15%, #000 85%, transparent),
-			linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+			linear-gradient(
+				to right,
+				transparent,
+				#000 var(--feather-x),
+				#000 calc(100% - var(--feather-x)),
+				transparent
+			),
+			linear-gradient(
+				to bottom,
+				transparent,
+				#000 var(--feather-y),
+				#000 calc(100% - var(--feather-y)),
+				transparent
+			);
 		-webkit-mask-composite: source-in;
 		mask-image:
-			linear-gradient(to right, transparent, #000 15%, #000 85%, transparent),
-			linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+			linear-gradient(
+				to right,
+				transparent,
+				#000 var(--feather-x),
+				#000 calc(100% - var(--feather-x)),
+				transparent
+			),
+			linear-gradient(
+				to bottom,
+				transparent,
+				#000 var(--feather-y),
+				#000 calc(100% - var(--feather-y)),
+				transparent
+			);
 		mask-composite: intersect;
 	}
 
@@ -83,6 +123,16 @@ const sizes =
 
 	.mark--image.mark--footer {
 		height: clamp(2rem, 0.6rem + 2.8vw, 3.6rem);
+	}
+
+	/*
+		The 关于 column is narrow and flush right, so this one is driven by width
+		instead of height: it fills the column and the height follows the ratio,
+		which means it can never overflow the way a fixed height would.
+	*/
+	.mark--image.mark--about {
+		width: 100%;
+		height: auto;
 	}
 
 	/* --- the type fallback ------------------------------------------------ */

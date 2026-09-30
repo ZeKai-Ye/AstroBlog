@@ -11,6 +11,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import WaveBand from '../components/WaveBand.astro';
 import AuthorCard from '../components/AuthorCard.astro';
+import SiteMark from '../components/SiteMark.astro';
 import { SITE, withBase } from '../config';
 import { getAuthorIndex, postCounts } from '../authors';
 
@@ -42,7 +43,7 @@ const counts = postCounts(posts, index);
 			</div>
 
 			<aside class="about__aside">
-				<p class="about__name">{SITE.title}</p>
+				<SiteMark size="about" />
 				<p class="about__bio">{SITE.description}</p>
 			</aside>
 		</div>
@@ -96,11 +97,6 @@ const counts = postCounts(posts, index);
 		display: grid;
 		gap: 0.4rem;
 		text-align: end;
-	}
-
-	.about__name {
-		font-size: var(--fs-lead);
-		line-height: 1.25;
 	}
 
 	.about__bio {
