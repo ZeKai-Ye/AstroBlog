@@ -268,35 +268,49 @@
 				String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 			/* ------------------------------------------------------------- api */
+			/**
+			 * `fetch` only rejects for network-level failures — an HTTP error
+			 * still resolves. So a rejection here means the request never got an
+			 * answer, which is usually a pooled keep-alive connection the dev
+			 * server had already closed. Retrying a GET is free and usually fixes
+			 * it; a write is retried only by hand, since it may have landed.
+			 */
 			async function api(path, options = {}) {
-				let response;
-				try {
-					response = await fetch(path, options);
-				} catch (cause) {
-					/*
-						`fetch` only rejects for network-level failures — an HTTP
-						error still resolves. So this branch means the dev server
-						is not answering, which is exactly the case where a bare
-						"Failed to fetch" tells you nothing.
-					*/
-					const error = new Error(
-						`请求发不出去：${location.origin}${path}\n` +
-							`浏览器报的是「${cause.message}」。\n` +
-							`通常是：dev server 已经停了、换了端口，或者这个页面是服务器重启前的旧标签页。`
-					);
-					error.offline = true;
-					throw error;
+				const method = (options.method ?? 'GET').toUpperCase();
+				const attempts = method === 'GET' ? 3 : 1;
+				let networkError = null;
+
+				for (let attempt = 1; attempt <= attempts; attempt++) {
+					let response;
+					try {
+						response = await fetch(path, options);
+					} catch (cause) {
+						networkError = cause;
+						if (attempt < attempts) {
+							await new Promise((resolve) => setTimeout(resolve, 150 * attempt));
+							continue;
+						}
+						break;
+					}
+
+					const text = await response.text();
+					let payload = {};
+					try {
+						payload = text ? JSON.parse(text) : {};
+					} catch {
+						throw new Error(`服务器返回了非 JSON 内容（HTTP ${response.status}）：${text.slice(0, 300)}`);
+					}
+					if (!response.ok) throw new Error(payload.error ?? `HTTP ${response.status} ${path}`);
+					return payload;
 				}
 
-				const text = await response.text();
-				let payload = {};
-				try {
-					payload = text ? JSON.parse(text) : {};
-				} catch {
-					throw new Error(`服务器返回了非 JSON 内容（HTTP ${response.status}）：${text.slice(0, 300)}`);
-				}
-				if (!response.ok) throw new Error(payload.error ?? `HTTP ${response.status} ${path}`);
-				return payload;
+				const error = new Error(
+					`请求发不出去（${method} ${location.origin}${path}，重试 ${attempts} 次都没成功）。\n` +
+						`浏览器报的是「${networkError?.message ?? '未知'}」。`
+				);
+				error.offline = true;
+				error.path = path;
+				throw error;
 			}
 
 			function toast(message, bad = false) {
@@ -307,17 +321,33 @@
 				setTimeout(() => node.remove(), bad ? 8000 : 2600);
 			}
 
-			/** A dev server that is not answering is not a toast-sized problem. */
-			function showFatal(error) {
+			/**
+			 * A dev server that is not answering is not a toast-sized problem, and
+			 * guessing at the cause from here is useless — so this probes once more
+			 * and prints everything needed to tell the two cases apart.
+			 */
+			async function showFatal(error) {
+				let probe = '还在探测…';
+				try {
+					const response = await fetch(`${error.path ?? '/__edit/api/state'}?probe=${Date.now()}`, {
+						cache: 'no-store',
+					});
+					probe = `HTTP ${response.status} — 这次通了`;
+				} catch (cause) {
+					probe = `仍然失败：${cause.message}`;
+				}
+
 				document.querySelector('main').innerHTML = `
 					<div class="fatal">
-						<h2>连不上开发服务器</h2>
-						<pre>${esc(error.message)}</pre>
-						<p>当前页面地址：<code>${esc(location.href)}</code></p>
+						<h2>编辑器连不上开发服务器</h2>
+						<pre>${esc(error.message)}\n\n再探一次： ${esc(probe)}</pre>
+						<p>页面地址：<code>${esc(location.href)}</code></p>
+						<p>来源：<code>${esc(location.origin)}</code>　在线：<code>${navigator.onLine}</code></p>
+						<p>浏览器：<code>${esc(navigator.userAgent)}</code></p>
 						<p>
-							编辑器挂在 <code>npm run dev</code> 上。它启动时会在终端里打印一行
-							<code>➜  Editor: http://localhost:端口/__edit</code> —— 用那一行的地址打开，
-							端口未必是现在这个。
+							编辑器挂在 <code>npm run dev</code> 上，它启动时会打印一行
+							<code>➜  Editor: http://localhost:端口/__edit</code>。如果「再探一次」显示通了，
+							直接重载就能用。
 						</p>
 						<p><button type="button" class="primary" data-retry>重新载入</button></p>
 					</div>`;
@@ -953,7 +983,8 @@
 				try {
 					await submit(event.target);
 				} catch (error) {
-					toast(error.message, true);
+					/* Writes are deliberately not retried automatically, so say so. */
+					toast(error.offline ? `${error.message}\n这次没有写入，再点一次保存即可。` : error.message, true);
 				} finally {
 					button.disabled = false;
 				}
