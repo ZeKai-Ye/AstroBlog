@@ -32,31 +32,55 @@ export const withBase = (path: string) => {
 /**
  * Resolves a file name to an image.
  *
- * Drop a photo into `src/assets/` and write its **file name** in `SITE.images`
- * below — everything in that folder is picked up at build time, so there is no
- * import to add. Astro then resizes/compresses it for each slot it is used in.
+ * Drop a photo into `src/assets/` — sub-folders are fine — and write its name
+ * relative to that folder in `SITE.images` below. Everything there is picked up
+ * at build time, so there is no import to add; Astro then resizes and compresses
+ * it once per slot it is used in.
  *
- * Returns `undefined` for an empty name, which is what makes `Figure` fall back
- * to the design's placeholder block.
+ * Two things this deliberately does:
+ *
+ *   - matches the extension case-insensitively, because Windows hands you
+ *     `IMG_1234.JPG` far more often than `img_1234.jpg`;
+ *   - **throws** when a configured name resolves to nothing, instead of quietly
+ *     drawing the placeholder. A configured-but-missing picture is always a
+ *     typo, and a silent fallback is how you end up staring at an empty slot
+ *     wondering why nothing happened.
  */
 import type { ImageMetadata } from 'astro';
 
+const EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'];
+
 const files = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/*.{jpg,jpeg,png,webp,avif,gif}',
+  [
+    '/src/assets/**/*.{jpg,jpeg,png,webp,avif,gif}',
+    '/src/assets/**/*.{JPG,JPEG,PNG,WEBP,AVIF,GIF}',
+  ],
   { eager: true }
 );
+
+/** Keyed by the name as written in SITE.images, lower-cased for lookup. */
+const byName = new Map<string, { src: ImageMetadata; label: string }>();
+
+for (const [path, mod] of Object.entries(files)) {
+  const label = path.replace('/src/assets/', '');
+  byName.set(label.toLowerCase(), { src: mod.default, label });
+}
 
 export const asset = (name?: string): ImageMetadata | undefined => {
   if (!name) return undefined;
 
-  const entry = files[`/src/assets/${name}`];
-  if (!entry && import.meta.env.DEV) {
-    console.warn(
-      `[assets] src/assets/${name} not found — that slot will show the placeholder. ` +
-        `Available: ${Object.keys(files).map((k) => k.split('/').pop()).join(', ') || '(none)'}`
-    );
-  }
-  return entry?.default;
+  const wanted = name.replace(/^\.?\//, '').toLowerCase();
+  const hit = byName.get(wanted);
+  if (hit) return hit.src;
+
+  const available = [...byName.values()].map((entry) => entry.label).sort();
+  throw new Error(
+    `[assets] SITE.images points at "${name}", but there is no such file in src/assets/.\n` +
+      (available.length
+        ? `  In there: ${available.join(', ')}\n`
+        : '  src/assets/ has no images in it yet.\n') +
+      `  Supported extensions: ${EXTENSIONS.join(', ')} (any case).`
+  );
 };
 
 export const SITE = {
@@ -102,7 +126,7 @@ export const SITE = {
     /** Home page, left shot (the 工作 feature). */
     heroWork: '',
     /** Home page, right shot in the cream band (the 时日 feature). */
-    heroDays: '',
+    heroDays: 'free.jpg',
     /** Fallback avatar for the identity above. Each real author's photo goes
      *  next to their own file in src/content/authors/. */
     avatar: '',

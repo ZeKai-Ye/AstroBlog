@@ -144,10 +144,27 @@ images: {
 见下面的「作者」一节。
 
 不用写 `import` —— `asset()` 会在构建时把 `src/assets/` 下的文件全部登记，按名字取用。
-支持 `jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`。名字写错时开发服务器会在终端里
-提示并列出目录里现有的文件。
+**子目录也认**（文件在 `photos/hero.jpg`，就写 `photos/hero.jpg`）。
+
+三条容易踩的规则：
+
+- **文件名必须和实际完全一致**。写错不会静默降级，而是**直接构建失败**并列出目录里
+  现有的文件：
+
+  ```
+  [assets] SITE.images points at "hero-days.jpg", but there is no such file in src/assets/.
+    In there: free.jpg
+    Supported extensions: jpg, jpeg, png, webp, avif, gif (any case).
+  ```
+
+- **扩展名不区分大小写**，`IMG_1234.JPG` 和 `img_1234.jpg` 都能用。
+- **只认这几种格式**：`jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`。`.heic`（iPhone 默认）
+  和 `.bmp` 不认，先转成 jpg。
 
 留 `''` 就是设计稿那个占位块。首页那两张如果不填，会退回到最新两篇文章的封面。
+
+> 图片要提交进 Git 才算数 —— Cloudflare 从仓库构建，看不到你本地的文件。原图多大都行，
+> Astro 会另生成压缩版本，只是仓库里会留着原图。
 
 ### 2. 文章封面 —— 放在文章旁边，写相对路径
 
