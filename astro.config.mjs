@@ -16,15 +16,14 @@ const picomatchShim = {
 };
 
 /**
- * Deployment origin and sub-path.
+ * Deployment origin and sub-path, both optional.
  *
- * GitHub Pages serves a project repo from `https://<user>.github.io/<repo>/`, so
- * the deploy workflow feeds both values in from `actions/configure-pages` (which
- * also resolves them correctly for a custom domain). Locally neither is set,
- * which leaves the base at `/` so `npm run dev` stays on http://localhost:4321/.
- *
- * `withBase()` in `src/config.ts` applies the base to the links written by hand
- * in templates — Astro only rewrites the asset URLs it generates itself.
+ * The site is deployed through Cloudflare's Git integration, which serves it
+ * from the domain root — so neither needs to be set. `SITE_URL` is only there to
+ * emit `<link rel="canonical">` (skip it and the tag is left out); `BASE_PATH`
+ * exists so the same build could be moved under a sub-path, and `withBase()` in
+ * `src/config.ts` is what applies it to the links written by hand in templates,
+ * since Astro only rewrites the asset URLs it generates itself.
  */
 const site = process.env.SITE_URL;
 const base = process.env.BASE_PATH ?? '/';

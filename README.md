@@ -27,36 +27,27 @@
 
 ## 部署
 
-推送到 `master` 即由 `.github/workflows/deploy.yml` 构建并发布到 GitHub Pages。
+用 **Cloudflare** 部署：仓库已接入 Cloudflare 的 Git 集成，推送后由 Cloudflare
+自己跑 `npm run build` 并发布，所以仓库里**不需要**任何 GitHub Actions workflow。
 
-**首次需要手动开一次 Pages**：**Settings → Pages → Source** 选 **GitHub Actions**。
-在此之前 `Configure Pages` 这一步会以 `Get Pages site failed` 失败。
+构建产物是纯静态的 `dist/`，构建命令 `npm run build`，输出目录 `dist`。
 
-这一步没法自动化：`actions/configure-pages` 的 `enablement` 选项要调用
-`POST /repos/{owner}/{repo}/pages`，而该接口拒绝 `GITHUB_TOKEN`
-（`Resource not accessible by integration`），必须用 PAT 或带
-`administration:write` 的 GitHub App token，CI 里没有。
-
-工作流用 `actions/configure-pages` 解析出站点源与子路径，再通过环境变量传给构建：
+两个可选环境变量（不设也能正常构建）：
 
 | 变量 | 作用 |
 | :-- | :-- |
-| `SITE_URL` | 站点源，用于 `<link rel="canonical">` 与 og 标签 |
-| `BASE_PATH` | 子路径，项目仓库为 `/<repo>` |
+| `SITE_URL` | 站点源，用于 `<link rel="canonical">` 与 og 标签；不设则跳过 canonical |
+| `BASE_PATH` | 子路径，Cloudflare 默认部署在域名根目录，保持不设即可 |
 
-`astro.config.mjs` 读取这两个变量，本地不设时 `base` 回落到 `/`，所以 `npm run dev`
-仍在 http://localhost:4321/。
-
-因为 GitHub Pages 把项目仓库放在 `/<repo>/` 下，`src/config.ts` 导出一个 `withBase()`
-给模板里的手写链接加上前缀 —— Astro 只会重写它自己生成的资源 URL，`<a href="/blog/">`
-这类硬编码路径不会自动处理。新增内部链接时记得套一层。
+`src/config.ts` 的 `withBase()` 给模板里的手写链接加 `BASE_PATH` 前缀（Astro 只重写
+它自己生成的资源 URL，`<a href="/blog/">` 这类硬编码路径不会自动处理）。在根目录部署
+时它是空操作；万一改到子路径下，把 `BASE_PATH` 设上就能整体生效。
 
 以后若换成自定义域名，`configure-pages` 会自己把 `BASE_PATH` 解析成空，无需改代码。
 
 ## 结构
 
 ```
-.github/workflows/deploy.yml   构建 + 发布到 GitHub Pages
 src/
 ├── config.ts            站点标题、导航、作者、withBase()、日期格式化
 ├── content.config.ts    blog 内容集合（Content Layer + glob loader）
