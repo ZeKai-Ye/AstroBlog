@@ -124,7 +124,7 @@ export const SITE = {
    */
   images: {
     /** Home page, left shot (the 工作 feature). */
-    heroWork: '',
+    heroWork: 'work.jpg',
     /** Home page, right shot in the cream band (the 时日 feature). */
     heroDays: 'free.jpg',
     /** Fallback avatar for the identity above. Each real author's photo goes
