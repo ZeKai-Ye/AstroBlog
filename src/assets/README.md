@@ -6,9 +6,12 @@
 images: {
   heroWork: 'hero-work.jpg',   // 首页左边那张（工作）
   heroDays: 'hero-days.jpg',   // 首页奶油色带里那张（时日）
-  avatar:   'avatar.jpg',      // 文章页侧栏的作者头像
+  avatar:   'avatar.jpg',      // 兜底头像，一般用不到
 },
 ```
+
+`avatar` 只在作者没有自己的头像时才用到 —— 作者的图片放在
+`src/content/authors/` 里各自那份 `.md` 旁边，见根目录 README 的「作者」一节。
 
 支持 `jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`。文件名写错时开发服务器会在
 终端里提示，并列出这个文件夹里现有的文件。

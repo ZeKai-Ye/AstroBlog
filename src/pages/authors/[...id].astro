@@ -1,0 +1,205 @@
+---
+/**
+ * 作者页 — one author, and everything they wrote here.
+ *
+ * Reuses the post page's cream surface and the 推荐 hairline rows, so an author
+ * page reads as the same site rather than a bolted-on directory.
+ */
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Figure from '../../components/Figure.astro';
+import PostRow from '../../components/PostRow.astro';
+import { getAuthorIndex, authorOf, type Author, type Post } from '../../authors';
+
+export async function getStaticPaths() {
+	const index = await getAuthorIndex();
+	const posts = await getCollection('blog', ({ data }) => !data.draft);
+
+	return index.list.map((author) => ({
+		params: { id: author.id },
+		props: {
+			author,
+			posts: posts
+				.filter((post) => authorOf(index, post.data.author)?.id === author.id)
+				.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+		},
+	}));
+}
+
+interface Props {
+	author: Author;
+	posts: Post[];
+}
+
+const { author, posts } = Astro.props;
+const { data } = author;
+const { Content } = await render(author);
+---
+
+<BaseLayout title={data.name} description={data.bio} surface="cream">
+	<div class="container author">
+		<header class="author__hero">
+			<div class="author__avatar">
+				<Figure
+					src={data.avatar}
+					alt={`${data.name} 的头像`}
+					label="头像"
+					ratio="294 / 266"
+					sizes="(max-width: 48rem) 60vw, 16rem"
+				/>
+			</div>
+
+			<div class="author__text">
+				{data.role && <p class="author__role">{data.role}</p>}
+				<h1 class="author__name">{data.name}</h1>
+				{data.bio && <p class="author__bio">{data.bio}</p>}
+
+				{
+					data.links.length > 0 && (
+						<ul class="author__links">
+							{data.links.map((link) => (
+								<li>
+									<a href={link.href} rel="me noopener">
+										{link.label}
+									</a>
+								</li>
+							))}
+						</ul>
+					)
+				}
+			</div>
+		</header>
+
+		{
+			author.body?.trim() && (
+				<div class="prose author__intro">
+					<Content />
+				</div>
+			)
+		}
+	</div>
+
+	<section class="container author__posts" aria-labelledby="author-posts">
+		<h2 id="author-posts" class="author__posts-label">
+			写的文章
+			<span class="author__count">{posts.length} 篇</span>
+		</h2>
+
+		{
+			posts.length > 0 ? (
+				<ol class="author__list">
+					{posts.map((post) => (
+						<PostRow post={post} />
+					))}
+				</ol>
+			) : (
+				<p class="author__empty">还没有署名的文章。</p>
+			)
+		}
+	</section>
+</BaseLayout>
+
+<style>
+	.author {
+		padding-block: var(--section-pad) 0;
+	}
+
+	/* Avatar on the left, the words on the right — the post sidebar's card,
+	   opened out. */
+	.author__hero {
+		display: grid;
+		grid-template-columns: clamp(9rem, 22vw, 16rem) minmax(0, 1fr);
+		gap: clamp(1.75rem, 4vw, 3.5rem);
+		align-items: center;
+	}
+
+	.author__role {
+		font-size: var(--fs-meta);
+		letter-spacing: 0.08em;
+		color: var(--c-rose-soft);
+	}
+
+	.author__name {
+		margin-block-start: 0.15em;
+		font-size: var(--fs-label);
+		font-weight: 400;
+		line-height: 1.2;
+	}
+
+	.author__bio {
+		margin-block-start: 0.7rem;
+		max-width: 34ch;
+		font-size: var(--fs-lead);
+		line-height: 1.4;
+		color: var(--c-ink-muted);
+	}
+
+	.author__links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.4rem;
+		margin-block-start: 1.1rem;
+		padding: 0;
+		list-style: none;
+		font-size: var(--fs-meta);
+	}
+
+	.author__links a {
+		text-decoration: underline;
+		text-decoration-color: var(--c-divider);
+		text-underline-offset: 0.25em;
+		transition: text-decoration-color 0.2s var(--ease);
+	}
+
+	.author__links a:hover {
+		text-decoration-color: currentColor;
+	}
+
+	.author__intro {
+		max-width: 46ch;
+		margin-block-start: clamp(2rem, 4vw, 3.5rem);
+	}
+
+	/* --- Their posts ------------------------------------------------------ */
+	.author__posts {
+		padding-block: var(--section-pad);
+	}
+
+	.author__posts-label {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1.5rem;
+		font-size: var(--fs-lead);
+		font-weight: 400;
+		margin-block-end: clamp(1rem, 2vw, 1.75rem);
+	}
+
+	.author__count {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.author__list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.author__empty {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+	}
+
+	@media (max-width: 48rem) {
+		.author__hero {
+			grid-template-columns: minmax(0, 1fr);
+			justify-items: start;
+		}
+
+		.author__avatar {
+			max-width: 12rem;
+		}
+	}
+</style>

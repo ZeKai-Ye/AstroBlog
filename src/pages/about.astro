@@ -3,11 +3,20 @@
  * 关于 / περί.
  *
  * The mockup only reserves this band and drops the 关于 label into its right
- * half, so the copy below is a placeholder to replace.
+ * half, so the copy below is a placeholder to replace. The 作者一览 grid below
+ * it is this site's own addition — one entry per file in src/content/authors,
+ * each linking to that author's page and their posts.
  */
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import WaveBand from '../components/WaveBand.astro';
-import { SITE } from '../config';
+import AuthorCard from '../components/AuthorCard.astro';
+import { SITE, withBase } from '../config';
+import { getAuthorIndex, postCounts } from '../authors';
+
+const index = await getAuthorIndex();
+const posts = await getCollection('blog', ({ data }) => !data.draft);
+const counts = postCounts(posts, index);
 ---
 
 <BaseLayout title="关于" surface="tan">
@@ -33,12 +42,29 @@ import { SITE } from '../config';
 			</div>
 
 			<aside class="about__aside">
-				<p class="about__name">{SITE.author.name}</p>
-				<p class="about__bio">{SITE.author.bio}</p>
-				<p class="about__tagline">{SITE.description}</p>
+				<p class="about__name">{SITE.title}</p>
+				<p class="about__bio">{SITE.description}</p>
 			</aside>
 		</div>
 	</WaveBand>
+
+	<section class="container authors" aria-labelledby="authors-heading">
+		<h2 id="authors-heading" class="section-label section-label--rose authors__label">作者一览</h2>
+
+		<ul class="authors__grid">
+			{
+				index.list.map((author) => (
+					<li>
+						<AuthorCard
+							author={author}
+							href={withBase(`/authors/${author.id}/`)}
+							note={`${counts.get(author.id) ?? 0} 篇`}
+						/>
+					</li>
+				))
+			}
+		</ul>
+	</section>
 </BaseLayout>
 
 <style>
@@ -77,10 +103,27 @@ import { SITE } from '../config';
 		line-height: 1.25;
 	}
 
-	.about__bio,
-	.about__tagline {
+	.about__bio {
 		font-size: var(--fs-meta);
 		color: var(--c-ink-muted);
+	}
+
+	/* --- 作者一览 ---------------------------------------------------------- */
+	.authors {
+		padding-block: var(--section-pad);
+	}
+
+	.authors__label {
+		margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
+	}
+
+	.authors__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+		gap: clamp(1.25rem, 3vw, 2rem);
+		margin: 0;
+		padding: 0;
+		list-style: none;
 	}
 
 	@media (max-width: 48rem) {

@@ -67,7 +67,11 @@ export const SITE = {
   description: '一个以文字与图像记录工作与时日的个人站点。',
   lang: 'zh-CN',
 
-  /** Author block — the right-hand card on a post page. */
+  /**
+   * Fallback identity. Real authors live in `src/content/authors/` — this is
+   * only used if that folder is empty, or if a post names an author id that
+   * does not exist.
+   */
   author: {
     name: '名字',
     bio: '作者简介',
@@ -99,7 +103,8 @@ export const SITE = {
     heroWork: '',
     /** Home page, right shot in the cream band (the 时日 feature). */
     heroDays: '',
-    /** Author card in the post sidebar. */
+    /** Fallback avatar for the identity above. Each real author's photo goes
+     *  next to their own file in src/content/authors/. */
     avatar: '',
   },
 

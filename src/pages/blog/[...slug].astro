@@ -21,6 +21,7 @@ import AuthorCard from '../../components/AuthorCard.astro';
 import Figure from '../../components/Figure.astro';
 import SearchBox from '../../components/SearchBox.astro';
 import { SITE, formatDateParts, withBase } from '../../config';
+import { getAuthorIndex, authorOf } from '../../authors';
 
 export async function getStaticPaths() {
 	const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
@@ -46,6 +47,10 @@ interface Props {
 const { entry, prev, next } = Astro.props;
 const { data } = entry;
 const { Content } = await render(entry);
+
+/* The card in the sidebar is whoever this post is by, linked to their page. */
+const author = authorOf(await getAuthorIndex(), data.author);
+const authorHref = author ? withBase(`/authors/${author.id}/`) : undefined;
 
 const date = formatDateParts(data.pubDate);
 const updated = data.updatedDate ? formatDateParts(data.updatedDate) : null;
@@ -107,7 +112,7 @@ const updated = data.updatedDate ? formatDateParts(data.updatedDate) : null;
 
 		<!-- Sidebar, second row: author. -->
 		<div class="post__aside">
-			<AuthorCard />
+			<AuthorCard author={author} href={authorHref} />
 		</div>
 	</div>
 

@@ -1,29 +1,40 @@
 ---
 /**
- * Author card, right-hand sidebar of the post page.
+ * Author card — the right-hand sidebar of a post page, reused as a tile in the
+ * 作者一览 grid on /about/.
  *
- * Design: 448x635 at x 1440, y 689 — 10px radius, 1px #808080 border on the
- * #FCF4E3 fill. Inside: a 294x266 image slot (51px in from the top, 294 wide,
- * so 65.6% of the card) captioned 头像, then a centred two-line block — the
- * name at 36px and the bio at 24px — and 136px of breathing room below.
+ * Design (post page sidebar): 448x635 at x 1440, y 689 — 10px radius, 1px
+ * #808080 border on the #FCF4E3 fill. Inside: a 294x266 image slot (11.4% in
+ * from the top and sides, 85% of the content box wide) captioned 头像, then a
+ * centred block — name at 36px, bio at 24px — and 30% of breathing room below.
+ *
+ * Pass `href` to make the whole card a link (the 作者一览 tiles do); without it
+ * the card stays an <aside>, which is what the post sidebar wants.
  */
 import Figure from './Figure.astro';
 import { SITE, asset } from '../config';
+import type { Author } from '../authors';
 
 interface Props {
-	name?: string;
-	bio?: string;
-	avatar?: ImageMetadata;
+	/** A collection entry. Omit to fall back to SITE.author. */
+	author?: Author;
+	/** Link target; turns the card into an <a>. */
+	href?: string;
+	/** Optional trailing line, e.g. "3 篇". */
+	note?: string;
 }
 
-const {
-	name = SITE.author.name,
-	bio = SITE.author.bio,
-	avatar = asset(SITE.images.avatar),
-} = Astro.props;
+const { author, href, note } = Astro.props;
+
+const name = author?.data.name ?? SITE.author.name;
+const bio = author?.data.bio ?? SITE.author.bio;
+const role = author?.data.role ?? '';
+const avatar = author?.data.avatar ?? asset(SITE.images.avatar);
+
+const Tag = href ? 'a' : 'aside';
 ---
 
-<aside class="author">
+<Tag class:list={['author', href && 'author--link']} {...href ? { href } : {}}>
 	<div class="author__avatar">
 		<Figure
 			src={avatar}
@@ -33,9 +44,12 @@ const {
 			sizes="(max-width: 56rem) 60vw, 17rem"
 		/>
 	</div>
+
 	<p class="author__name">{name}</p>
+	{role && <p class="author__role">{role}</p>}
 	{bio && <p class="author__bio">{bio}</p>}
-</aside>
+	{note && <p class="author__note">{note}</p>}
+</Tag>
 
 <style>
 	.author {
@@ -45,6 +59,18 @@ const {
 		border: 1px solid var(--c-rule);
 		border-radius: var(--radius);
 		text-align: center;
+	}
+
+	.author--link {
+		display: block;
+		transition:
+			border-color 0.2s var(--ease),
+			transform 0.2s var(--ease);
+	}
+
+	.author--link:hover {
+		border-color: var(--c-ink);
+		transform: translateY(-3px);
 	}
 
 	.author__avatar {
@@ -58,10 +84,24 @@ const {
 		line-height: 1.25;
 	}
 
+	.author__role {
+		margin-block-start: 0.2em;
+		font-size: var(--fs-meta);
+		letter-spacing: 0.08em;
+		color: var(--c-rose-soft);
+	}
+
 	.author__bio {
 		margin-block-start: 0.35em;
 		font-size: var(--fs-meta);
 		line-height: 1.5;
 		color: var(--c-ink-muted);
+	}
+
+	.author__note {
+		margin-block-start: 0.6em;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+		font-variant-numeric: tabular-nums;
 	}
 </style>

@@ -49,9 +49,12 @@
 
 ```
 src/
-├── config.ts            站点标题、导航、作者、withBase()、日期格式化
-├── content.config.ts    blog 内容集合（Content Layer + glob loader）
+├── config.ts            站点标题、导航、withBase()、asset()、日期格式化
+├── authors.ts           作者查找：排序、按 id 取、按作者统计篇数
+├── content.config.ts    authors / blog 两个内容集合
 ├── content/blog/*.md    文章
+├── content/authors/*.md 作者（头像就放在各自 .md 旁边）
+├── assets/              站点级图片 + 自己的说明
 ├── styles/global.css    设计令牌（颜色 / 字体 / 尺寸）+ 基础排版
 ├── layouts/BaseLayout.astro
 ├── components/
@@ -62,14 +65,15 @@ src/
 │   ├── HeroPill.astro     首页胶囊标签 + 点状箭头
 │   ├── PostRow.astro      推荐列表的一行（顶部细线分隔）
 │   ├── Figure.astro       图片位；无图时显示占位块
-│   ├── AuthorCard.astro   文章页侧栏作者卡
+│   ├── AuthorCard.astro   作者卡：文章侧栏用，作者一览的格子也用它
 │   └── SearchBox.astro    搜索框
 └── pages/
     ├── index.astro           首页（设计稿第 1 帧）
     ├── blog/index.astro      时日 · 列表
     ├── blog/[...slug].astro  文章页（设计稿第 2 帧）
+    ├── authors/[...id].astro 作者页：头像、简介、TA 写的文章
     ├── works.astro           工作（占位）
-    ├── about.astro           关于
+    ├── about.astro           关于 + 作者一览
     ├── search.astro          站内搜索（构建期生成索引，浏览器端过滤）
     └── 404.astro
 ```
@@ -132,9 +136,12 @@ src/
 images: {
   heroWork: 'hero-work.jpg',   // 首页左边那张（工作）
   heroDays: 'hero-days.jpg',   // 首页奶油色带里那张（时日）
-  avatar:   'avatar.jpg',      // 文章页侧栏的作者头像
+  avatar:   'avatar.jpg',      // 兜底头像，一般用不到
 },
 ```
+
+`avatar` 只在作者没有自己的头像时才用到 —— 作者的头像放在各自那份作者 `.md` 旁边，
+见下面的「作者」一节。
 
 不用写 `import` —— `asset()` 会在构建时把 `src/assets/` 下的文件全部登记，按名字取用。
 支持 `jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`。名字写错时开发服务器会在终端里
@@ -184,6 +191,41 @@ draft: false        # true 则不进入任何索引
 # cover: ./cover.jpg  # 可选题图
 ---
 ```
+
+## 作者
+
+作者是一份内容集合，`src/content/authors/` 下一人一个 Markdown：
+
+```yaml
+---
+name: 沈砚
+role: 主笔                    # 可选，显示在名字上方
+bio: 一句话简介，出现在卡片和文章侧栏
+avatar: ./shen-yan.png        # 可选，与这份 .md 同目录
+order: 1                      # 可选，作者一览里的排序，小的在前
+links:                        # 可选
+  - label: 邮箱
+    href: mailto:you@example.com
+---
+这里可以写长一点的自我介绍（Markdown 正文）。
+```
+
+文件名就是 id（作者页在 `/authors/<文件名>/`），文章里用 `author:` 指向它：
+
+```yaml
+---
+title: 标题
+author: shen-yan
+---
+```
+
+没写 `author` 的文章归到第一位作者；`author` 写错时开发服务器会提示并列出可用 id。
+
+**作者一览**在 `/about/` 页面底部，列出全部作者（头像、名字、身份、简介、篇数）。
+点进任意一位是 `/authors/<id>/`：完整简介、TA 的所有文章；文章页侧栏的作者卡也指向同一页。
+
+示例里的三位作者和头像是占位内容。换成你自己的：删掉多余的 `.md` 和图片、改掉剩下的，
+作者一览、篇数、文章归属都会自动跟着变。
 
 ## 一处依赖修补
 

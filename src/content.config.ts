@@ -2,6 +2,32 @@ import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 /**
+ * 作者 — the people who write here.
+ *
+ * Markdown files live in `src/content/authors`. The file name becomes the entry
+ * id (and the URL: /authors/<id>/), so use lowercase slugs. A `## 标题` heading
+ * in the body shows up as a section on the author's page.
+ */
+const authors = defineCollection({
+	loader: glob({ base: './src/content/authors', pattern: '**/*.md' }),
+	schema: ({ image }) =>
+		z.object({
+			name: z.string(),
+			/** One line. Goes on the cards and under the name on a post. */
+			bio: z.string().default(''),
+			/** Anything else shown under it — role, location, whatever. */
+			role: z.string().default(''),
+			/** Pick a file next to this .md, e.g. `./shen-yan.jpg`. */
+			avatar: image().optional(),
+			links: z
+				.array(z.object({ label: z.string(), href: z.string() }))
+				.default([]),
+			/** Lower sorts first in 作者一览; ties fall back to name. */
+			order: z.number().default(100),
+		}),
+});
+
+/**
  * 时日 / Ἡμέραι — the blog.
  *
  * Markdown files live in `src/content/blog`. The file name becomes the entry id
@@ -20,9 +46,14 @@ const blog = defineCollection({
 			/** Optional lead image; falls back to the design's image slot. */
 			cover: image().optional(),
 			coverAlt: z.string().optional(),
+			/**
+			 * Author id — the file name in `src/content/authors`.
+			 * Leave it off and the post falls to the first author.
+			 */
+			author: z.string().optional(),
 			/** Drafts are excluded from every index and from the RSS-less build. */
 			draft: z.boolean().default(false),
 		}),
 });
 
-export const collections = { blog };
+export const collections = { authors, blog };
