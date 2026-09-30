@@ -23,7 +23,7 @@ import Figure from '../components/Figure.astro';
 import HeroPill from '../components/HeroPill.astro';
 import PostRow from '../components/PostRow.astro';
 import WaveBand from '../components/WaveBand.astro';
-import { SITE, withBase } from '../config';
+import { SITE, asset, withBase } from '../config';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -32,8 +32,9 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 const recommended = posts.slice(0, 4);
 const [featureWork, featureDays] = SITE.features;
 
-const heroCover = posts[0]?.data.cover;
-const daysCover = posts[1]?.data.cover;
+/* A file named in SITE.images wins; otherwise the newest posts' covers. */
+const heroCover = asset(SITE.images.heroWork) ?? posts[0]?.data.cover;
+const daysCover = asset(SITE.images.heroDays) ?? posts[1]?.data.cover;
 ---
 
 <BaseLayout surface="tan">

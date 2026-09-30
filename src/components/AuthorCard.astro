@@ -8,7 +8,7 @@
  * name at 36px and the bio at 24px — and 136px of breathing room below.
  */
 import Figure from './Figure.astro';
-import { SITE } from '../config';
+import { SITE, asset } from '../config';
 
 interface Props {
 	name?: string;
@@ -16,12 +16,22 @@ interface Props {
 	avatar?: ImageMetadata;
 }
 
-const { name = SITE.author.name, bio = SITE.author.bio, avatar } = Astro.props;
+const {
+	name = SITE.author.name,
+	bio = SITE.author.bio,
+	avatar = asset(SITE.images.avatar),
+} = Astro.props;
 ---
 
 <aside class="author">
 	<div class="author__avatar">
-		<Figure src={avatar} alt={`${name} 的头像`} label="头像" ratio="294 / 266" />
+		<Figure
+			src={avatar}
+			alt={`${name} 的头像`}
+			label="头像"
+			ratio="294 / 266"
+			sizes="(max-width: 56rem) 60vw, 17rem"
+		/>
 	</div>
 	<p class="author__name">{name}</p>
 	{bio && <p class="author__bio">{bio}</p>}

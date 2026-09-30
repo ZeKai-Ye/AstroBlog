@@ -18,16 +18,45 @@ export interface NavItem {
 /**
  * Prefixes a root-relative path with Astro's configured `base`.
  *
- * GitHub Pages serves a project repo from `/<repo>/`, so the deploy workflow
- * sets `BASE_PATH` and every internal link has to carry it — Astro rewrites the
- * asset URLs it generates, but not `href`s written by hand in a template.
- * Locally the base is `/` and this is a no-op.
+ * Astro rewrites the asset URLs it generates itself, but not `href`s written by
+ * hand in a template. Deploying at the domain root (the default) makes this a
+ * no-op; it only matters if `BASE_PATH` is ever set.
  */
 const BASE = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 export const withBase = (path: string) => {
   const normalised = path.startsWith('/') ? path : `/${path}`;
   return `${BASE}${normalised}` || '/';
+};
+
+/**
+ * Resolves a file name to an image.
+ *
+ * Drop a photo into `src/assets/` and write its **file name** in `SITE.images`
+ * below — everything in that folder is picked up at build time, so there is no
+ * import to add. Astro then resizes/compresses it for each slot it is used in.
+ *
+ * Returns `undefined` for an empty name, which is what makes `Figure` fall back
+ * to the design's placeholder block.
+ */
+import type { ImageMetadata } from 'astro';
+
+const files = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/*.{jpg,jpeg,png,webp,avif,gif}',
+  { eager: true }
+);
+
+export const asset = (name?: string): ImageMetadata | undefined => {
+  if (!name) return undefined;
+
+  const entry = files[`/src/assets/${name}`];
+  if (!entry && import.meta.env.DEV) {
+    console.warn(
+      `[assets] src/assets/${name} not found — that slot will show the placeholder. ` +
+        `Available: ${Object.keys(files).map((k) => k.split('/').pop()).join(', ') || '(none)'}`
+    );
+  }
+  return entry?.default;
 };
 
 export const SITE = {
@@ -57,6 +86,22 @@ export const SITE = {
     { href: '/works/', zh: '工作', greek: 'Ἔργα' },
     { href: '/blog/', zh: '时日', greek: 'Ἡμέραι' },
   ],
+
+  /**
+   * Pictures, by file name inside `src/assets/`.
+   *
+   * Put `hero-work.jpg` in that folder and write `heroWork: 'hero-work.jpg'`.
+   * Leave a value as `''` to keep the design's placeholder block. The two hero
+   * slots fall back to the newest posts' covers when left empty.
+   */
+  images: {
+    /** Home page, left shot (the 工作 feature). */
+    heroWork: '',
+    /** Home page, right shot in the cream band (the 时日 feature). */
+    heroDays: '',
+    /** Author card in the post sidebar. */
+    avatar: '',
+  },
 
   /** Left-aligned label in the footer. */
   footerNote: '底边栏',

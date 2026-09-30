@@ -16,6 +16,8 @@ interface Props {
 	label?: string;
 	/** CSS `aspect-ratio` value. The design's hero shot is 640x755. */
 	ratio?: string;
+	/** `sizes` hint so the browser picks a sensibly sized srcset entry. */
+	sizes?: string;
 	class?: string;
 }
 
@@ -24,6 +26,7 @@ const {
 	alt,
 	label = '图片',
 	ratio = '640 / 755',
+	sizes = '(max-width: 48rem) 100vw, 50vw',
 	class: className = '',
 } = Astro.props;
 ---
@@ -31,7 +34,7 @@ const {
 <figure class:list={['slot', className]} style={`--slot-ratio: ${ratio}`}>
 	{
 		src ? (
-			<Image src={src} alt={alt} widths={[480, 800, 1200]} sizes="(max-width: 48rem) 100vw, 50vw" />
+			<Image src={src} alt={alt} widths={[480, 800, 1200]} sizes={sizes} />
 		) : (
 			<span class="slot__empty" role="img" aria-label={alt}>
 				<span class="slot__label">{label}</span>

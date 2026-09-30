@@ -120,6 +120,56 @@ src/
 
 底边栏中文后的希腊文已去掉；站点名 `Erga kai Hemerai` 在 `src/config.ts` 的 `title`。
 
+## 换图片
+
+站内一共有 5 处图片位，分两种放法。
+
+### 1. 站点级图片 —— 放进 `src/assets/`，在 config 里写文件名
+
+把照片丢进 **`src/assets/`**，然后在 `src/config.ts` 的 `SITE.images` 填**文件名**：
+
+```ts
+images: {
+  heroWork: 'hero-work.jpg',   // 首页左边那张（工作）
+  heroDays: 'hero-days.jpg',   // 首页奶油色带里那张（时日）
+  avatar:   'avatar.jpg',      // 文章页侧栏的作者头像
+},
+```
+
+不用写 `import` —— `asset()` 会在构建时把 `src/assets/` 下的文件全部登记，按名字取用。
+支持 `jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`。名字写错时开发服务器会在终端里
+提示并列出目录里现有的文件。
+
+留 `''` 就是设计稿那个占位块。首页那两张如果不填，会退回到最新两篇文章的封面。
+
+### 2. 文章封面 —— 放在文章旁边，写相对路径
+
+```yaml
+---
+title: 标题
+cover: ./cover.jpg      # 与这篇 .md 同目录
+coverAlt: 图片说明
+---
+```
+
+### 尺寸与裁剪
+
+`Figure` 组件用 `object-fit: cover` 填满各自的格子，比例由 `ratio` 决定，所以**放原图即可**，
+不用自己先裁。各位置的比例：
+
+| 位置 | 比例 | 设计稿尺寸 |
+| :-- | :-- | :-- |
+| 首页主图 / 次图 | `640 / 755` | 640×755 |
+| 文章页封面 | `16 / 9` | — |
+| 作者头像 | `294 / 266` | 294×266 |
+| 工作页卡片 | `4 / 3` | — |
+
+Astro 会为每个尺寸生成 WebP 的 `srcset`（480w / 800w / 1200w），浏览器按需下载。
+
+### 网站图标
+
+替换 `public/favicon.svg`（以及 `public/favicon.ico`）即可，不用改代码。
+
 ## 写文章
 
 在 `src/content/blog/` 放 Markdown 即可，文件名就是 URL 片段（`/blog/<文件名>/`）。
