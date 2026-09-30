@@ -28,9 +28,14 @@
 ## 部署
 
 推送到 `master` 即由 `.github/workflows/deploy.yml` 构建并发布到 GitHub Pages。
-工作流里 `actions/configure-pages` 带了 `enablement: true`，首次运行会自己把
-Pages 打开（构建来源设为 "GitHub Actions"），不需要手动配置。若组织策略不允许
-自动开启，就在 **Settings → Pages → Source** 手动选 **GitHub Actions**。
+
+**首次需要手动开一次 Pages**：**Settings → Pages → Source** 选 **GitHub Actions**。
+在此之前 `Configure Pages` 这一步会以 `Get Pages site failed` 失败。
+
+这一步没法自动化：`actions/configure-pages` 的 `enablement` 选项要调用
+`POST /repos/{owner}/{repo}/pages`，而该接口拒绝 `GITHUB_TOKEN`
+（`Resource not accessible by integration`），必须用 PAT 或带
+`administration:write` 的 GitHub App token，CI 里没有。
 
 工作流用 `actions/configure-pages` 解析出站点源与子路径，再通过环境变量传给构建：
 
