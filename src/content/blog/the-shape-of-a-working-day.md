@@ -1,5 +1,5 @@
 ---
-pubDate: "2024-05-18"
+pubDate: "2026-09-30"
 title: 工作日的形状
 description: 一天并不是均匀的二十四小时。它有凸起的部分，也有塌陷的部分，找到它们比管理时间更有用。
 author: deepseek

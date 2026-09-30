@@ -460,6 +460,20 @@
 					${hint ? `<p class="hint">${hint}</p>` : ''}
 				</label>`;
 
+			/**
+			 * The id is the file name, and the file name is the URL — so renaming
+			 * is a real operation (an author's id is referenced from every post
+			 * they wrote), not just editing a text field.
+			 */
+			const nameField = (id, hint) =>
+				`<label class="field wide"><span>文件名 / 链接</span>
+					<div class="row">
+						<input type="text" name="id" value="${esc(id)}" />
+						<button type="button" class="tiny" data-rename="${esc(id)}">重命名</button>
+					</div>
+					${hint ? `<p class="hint">${hint}</p>` : ''}
+				</label>`;
+
 			function renderEditor() {
 				if (state.section === 'posts') return renderPostEditor();
 				if (state.section === 'authors') return renderAuthorEditor();
@@ -493,7 +507,7 @@
 						<fieldset>
 							<legend>基本信息</legend>
 							<div class="grid">
-								${field('文件名 / 链接', 'id', entry.id, { readonly: true, hint: '文件名就是链接：/blog/&lt;文件名&gt;/' })}
+								${nameField(entry.id, '文件名就是链接：/blog/&lt;文件名&gt;/')}
 								${field('日期', 'pubDate', data.pubDate, { type: 'date', required: true })}
 								${field('标题', 'title', data.title, { required: true, wide: true })}
 								${field('摘要', 'description', data.description, { type: 'textarea', wide: true, hint: '出现在列表和搜索结果里' })}
@@ -545,7 +559,7 @@
 						<fieldset>
 							<legend>基本信息</legend>
 							<div class="grid">
-								${field('文件名 / 链接', 'id', entry.id, { readonly: true, hint: '作者页在 /authors/&lt;文件名&gt;/' })}
+								${nameField(entry.id, '作者页在 /authors/&lt;文件名&gt;/；改名字会同步更新 TA 名下文章的署名。')}
 								${field('排序', 'order', data.order ?? 100, { type: 'number', hint: '小的在前' })}
 								${field('名字', 'name', data.name, { required: true })}
 								${field('身份', 'role', data.role, { hint: '显示在名字上方' })}
@@ -884,6 +898,50 @@
 						}
 						await load();
 						toast('已创建');
+					} catch (error) {
+						toast(error.message, true);
+					}
+					return;
+				}
+
+				const renameButton = target.closest('[data-rename]');
+				if (renameButton) {
+					const kind = state.section === 'authors' ? 'author' : 'post';
+					const from = renameButton.dataset.rename;
+					const to = document.querySelector('[name="id"]').value.trim();
+
+					if (!to || to === from) {
+						toast('文件名没有变化');
+						return;
+					}
+					if (!/^[a-z0-9][a-z0-9-]*$/.test(to)) {
+						toast('文件名只能用英文小写字母、数字和短横线', true);
+						return;
+					}
+
+					const extra =
+						kind === 'author'
+							? '\n\nTA 名下文章里的署名会一起改掉。'
+							: '\n\n这个链接会失效，旧地址不会再有人自动跳转过来。';
+					if (!window.confirm(`把「${from}」改名为「${to}」？${extra}`)) return;
+
+					try {
+						const result = await api('/__edit/api/rename', {
+							method: 'POST',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify({ kind, from, to }),
+						});
+						if (kind === 'author') state.selected.authors = result.to;
+						else state.selected.posts = result.to;
+
+						await load();
+						setDirty(false);
+						refreshPreview();
+						toast(
+							result.touched?.length
+								? `已改名为 ${result.to}，同步更新了 ${result.touched.length} 篇文章`
+								: `已改名为 ${result.to}`
+						);
 					} catch (error) {
 						toast(error.message, true);
 					}

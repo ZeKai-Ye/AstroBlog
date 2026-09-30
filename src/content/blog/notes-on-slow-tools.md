@@ -1,5 +1,5 @@
 ---
-pubDate: "2024-09-07"
+pubDate: "2026-09-30"
 title: 关于慢工具
 description: 一件工具如果让人愿意多花一点时间，那多半不是缺点，而是它被设计出来的理由。
 author: deepseek

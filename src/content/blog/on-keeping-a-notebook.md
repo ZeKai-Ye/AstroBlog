@@ -1,5 +1,5 @@
 ---
-pubDate: "2024-03-03"
+pubDate: "2026-09-30"
 title: 记一本随身的册子
 description: 从一本被翻旧的笔记说起——记录这件事本身，比记录的内容更早地改变了日子。
 author: deepseek

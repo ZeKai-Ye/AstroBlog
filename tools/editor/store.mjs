@@ -181,6 +181,45 @@ export async function deleteAuthor(id) {
 	await rm(join(PATHS.authors, `${id}.md`));
 }
 
+/* --------------------------------------------------------------- rename --- */
+
+/**
+ * Renames an entry's file, which is what its id — and therefore its URL — is.
+ *
+ * An author's id is also referenced from every post they wrote, so those get
+ * rewritten in the same pass; a post's id is not referenced from anywhere, so
+ * only the file moves. Nothing here touches the pictures, which are named
+ * inside `src/assets/` and are unaffected by a content file's name.
+ */
+export async function renameEntry(kind, from, to) {
+	if (kind !== 'author' && kind !== 'post') {
+		throw new EditorError(`cannot rename a "${kind}"`);
+	}
+
+	assertId(from, `${kind} id`);
+	assertId(to, `${kind} id`);
+
+	const dir = kind === 'author' ? PATHS.authors : PATHS.posts;
+	const source = join(dir, `${from}.md`);
+	const target = join(dir, `${to}.md`);
+
+	if (!existsSync(source)) throw new EditorError(`"${from}" does not exist`, 404);
+	if (existsSync(target)) throw new EditorError(`"${to}" already exists — pick another name`);
+
+	await rename(source, target);
+
+	const touched = [];
+	if (kind === 'author') {
+		for (const post of await listPosts()) {
+			if (post.data?.author !== from) continue;
+			await writeEntry(PATHS.posts, post.id, { ...post.data, author: to }, post.body);
+			touched.push(post.id);
+		}
+	}
+
+	return { kind, from, to, touched };
+}
+
 /* --------------------------------------------------------------- settings --- */
 
 export async function readSettings() {

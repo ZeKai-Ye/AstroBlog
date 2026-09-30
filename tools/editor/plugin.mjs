@@ -145,6 +145,12 @@ async function handle(req, res) {
 		}
 	}
 
+	if (route === 'rename' && method === 'POST') {
+		const body = await readJsonBody(req);
+		sendJson(res, 200, await store.renameEntry(body.kind, body.from, body.to));
+		return;
+	}
+
 	if (route === 'settings' && method === 'POST') {
 		const body = await readJsonBody(req);
 		sendJson(res, 200, { settings: await store.writeSettings(body.settings) });
