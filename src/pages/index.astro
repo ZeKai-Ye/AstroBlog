@@ -23,7 +23,7 @@ import Figure from '../components/Figure.astro';
 import HeroPill from '../components/HeroPill.astro';
 import PostRow from '../components/PostRow.astro';
 import WaveBand from '../components/WaveBand.astro';
-import { SITE } from '../config';
+import { SITE, withBase } from '../config';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -51,7 +51,7 @@ const daysCover = posts[1]?.data.cover;
 			/>
 			<HeroPill
 				class="hero__pill"
-				href={featureWork.href}
+				href={withBase(featureWork.href)}
 				zh={featureWork.zh}
 				greek={featureWork.greek}
 				tone="cream"
@@ -72,7 +72,7 @@ const daysCover = posts[1]?.data.cover;
 			/>
 			<HeroPill
 				class="feature__pill"
-				href={featureDays.href}
+				href={withBase(featureDays.href)}
 				zh={featureDays.zh}
 				greek={featureDays.greek}
 				tone="tan"
@@ -100,7 +100,7 @@ const daysCover = posts[1]?.data.cover;
 					这里放着一部分工作、一部分阅读，和一些没有归类的日子。写作对我来说更像整理：把散落的东西摆到光底下，看清楚它们本来的形状。
 				</p>
 				<p>
-					如果你想说点什么，<a href="/about/">关于</a>那一页有联系方式。
+					如果你想说点什么，<a href={withBase('/about/')}>关于</a>那一页有联系方式。
 				</p>
 			</div>
 			<h2 class="section-label section-label--peach about__label">关于</h2>

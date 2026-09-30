@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import WaveBand from '../components/WaveBand.astro';
+import { withBase } from '../config';
 ---
 
 <BaseLayout title="页面不存在" surface="tan">
@@ -11,8 +12,8 @@ import WaveBand from '../components/WaveBand.astro';
 
 	<WaveBand class="band">
 		<div class="container band-inner notfound__links">
-			<a href="/">回到首页</a>
-			<a href="/blog/">看看时日</a>
+			<a href={withBase('/')}>回到首页</a>
+			<a href={withBase('/blog/')}>看看时日</a>
 		</div>
 	</WaveBand>
 </BaseLayout>

@@ -9,7 +9,7 @@ import '../styles/global.css';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import BackToTop from '../components/BackToTop.astro';
-import { SITE } from '../config';
+import { SITE, withBase } from '../config';
 
 interface Props {
 	/** Page title; the site name is appended automatically. */
@@ -30,7 +30,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
 		<meta name="generator" content={Astro.generator} />
 		<title>{pageTitle}</title>
 		<meta name="description" content={description} />

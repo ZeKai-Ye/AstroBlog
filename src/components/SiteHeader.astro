@@ -10,15 +10,21 @@
  * Greys in the mockup mark positions only, so the wordmark is set as type
  * rather than as a filled box.
  */
-import { SITE } from '../config';
+import { SITE, withBase } from '../config';
 
 const path = Astro.url.pathname;
-const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+const home = withBase('/');
+/* `Astro.url.pathname` already carries the base, so compare against prefixed
+   hrefs. The home link needs an exact match or it would light up everywhere. */
+const isActive = (href: string) => {
+	const full = withBase(href);
+	return full === home ? path === home : path.startsWith(full);
+};
 ---
 
 <header class="masthead">
 	<div class="masthead__logo">
-		<a class="masthead__wordmark" href="/">{SITE.title}</a>
+		<a class="masthead__wordmark" href={home}>{SITE.title}</a>
 	</div>
 
 	<nav class="masthead__nav" aria-label="主导航">
@@ -28,7 +34,7 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
 					<li>
 						<a
 							class:list={['masthead__link', { 'is-active': isActive(item.href) }]}
-							href={item.href}
+							href={withBase(item.href)}
 							aria-current={isActive(item.href) ? 'page' : undefined}
 						>
 							<span>{item.zh}</span>

@@ -8,7 +8,7 @@
  * gloss under each one in the masthead; repeating it here just made the footer
  * noisy.
  */
-import { SITE } from '../config';
+import { SITE, withBase } from '../config';
 
 const year = new Date().getFullYear();
 ---
@@ -23,7 +23,7 @@ const year = new Date().getFullYear();
 				{
 					SITE.nav.map((item) => (
 						<li>
-							<a class="footer__link" href={item.href}>
+							<a class="footer__link" href={withBase(item.href)}>
 								{item.zh}
 							</a>
 						</li>

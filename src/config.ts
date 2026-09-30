@@ -15,6 +15,21 @@ export interface NavItem {
   greek: string;
 }
 
+/**
+ * Prefixes a root-relative path with Astro's configured `base`.
+ *
+ * GitHub Pages serves a project repo from `/<repo>/`, so the deploy workflow
+ * sets `BASE_PATH` and every internal link has to carry it — Astro rewrites the
+ * asset URLs it generates, but not `href`s written by hand in a template.
+ * Locally the base is `/` and this is a no-op.
+ */
+const BASE = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+export const withBase = (path: string) => {
+  const normalised = path.startsWith('/') ? path : `/${path}`;
+  return `${BASE}${normalised}` || '/';
+};
+
 export const SITE = {
   /** The wordmark in the masthead. In the mockup this is the grey
    *  "待添加的标题主图标位置" placeholder box. */

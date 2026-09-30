@@ -8,7 +8,7 @@
  * a title, a one-line excerpt and a date.
  */
 import type { CollectionEntry } from 'astro:content';
-import { formatDateParts } from '../config';
+import { formatDateParts, withBase } from '../config';
 
 interface Props {
 	post: CollectionEntry<'blog'>;
@@ -17,10 +17,11 @@ interface Props {
 const { post } = Astro.props;
 const { data } = post;
 const date = formatDateParts(data.pubDate);
+const href = withBase(`/blog/${post.id}/`);
 ---
 
 <li class="row">
-	<a class="row__link" href={`/blog/${post.id}/`}>
+	<a class="row__link" href={href}>
 		<span class="row__head">
 			<span class="row__title">{data.title}</span>
 			<time class="row__date" datetime={date.iso}>

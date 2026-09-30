@@ -20,7 +20,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import AuthorCard from '../../components/AuthorCard.astro';
 import Figure from '../../components/Figure.astro';
 import SearchBox from '../../components/SearchBox.astro';
-import { SITE, formatDateParts } from '../../config';
+import { SITE, formatDateParts, withBase } from '../../config';
 
 export async function getStaticPaths() {
 	const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
@@ -117,7 +117,7 @@ const updated = data.updatedDate ? formatDateParts(data.updatedDate) : null;
 			{
 				prev && (
 					<li class="post__nav-item">
-						<a href={`/blog/${prev.id}/`}>
+						<a href={withBase(`/blog/${prev.id}/`)}>
 							<span class="post__nav-dir">上一篇</span>
 							<span class="post__nav-title">{prev.data.title}</span>
 						</a>
@@ -127,7 +127,7 @@ const updated = data.updatedDate ? formatDateParts(data.updatedDate) : null;
 			{
 				next && (
 					<li class="post__nav-item post__nav-item--next">
-						<a href={`/blog/${next.id}/`}>
+						<a href={withBase(`/blog/${next.id}/`)}>
 							<span class="post__nav-dir">下一篇</span>
 							<span class="post__nav-title">{next.data.title}</span>
 						</a>

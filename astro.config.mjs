@@ -15,10 +15,24 @@ const picomatchShim = {
 	replacement: fileURLToPath(new URL('./tools/picomatch-esm.mjs', import.meta.url)),
 };
 
+/**
+ * Deployment origin and sub-path.
+ *
+ * GitHub Pages serves a project repo from `https://<user>.github.io/<repo>/`, so
+ * the deploy workflow feeds both values in from `actions/configure-pages` (which
+ * also resolves them correctly for a custom domain). Locally neither is set,
+ * which leaves the base at `/` so `npm run dev` stays on http://localhost:4321/.
+ *
+ * `withBase()` in `src/config.ts` applies the base to the links written by hand
+ * in templates — Astro only rewrites the asset URLs it generates itself.
+ */
+const site = process.env.SITE_URL;
+const base = process.env.BASE_PATH ?? '/';
+
 // https://astro.build/config
 export default defineConfig({
-	// Set this to the deployed origin so <link rel="canonical"> is emitted:
-	// site: 'https://your-domain.example',
+	site,
+	base,
 
 	vite: {
 		resolve: {

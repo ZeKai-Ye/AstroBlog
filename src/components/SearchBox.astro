@@ -7,9 +7,10 @@
  * the right. A static site has no server to query, so the field posts a `q`
  * parameter to /search/ and that page filters a build-time index in the browser.
  */
+import { withBase } from '../config';
 ---
 
-<form class="search" action="/search/" method="get" role="search">
+<form class="search" action={withBase('/search/')} method="get" role="search">
 	<label class="sr-only" for="site-search">搜索</label>
 	<input
 		class="search__input"

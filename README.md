@@ -1,4 +1,4 @@
-# Tasty Transit
+# Erga kai Hemerai
 
 一个以 Astro 构建的个人博客。界面按仓库根目录的设计稿还原：
 
@@ -25,11 +25,33 @@
 | `npm run preview` | 预览 `./dist/` |
 | `npm run astro -- --help` | Astro CLI 帮助 |
 
+## 部署
+
+推送到 `master` 即由 `.github/workflows/deploy.yml` 构建并发布到 GitHub Pages。
+首次使用需要在仓库 **Settings → Pages → Source** 里选 **GitHub Actions**（只需一次）。
+
+工作流用 `actions/configure-pages` 解析出站点源与子路径，再通过环境变量传给构建：
+
+| 变量 | 作用 |
+| :-- | :-- |
+| `SITE_URL` | 站点源，用于 `<link rel="canonical">` 与 og 标签 |
+| `BASE_PATH` | 子路径，项目仓库为 `/<repo>` |
+
+`astro.config.mjs` 读取这两个变量，本地不设时 `base` 回落到 `/`，所以 `npm run dev`
+仍在 http://localhost:4321/。
+
+因为 GitHub Pages 把项目仓库放在 `/<repo>/` 下，`src/config.ts` 导出一个 `withBase()`
+给模板里的手写链接加上前缀 —— Astro 只会重写它自己生成的资源 URL，`<a href="/blog/">`
+这类硬编码路径不会自动处理。新增内部链接时记得套一层。
+
+以后若换成自定义域名，`configure-pages` 会自己把 `BASE_PATH` 解析成空，无需改代码。
+
 ## 结构
 
 ```
+.github/workflows/deploy.yml   构建 + 发布到 GitHub Pages
 src/
-├── config.ts            站点标题、导航、作者、日期格式化
+├── config.ts            站点标题、导航、作者、withBase()、日期格式化
 ├── content.config.ts    blog 内容集合（Content Layer + glob loader）
 ├── content/blog/*.md    文章
 ├── styles/global.css    设计令牌（颜色 / 字体 / 尺寸）+ 基础排版

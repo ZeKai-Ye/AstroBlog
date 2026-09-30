@@ -9,6 +9,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SearchBox from '../components/SearchBox.astro';
+import { withBase } from '../config';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -18,7 +19,7 @@ const index = posts.map((post) => ({
 	title: post.data.title,
 	description: post.data.description,
 	tags: post.data.tags,
-	href: `/blog/${post.id}/`,
+	href: withBase(`/blog/${post.id}/`),
 	date: post.data.pubDate.toISOString().slice(0, 10),
 }));
 
