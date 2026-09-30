@@ -31,6 +31,10 @@
 
 `npm run dev` 之后打开 **http://localhost:4321/__edit**（终端启动时会打印这个地址）。
 
+> **不要直接双击 `tools/editor/ui.html`。** 那是 `file://` 页面，没有后端，所有请求都会
+> 失败 —— 编辑器是挂在 dev server 上的中间件，只能通过上面那个地址访问。真这么打开了，
+> 页面会直接告诉你正确姿势，不用猜。
+
 它不是一个独立进程，而是挂在 Vite dev server 上的一个中间件，所以：
 
 - **进不了线上。** 插件标了 `apply: 'serve'`，`npm run build` 根本不会构造它 ——

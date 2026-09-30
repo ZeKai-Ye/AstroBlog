@@ -1,4 +1,16 @@
 <!doctype html>
+<!--
+	The local editor's UI.
+
+	This file is NOT meant to be opened directly — double-clicking it gives you a
+	file:// page with no backend, and every request fails. It is served by the
+	dev-server middleware in ./plugin.mjs:
+
+	    npm run dev        →  http://localhost:4321/__edit
+
+	The script below detects the file:// case and says so instead of failing
+	silently, but the real entry point is that URL.
+-->
 <html lang="zh-CN">
 	<head>
 		<meta charset="utf-8" />
@@ -123,6 +135,9 @@
 			/* Shown when the dev server is not answering at all. */
 			.fatal { max-width: 46rem; margin: 3rem auto; line-height: 1.75; }
 			.fatal h2 { margin: 0 0 1rem; font-size: 18px; color: #8c2f2b; }
+			.fatal h3 { margin: 1.6rem 0 0.4rem; font-size: 14px; }
+			.fatal ol { margin: 0; padding-inline-start: 1.4rem; }
+			.fatal ol li { margin-block-end: 0.35rem; }
 			.fatal pre {
 				white-space: pre-wrap;
 				background: #fff;
@@ -1026,8 +1041,47 @@
 				}
 			});
 
-			state.section = sectionFromHash() ?? 'posts';
-			load(false).catch((error) => (error.offline ? showFatal(error) : toast(`加载失败：${error.message}`, true)));
+			/**
+			 * Opening this file straight off disk is the single easiest mistake
+			 * to make — the file lives in tools/, so double-clicking it is only
+			 * natural. It cannot work that way: the editor is middleware on the
+			 * dev server and has no backend of its own under file://. Catch it
+			 * before the first request rather than after three failed retries.
+			 */
+			function showFileProtocol() {
+				document.querySelector('main').innerHTML = `
+					<div class="fatal">
+						<h2>这个页面不能直接用文件打开</h2>
+						<p>
+							你是从文件系统打开它的：<code>${esc(location.href)}</code>
+						</p>
+						<p>
+							编辑器本身没有后端 —— 它是挂在 <code>npm run dev</code> 上的一个中间件，
+							靠那个服务器才能读写 <code>src/</code> 里的文件。用 <code>file://</code> 打开时
+							它连不上任何东西，所以请求全部失败。
+						</p>
+						<h3>正确的打开方式</h3>
+						<ol>
+							<li>在项目根目录运行 <code>npm run dev</code></li>
+							<li>终端会打印一行 <code>➜  Editor: http://localhost:4321/__edit</code></li>
+							<li>把<strong>那一行</strong>的地址填进地址栏</li>
+						</ol>
+						<p>
+							通常就是
+							<a href="http://localhost:4321/__edit">http://localhost:4321/__edit</a>
+							（端口以终端打印的为准）。
+						</p>
+					</div>`;
+			}
+
+			if (location.protocol === 'file:') {
+				showFileProtocol();
+			} else {
+				state.section = sectionFromHash() ?? 'posts';
+				load(false).catch((error) =>
+					error.offline ? showFatal(error) : toast(`加载失败：${error.message}`, true)
+				);
+			}
 		</script>
 	</body>
 </html>
