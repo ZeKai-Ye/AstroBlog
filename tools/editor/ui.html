@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>编辑器 · Erga kai Hemerai</title>
+		<style>
+			:root {
+				--tan: #f0d9c7;
+				--cream: #fff1d4;
+				--paper: #fcf4e3;
+				--ink: #1d1a17;
+				--muted: #6f675e;
+				--line: #e0d3c2;
+				--rose: #d9736f;
+				--ok: #4f7a52;
+				--warn: #b26a2c;
+				--font: 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+			}
+
+			* { box-sizing: border-box; }
+
+			body {
+				margin: 0;
+				font-family: var(--font);
+				font-size: 14px;
+				color: var(--ink);
+				background: var(--paper);
+				height: 100vh;
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+			}
+
+			/* ---------------------------------------------------------- chrome */
+			.bar {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+				padding: 0.6rem 1rem;
+				background: var(--cream);
+				border-bottom: 1px solid var(--line);
+				flex: none;
+			}
+
+			.bar h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: 0.02em; }
+			.bar .spacer { flex: 1; }
+			.bar .status { color: var(--muted); font-size: 12px; }
+			.bar .status.dirty { color: var(--warn); }
+
+			.tabs { display: flex; gap: 2px; }
+
+			.tabs button {
+				border: 1px solid transparent;
+				background: none;
+				padding: 0.35rem 0.8rem;
+				border-radius: 999px;
+				cursor: pointer;
+				font: inherit;
+				color: var(--muted);
+			}
+
+			.tabs button:hover { background: #00000008; }
+			.tabs button[aria-current='true'] { background: var(--tan); color: var(--ink); }
+
+			button, .btn {
+				font: inherit;
+				cursor: pointer;
+				border: 1px solid var(--line);
+				background: #fff;
+				color: var(--ink);
+				padding: 0.34rem 0.75rem;
+				border-radius: 6px;
+			}
+
+			button:hover { border-color: var(--muted); }
+			button.primary { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+			button.primary:disabled { opacity: 0.4; cursor: default; }
+			button.danger { color: #a33; }
+			button.tiny { padding: 0.15rem 0.45rem; font-size: 12px; }
+
+			/* ------------------------------------------------------------ body */
+			main { flex: 1; display: flex; min-height: 0; }
+
+			.list {
+				width: 260px;
+				flex: none;
+				border-right: 1px solid var(--line);
+				overflow-y: auto;
+				background: #fffdf8;
+				padding: 0.5rem;
+			}
+
+			.list .head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0.25rem 0.35rem 0.6rem;
+				color: var(--muted);
+				font-size: 12px;
+			}
+
+			.list .item {
+				display: block;
+				width: 100%;
+				text-align: start;
+				border: 1px solid transparent;
+				background: none;
+				padding: 0.5rem 0.6rem;
+				border-radius: 8px;
+				line-height: 1.35;
+			}
+
+			.list .item:hover { background: #00000008; }
+			.list .item[aria-current='true'] { background: var(--cream); border-color: var(--tan); }
+			.list .item b { display: block; font-weight: 600; }
+			.list .item span { color: var(--muted); font-size: 12px; }
+			.list .item.bad b::after { content: ' ⚠'; color: var(--warn); }
+
+			.editor { flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem 4rem; min-width: 0; }
+			.editor .empty { color: var(--muted); padding: 3rem 0; text-align: center; }
+
+			/* ----------------------------------------------------------- forms */
+			fieldset { border: 0; margin: 0 0 1.6rem; padding: 0; }
+			legend { font-weight: 600; padding: 0 0 0.5rem; color: var(--muted); font-size: 12px; letter-spacing: 0.08em; }
+
+			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1rem; }
+			.grid .wide { grid-column: 1 / -1; }
+
+			label.field { display: grid; gap: 0.3rem; }
+			label.field > span { font-size: 12px; color: var(--muted); }
+			label.field > span em { font-style: normal; color: var(--warn); }
+
+			input[type='text'], input[type='date'], input[type='number'], textarea, select {
+				font: inherit;
+				width: 100%;
+				padding: 0.42rem 0.55rem;
+				border: 1px solid var(--line);
+				border-radius: 6px;
+				background: #fff;
+				color: var(--ink);
+			}
+
+			input:focus, textarea:focus, select:focus { outline: 2px solid var(--tan); outline-offset: 0; border-color: var(--muted); }
+			textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+			textarea.body { min-height: 420px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+			input[readonly] { background: #f6f1e8; color: var(--muted); }
+
+			.row { display: flex; gap: 0.5rem; align-items: center; }
+			.row > input { flex: 1; }
+			.check { display: flex; align-items: center; gap: 0.45rem; }
+			.check input { width: auto; }
+
+			.repeat { display: grid; gap: 0.5rem; }
+			.repeat .entry { display: flex; gap: 0.5rem; align-items: center; }
+			.repeat .entry input { flex: 1; }
+
+			.hint { color: var(--muted); font-size: 12px; margin: 0.35rem 0 0; }
+			.hint code { background: #00000010; padding: 0.05rem 0.3rem; border-radius: 3px; }
+
+			/* ----------------------------------------------------------- media */
+			.media { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.9rem; }
+			.media figure { margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+			.media img { display: block; width: 100%; height: 110px; object-fit: cover; background: #eee; }
+			.media figcaption { padding: 0.4rem 0.5rem; font-size: 12px; word-break: break-all; }
+			.media .used { color: var(--ok); }
+			.media .actions { display: flex; gap: 0.35rem; padding: 0 0.5rem 0.5rem; }
+
+			.drop {
+				border: 1px dashed var(--muted);
+				border-radius: 10px;
+				padding: 1.2rem;
+				text-align: center;
+				color: var(--muted);
+				margin-bottom: 1rem;
+			}
+			.drop.hot { border-color: var(--rose); background: var(--cream); }
+
+			/* --------------------------------------------------------- overlay */
+			.overlay {
+				position: fixed;
+				inset: 0;
+				background: #1d1a1744;
+				display: grid;
+				place-items: center;
+				z-index: 20;
+			}
+			.overlay[hidden] { display: none; }
+			.modal { background: var(--paper); border-radius: 12px; padding: 1rem 1.25rem 1.25rem; width: min(720px, 92vw); max-height: 82vh; overflow: auto; }
+			.modal h2 { margin: 0 0 0.8rem; font-size: 15px; }
+			.modal .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+			.modal figure { cursor: pointer; margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+			.modal figure:hover { border-color: var(--ink); }
+			.modal img { display: block; width: 100%; height: 92px; object-fit: cover; }
+			.modal figcaption { font-size: 11px; padding: 0.3rem 0.4rem; word-break: break-all; }
+
+			/* ----------------------------------------------------------- toast */
+			#toast { position: fixed; inset-block-end: 1.2rem; inset-inline-start: 50%; translate: -50% 0; display: grid; gap: 0.4rem; z-index: 30; }
+			#toast div { background: var(--ink); color: var(--cream); padding: 0.5rem 0.9rem; border-radius: 8px; font-size: 13px; }
+			#toast div.bad { background: #8c2f2b; }
+
+			/* --------------------------------------------------------- preview */
+			.preview { width: 0; flex: none; border-left: 1px solid var(--line); background: #fff; transition: width 0.2s ease; }
+			.preview.open { width: 46%; }
+			.preview iframe { width: 100%; height: 100%; border: 0; display: block; }
+		</style>
+	</head>
+
+	<body>
+		<header class="bar">
+			<h1>编辑器</h1>
+			<nav class="tabs" id="tabs"></nav>
+			<div class="spacer"></div>
+			<span class="status" id="status"></span>
+			<button type="button" id="preview-toggle">预览</button>
+			<a class="btn" href="/" target="_blank" rel="noopener" style="text-decoration: none">打开站点 ↗</a>
+		</header>
+
+		<main>
+			<aside class="list" id="list"></aside>
+			<section class="editor" id="editor"></section>
+			<aside class="preview" id="preview"><iframe id="frame" src="/" title="预览"></iframe></aside>
+		</main>
+
+		<div class="overlay" id="overlay" hidden><div class="modal" id="modal"></div></div>
+		<div id="toast"></div>
+
+		<script type="module">
+			const SECTIONS = [
+				{ id: 'posts', label: '文章' },
+				{ id: 'authors', label: '作者' },
+				{ id: 'media', label: '图片' },
+				{ id: 'settings', label: '站点' },
+			];
+
+			const state = {
+				section: 'posts',
+				selected: { posts: null, authors: null },
+				posts: [],
+				authors: [],
+				settings: null,
+				media: [],
+				usage: {},
+				dirty: false,
+			};
+
+			const sectionFromHash = () => {
+				const wanted = location.hash.replace(/^#/, '');
+				return SECTIONS.some((section) => section.id === wanted) ? wanted : null;
+			};
+
+			const $ = (id) => document.getElementById(id);
+			const esc = (value) =>
+				String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+			/* ------------------------------------------------------------- api */
+			async function api(path, options = {}) {
+				const response = await fetch(path, options);
+				const text = await response.text();
+				let payload = {};
+				try {
+					payload = text ? JSON.parse(text) : {};
+				} catch {
+					throw new Error(text.slice(0, 300) || `HTTP ${response.status}`);
+				}
+				if (!response.ok) throw new Error(payload.error ?? `HTTP ${response.status}`);
+				return payload;
+			}
+
+			function toast(message, bad = false) {
+				const node = document.createElement('div');
+				if (bad) node.className = 'bad';
+				node.textContent = message;
+				$('toast').append(node);
+				setTimeout(() => node.remove(), bad ? 6000 : 2600);
+			}
+
+			function setDirty(value) {
+				state.dirty = value;
+				const status = $('status');
+				status.textContent = value ? '有未保存的修改' : '已保存';
+				status.classList.toggle('dirty', value);
+			}
+
+			window.addEventListener('beforeunload', (event) => {
+				if (state.dirty) event.preventDefault();
+			});
+
+			/* ------------------------------------------------------------ load */
+			async function load(keepSelection = true) {
+				const data = await api('/__edit/api/state');
+				state.posts = data.posts;
+				state.authors = data.authors;
+				state.settings = data.settings;
+				state.media = data.media;
+				state.usage = data.usage ?? {};
+
+				if (!keepSelection || !state.selected.posts) state.selected.posts = state.posts[0]?.id ?? null;
+				if (!keepSelection || !state.selected.authors) state.selected.authors = state.authors[0]?.id ?? null;
+				if (!state.posts.some((p) => p.id === state.selected.posts)) state.selected.posts = state.posts[0]?.id ?? null;
+				if (!state.authors.some((a) => a.id === state.selected.authors)) state.selected.authors = state.authors[0]?.id ?? null;
+
+				render();
+			}
+
+			/* ---------------------------------------------------------- render */
+			function render() {
+				renderTabs();
+				renderList();
+				renderEditor();
+			}
+
+			function renderTabs() {
+				$('tabs').innerHTML = SECTIONS.map(
+					(section) =>
+						`<button type="button" data-section="${section.id}" aria-current="${state.section === section.id}">${section.label}</button>`
+				).join('');
+			}
+
+			function renderList() {
+				const list = $('list');
+				const names = { posts: '文章', authors: '作者' };
+
+				if (state.section === 'settings' || state.section === 'media') {
+					list.innerHTML = `<div class="head">${state.section === 'media' ? '图片库' : '站点'}</div>`;
+					return;
+				}
+
+				const items = state.section === 'posts' ? state.posts : state.authors;
+				const selected = state.selected[state.section];
+
+				list.innerHTML =
+					`<div class="head"><span>${names[state.section]} · ${items.length}</span><button type="button" class="tiny" data-new="${state.section}">+ 新建</button></div>` +
+					items
+						.map((item) => {
+							const title = item.data?.title ?? item.data?.name ?? item.id;
+							const sub =
+								state.section === 'posts'
+									? `${item.data?.pubDate ?? ''}${item.data?.draft ? ' · 草稿' : ''}`
+									: item.data?.role ?? '';
+							return `<button type="button" class="item${item.error ? ' bad' : ''}" data-select="${item.id}" aria-current="${selected === item.id}">
+								<b>${esc(title)}</b><span>${esc(sub)}</span>
+							</button>`;
+						})
+						.join('');
+			}
+
+			const field = (label, name, value, options = {}) => {
+				const required = options.required ? ' <em>*</em>' : '';
+				const wide = options.wide ? ' wide' : '';
+				const hint = options.hint ? `<p class="hint">${options.hint}</p>` : '';
+				if (options.type === 'textarea') {
+					return `<label class="field${wide}"><span>${label}${required}</span>
+						<textarea name="${name}" class="${options.className ?? ''}" rows="${options.rows ?? 3}">${esc(value ?? '')}</textarea>${hint}</label>`;
+				}
+				return `<label class="field${wide}"><span>${label}${required}</span>
+					<input type="${options.type ?? 'text'}" name="${name}" value="${esc(value ?? '')}" ${options.readonly ? 'readonly' : ''} />${hint}</label>`;
+			};
+
+			/** A text input plus a button that opens the image picker. */
+			const imageField = (label, name, value, hint = '') =>
+				`<label class="field wide"><span>${label}</span>
+					<div class="row">
+						<input type="text" name="${name}" value="${esc(value ?? '')}" placeholder="src/assets/ 里的文件名，留空＝占位块" />
+						<button type="button" class="tiny" data-pick="${name}">选择…</button>
+					</div>
+					${hint ? `<p class="hint">${hint}</p>` : ''}
+				</label>`;
+
+			function renderEditor() {
+				if (state.section === 'posts') return renderPostEditor();
+				if (state.section === 'authors') return renderAuthorEditor();
+				if (state.section === 'media') return renderMedia();
+				return renderSettings();
+			}
+
+			function unreadable(entry) {
+				return `<div class="empty">
+					<p>这个文件的 frontmatter 编辑器读不懂，已按只读处理。<strong>${esc(entry.error)}</strong></p>
+					<p class="hint">请手工编辑 <code>${esc(entry.file)}</code>，改好后再回来。</p>
+					<pre style="text-align:start;white-space:pre-wrap;background:#fff;border:1px solid var(--line);padding:1rem;border-radius:8px">${esc(entry.raw)}</pre>
+				</div>`;
+			}
+
+			function renderPostEditor() {
+				const entry = state.posts.find((post) => post.id === state.selected.posts);
+				if (!entry) return void ($('editor').innerHTML = '<div class="empty">还没有文章，点左上角「+ 新建」。</div>');
+				if (entry.error) return void ($('editor').innerHTML = unreadable(entry));
+
+				const data = entry.data ?? {};
+				const authorOptions = state.authors
+					.map(
+						(author) =>
+							`<option value="${esc(author.id)}" ${data.author === author.id ? 'selected' : ''}>${esc(author.data?.name ?? author.id)}</option>`
+					)
+					.join('');
+
+				$('editor').innerHTML = `
+					<form id="form" data-kind="post" data-id="${esc(entry.id)}">
+						<fieldset>
+							<legend>基本信息</legend>
+							<div class="grid">
+								${field('文件名 / 链接', 'id', entry.id, { readonly: true, hint: '文件名就是链接：/blog/&lt;文件名&gt;/' })}
+								${field('日期', 'pubDate', data.pubDate, { type: 'date', required: true })}
+								${field('标题', 'title', data.title, { required: true, wide: true })}
+								${field('摘要', 'description', data.description, { type: 'textarea', wide: true, hint: '出现在列表和搜索结果里' })}
+								${field('标签', 'tags', (data.tags ?? []).join(', '), { hint: '英文逗号分隔' })}
+								${field('修订日期', 'updatedDate', data.updatedDate, { type: 'date' })}
+								<label class="field"><span>作者</span>
+									<select name="author"><option value="">（默认：第一位作者）</option>${authorOptions}</select>
+								</label>
+								<label class="field"><span>&nbsp;</span>
+									<span class="check"><input type="checkbox" name="draft" ${data.draft ? 'checked' : ''} /> 草稿（不发布）</span>
+								</label>
+								${imageField('封面', 'cover', data.cover, '留空则文章不显示封面图。')}
+								${field('封面说明', 'coverAlt', data.coverAlt, { wide: true, hint: '给读屏软件用；留空则用标题' })}
+							</div>
+						</fieldset>
+
+						<fieldset>
+							<legend>正文（Markdown）</legend>
+							${field('', 'body', entry.body, { type: 'textarea', className: 'body', wide: true })}
+						</fieldset>
+
+						<div class="row">
+							<button type="submit" class="primary">保存</button>
+							<button type="button" data-reload>放弃修改</button>
+							<div class="spacer" style="flex:1"></div>
+							<button type="button" class="danger" data-delete="post" data-id="${esc(entry.id)}">删除这篇</button>
+						</div>
+					</form>`;
+			}
+
+			function renderAuthorEditor() {
+				const entry = state.authors.find((author) => author.id === state.selected.authors);
+				if (!entry) return void ($('editor').innerHTML = '<div class="empty">还没有作者，点左上角「+ 新建」。</div>');
+				if (entry.error) return void ($('editor').innerHTML = unreadable(entry));
+
+				const data = entry.data ?? {};
+				const links = (data.links ?? [])
+					.map(
+						(link) => `<div class="entry">
+							<input type="text" name="linkLabel" value="${esc(link.label)}" placeholder="名称" />
+							<input type="text" name="linkHref" value="${esc(link.href)}" placeholder="链接" />
+							<button type="button" class="tiny" data-remove-row>×</button>
+						</div>`
+					)
+					.join('');
+
+				$('editor').innerHTML = `
+					<form id="form" data-kind="author" data-id="${esc(entry.id)}">
+						<fieldset>
+							<legend>基本信息</legend>
+							<div class="grid">
+								${field('文件名 / 链接', 'id', entry.id, { readonly: true, hint: '作者页在 /authors/&lt;文件名&gt;/' })}
+								${field('排序', 'order', data.order ?? 100, { type: 'number', hint: '小的在前' })}
+								${field('名字', 'name', data.name, { required: true })}
+								${field('身份', 'role', data.role, { hint: '显示在名字上方' })}
+								${field('一句话简介', 'bio', data.bio, { type: 'textarea', wide: true, hint: '出现在作者卡和文章侧栏' })}
+								${imageField('头像', 'avatar', data.avatar)}
+							</div>
+						</fieldset>
+
+						<fieldset>
+							<legend>链接</legend>
+							<div class="repeat" id="links">${links}</div>
+							<p style="margin:0.6rem 0 0"><button type="button" class="tiny" data-add-row>+ 加一条</button></p>
+						</fieldset>
+
+						<fieldset>
+							<legend>自我介绍（Markdown，显示在作者页）</legend>
+							${field('', 'body', entry.body, { type: 'textarea', className: 'body', wide: true })}
+						</fieldset>
+
+						<div class="row">
+							<button type="submit" class="primary">保存</button>
+							<button type="button" data-reload>放弃修改</button>
+							<div style="flex:1"></div>
+							<button type="button" class="danger" data-delete="author" data-id="${esc(entry.id)}">删除这位</button>
+						</div>
+					</form>`;
+			}
+
+			function renderMedia() {
+				$('editor').innerHTML = `
+					<fieldset>
+						<legend>上传</legend>
+						<div class="drop" id="drop">
+							把图片拖到这里，或 <button type="button" class="tiny" id="browse">选择文件</button>
+							<input type="file" id="file" accept="image/*" multiple hidden />
+							<p class="hint">会存进 <code>src/assets/</code>，同名文件覆盖。支持 jpg / jpeg / png / webp / avif / gif。</p>
+						</div>
+					</fieldset>
+
+					<fieldset>
+						<legend>图片库 · ${state.media.length}</legend>
+						${
+							state.media.length === 0
+								? '<p class="hint">还没有图片。</p>'
+								: `<div class="media">${state.media
+										.map((item) => {
+											const used = state.usage[item.name] ?? 0;
+											return `<figure>
+												<img src="/__edit/media/${encodeURIComponent(item.name)}" alt="" loading="lazy" />
+												<figcaption>${esc(item.name)}<br /><span class="${used ? 'used' : ''}">${used ? `被引用 ${used} 处` : '未被引用'}</span></figcaption>
+												<div class="actions">
+													<button type="button" class="tiny" data-copy="${esc(item.name)}">复制文件名</button>
+													<button type="button" class="tiny danger" data-delete-media="${esc(item.name)}">删除</button>
+												</div>
+											</figure>`;
+										})
+										.join('')}</div>`
+						}
+					</fieldset>`;
+			}
+
+			function renderSettings() {
+				const s = state.settings ?? {};
+				const works = (s.works ?? [])
+					.map(
+						(work) => `<div class="entry" data-work>
+							<input type="text" name="workTitle" value="${esc(work.title)}" placeholder="标题" />
+							<input type="text" name="workMeta" value="${esc(work.meta)}" placeholder="说明" />
+							<input type="text" name="workImage" value="${esc(work.image)}" placeholder="图片文件名" />
+							<button type="button" class="tiny" data-remove-row>×</button>
+						</div>`
+					)
+					.join('');
+
+				const nav = (s.nav ?? [])
+					.map(
+						(item) => `<div class="entry" data-nav>
+							<input type="text" name="navHref" value="${esc(item.href)}" placeholder="/blog/" />
+							<input type="text" name="navZh" value="${esc(item.zh)}" placeholder="中文" />
+							<input type="text" name="navGreek" value="${esc(item.greek)}" placeholder="希腊文" />
+							<button type="button" class="tiny" data-remove-row>×</button>
+						</div>`
+					)
+					.join('');
+
+				$('editor').innerHTML = `
+					<form id="form" data-kind="settings">
+						<fieldset>
+							<legend>站点</legend>
+							<div class="grid">
+								${field('站名', 'title', s.title, { required: true, wide: true })}
+								${field('简介', 'description', s.description, { type: 'textarea', wide: true })}
+								${field('语言', 'lang', s.lang)}
+								${field('页脚小字', 'footerNote', s.footerNote)}
+							</div>
+						</fieldset>
+
+						<fieldset>
+							<legend>首页图片</legend>
+							<div class="grid">
+								${imageField('左边（工作）', 'heroWork', s.images?.heroWork, '留空则用最新一篇文章的封面。')}
+								${imageField('右边（时日）', 'heroDays', s.images?.heroDays, '留空则用第二新的文章封面。')}
+								${imageField('兜底头像', 'avatar', s.images?.avatar, '只在作者没有自己的头像时用。')}
+							</div>
+						</fieldset>
+
+						<fieldset>
+							<legend>工作页条目</legend>
+							<div class="repeat" id="works">${works}</div>
+							<p style="margin:0.6rem 0 0"><button type="button" class="tiny" data-add-row="work">+ 加一条</button></p>
+						</fieldset>
+
+						<fieldset>
+							<legend>导航</legend>
+							<div class="repeat" id="nav">${nav}</div>
+							<p style="margin:0.6rem 0 0"><button type="button" class="tiny" data-add-row="nav">+ 加一条</button></p>
+						</fieldset>
+
+						<div class="row">
+							<button type="submit" class="primary">保存</button>
+							<button type="button" data-reload>放弃修改</button>
+						</div>
+					</form>`;
+			}
+
+			/* ------------------------------------------------------------ save */
+			const value = (form, name) => form.querySelector(`[name="${name}"]`)?.value.trim() ?? '';
+			const isChecked = (form, name) => Boolean(form.querySelector(`[name="${name}"]`)?.checked);
+
+			async function submit(form) {
+				const kind = form.dataset.kind;
+
+				if (kind === 'settings') {
+					const works = [...form.querySelectorAll('[data-work]')].map((row) => ({
+						title: row.querySelector('[name=workTitle]').value.trim(),
+						meta: row.querySelector('[name=workMeta]').value.trim(),
+						image: row.querySelector('[name=workImage]').value.trim(),
+					}));
+					const nav = [...form.querySelectorAll('[data-nav]')].map((row) => ({
+						href: row.querySelector('[name=navHref]').value.trim(),
+						zh: row.querySelector('[name=navZh]').value.trim(),
+						greek: row.querySelector('[name=navGreek]').value.trim(),
+					}));
+
+					const settings = {
+						...state.settings,
+						title: value(form, 'title'),
+						description: value(form, 'description'),
+						lang: value(form, 'lang'),
+						footerNote: value(form, 'footerNote'),
+						images: {
+							heroWork: value(form, 'heroWork'),
+							heroDays: value(form, 'heroDays'),
+							avatar: value(form, 'avatar'),
+						},
+						works: works.filter((work) => work.title !== ''),
+						nav: nav.filter((item) => item.href !== '' && item.zh !== ''),
+					};
+
+					const result = await api('/__edit/api/settings', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ settings }),
+					});
+					state.settings = result.settings;
+					toast('站点设置已保存');
+				}
+
+				if (kind === 'post') {
+					const tags = value(form, 'tags')
+						.split(',')
+						.map((tag) => tag.trim())
+						.filter(Boolean);
+					const data = {
+						title: value(form, 'title'),
+						description: value(form, 'description'),
+						pubDate: value(form, 'pubDate'),
+						updatedDate: value(form, 'updatedDate') || undefined,
+						tags,
+						author: value(form, 'author') || undefined,
+						cover: value(form, 'cover') || undefined,
+						coverAlt: value(form, 'coverAlt') || undefined,
+						draft: isChecked(form, 'draft'),
+					};
+
+					if (!data.title) throw new Error('标题是必填的');
+					if (!data.pubDate) throw new Error('日期是必填的');
+
+					await api('/__edit/api/post', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ id: form.dataset.id, data, body: value(form, 'body') }),
+					});
+					toast('文章已保存');
+				}
+
+				if (kind === 'author') {
+					const links = [...form.querySelectorAll('#links .entry')]
+						.map((row) => ({
+							label: row.querySelector('[name=linkLabel]').value.trim(),
+							href: row.querySelector('[name=linkHref]').value.trim(),
+						}))
+						.filter((link) => link.label !== '' && link.href !== '');
+
+					const data = {
+						name: value(form, 'name'),
+						role: value(form, 'role'),
+						bio: value(form, 'bio'),
+						avatar: value(form, 'avatar') || undefined,
+						order: Number(value(form, 'order')) || 100,
+						links,
+					};
+
+					if (!data.name) throw new Error('名字是必填的');
+
+					await api('/__edit/api/author', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ id: form.dataset.id, data, body: value(form, 'body') }),
+					});
+					toast('作者已保存');
+				}
+
+				await load();
+				setDirty(false);
+				refreshPreview();
+			}
+
+			/* ----------------------------------------------------------- media */
+			async function upload(files) {
+				for (const file of files) {
+					try {
+						const response = await fetch('/__edit/api/media', {
+							method: 'POST',
+							headers: { 'x-file-name': encodeURIComponent(file.name) },
+							body: file,
+						});
+						const payload = await response.json();
+						if (!response.ok) throw new Error(payload.error ?? `HTTP ${response.status}`);
+						toast(`已上传 ${payload.media.name}`);
+					} catch (error) {
+						toast(`${file.name}：${error.message}`, true);
+					}
+				}
+				await load();
+			}
+
+			function pickMedia(callback) {
+				if (state.media.length === 0) {
+					toast('图片库是空的，先去「图片」里上传一张', true);
+					return;
+				}
+				$('modal').innerHTML = `<h2>选一张图片</h2>
+					<button type="button" class="tiny" data-pick-none>不用图片（显示占位块）</button>
+					<div class="grid" style="margin-top:0.8rem">
+						${state.media
+							.map(
+								(item) => `<figure data-pick-name="${esc(item.name)}">
+									<img src="/__edit/media/${encodeURIComponent(item.name)}" alt="" loading="lazy" />
+									<figcaption>${esc(item.name)}</figcaption>
+								</figure>`
+							)
+							.join('')}
+					</div>`;
+				$('overlay').hidden = false;
+
+				$('modal').onclick = (event) => {
+					const figure = event.target.closest('[data-pick-name]');
+					if (figure) {
+						callback(figure.dataset.pickName);
+						$('overlay').hidden = true;
+						return;
+					}
+					if (event.target.closest('[data-pick-none]')) {
+						callback('');
+						$('overlay').hidden = true;
+					}
+				};
+			}
+
+			/* --------------------------------------------------------- preview */
+			function refreshPreview() {
+				if (!$('preview').classList.contains('open')) return;
+				let url = '/';
+				if (state.section === 'posts' && state.selected.posts) url = `/blog/${state.selected.posts}/`;
+				if (state.section === 'authors' && state.selected.authors) url = `/authors/${state.selected.authors}/`;
+				$('frame').src = url;
+			}
+
+			/* ---------------------------------------------------------- events */
+			document.addEventListener('click', async (event) => {
+				const target = event.target;
+				const section = target.closest('[data-section]');
+				if (section) {
+					state.section = section.dataset.section;
+					location.hash = state.section;
+					setDirty(false);
+					render();
+					refreshPreview();
+					return;
+				}
+
+				const select = target.closest('[data-select]');
+				if (select) {
+					state.selected[state.section] = select.dataset.select;
+					setDirty(false);
+					render();
+					refreshPreview();
+					return;
+				}
+
+				const create = target.closest('[data-new]');
+				if (create) {
+					const kind = create.dataset.new;
+					const id = window.prompt(kind === 'posts' ? '新文章的文件名（英文/数字/短横线）' : '新作者的文件名');
+					if (!id) return;
+					try {
+						if (kind === 'posts') {
+							await api('/__edit/api/post', {
+								method: 'POST',
+								headers: { 'content-type': 'application/json' },
+								body: JSON.stringify({
+									id: id.trim(),
+									data: { title: '新文章', pubDate: new Date().toISOString().slice(0, 10), tags: [] },
+									body: '',
+								}),
+							});
+							state.selected.posts = id.trim();
+						} else {
+							await api('/__edit/api/author', {
+								method: 'POST',
+								headers: { 'content-type': 'application/json' },
+								body: JSON.stringify({ id: id.trim(), data: { name: '新作者', order: 100 }, body: '' }),
+							});
+							state.selected.authors = id.trim();
+						}
+						await load();
+						toast('已创建');
+					} catch (error) {
+						toast(error.message, true);
+					}
+					return;
+				}
+
+				const pick = target.closest('[data-pick]');
+				if (pick) {
+					pickMedia((name) => {
+						const input = document.querySelector(`[name="${pick.dataset.pick}"]`);
+						if (input) {
+							input.value = name;
+							setDirty(true);
+						}
+					});
+					return;
+				}
+
+				const del = target.closest('[data-delete]');
+				if (del) {
+					const kind = del.dataset.delete;
+					if (!window.confirm(`确定删除 "${del.dataset.id}"？文件会被删掉。`)) return;
+					try {
+						await api(`/__edit/api/${kind}?id=${encodeURIComponent(del.dataset.id)}`, { method: 'DELETE' });
+						if (kind === 'post') state.selected.posts = null;
+						else state.selected.authors = null;
+						await load(false);
+						toast('已删除');
+					} catch (error) {
+						toast(error.message, true);
+					}
+					return;
+				}
+
+				const delMedia = target.closest('[data-delete-media]');
+				if (delMedia) {
+					const name = delMedia.dataset.deleteMedia;
+					const used = state.usage[name] ?? 0;
+					const question = used
+						? `"${name}" 正被 ${used} 处引用，删掉之后那些地方会构建失败。仍要删除？`
+						: `删除 "${name}"？`;
+					if (!window.confirm(question)) return;
+					try {
+						await api(`/__edit/api/media?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
+						await load();
+						toast('已删除');
+					} catch (error) {
+						toast(error.message, true);
+					}
+					return;
+				}
+
+				const copy = target.closest('[data-copy]');
+				if (copy) {
+					await navigator.clipboard.writeText(copy.dataset.copy);
+					toast(`已复制 ${copy.dataset.copy}`);
+					return;
+				}
+
+				const removeRow = target.closest('[data-remove-row]');
+				if (removeRow) {
+					removeRow.closest('.entry').remove();
+					setDirty(true);
+					return;
+				}
+
+				const addRow = target.closest('[data-add-row]');
+				if (addRow) {
+					const kind = addRow.dataset.addRow;
+					const html =
+						kind === 'nav'
+							? `<div class="entry" data-nav><input type="text" name="navHref" placeholder="/blog/" /><input type="text" name="navZh" placeholder="中文" /><input type="text" name="navGreek" placeholder="希腊文" /><button type="button" class="tiny" data-remove-row>×</button></div>`
+							: `<div class="entry" data-work><input type="text" name="workTitle" placeholder="标题" /><input type="text" name="workMeta" placeholder="说明" /><input type="text" name="workImage" placeholder="图片文件名" /><button type="button" class="tiny" data-remove-row>×</button></div>`;
+					document.getElementById(kind === 'nav' ? 'nav' : 'works').insertAdjacentHTML('beforeend', html);
+					setDirty(true);
+					return;
+				}
+
+				if (target.closest('[data-reload]')) {
+					setDirty(false);
+					render();
+					return;
+				}
+
+				if (target.id === 'browse') document.getElementById('file').click();
+				if (target.closest('#preview-toggle')) {
+					$('preview').classList.toggle('open');
+					refreshPreview();
+				}
+			});
+
+			document.addEventListener('input', (event) => {
+				if (event.target.closest('#form')) setDirty(true);
+			});
+
+			document.addEventListener('change', (event) => {
+				if (event.target.id === 'file') {
+					upload([...event.target.files]);
+					event.target.value = '';
+				}
+			});
+
+			document.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				const button = event.target.querySelector('button[type=submit]');
+				button.disabled = true;
+				try {
+					await submit(event.target);
+				} catch (error) {
+					toast(error.message, true);
+				} finally {
+					button.disabled = false;
+				}
+			});
+
+			// Drag and drop onto the media section.
+			document.addEventListener('dragover', (event) => {
+				const drop = event.target.closest('#drop');
+				if (!drop) return;
+				event.preventDefault();
+				drop.classList.add('hot');
+			});
+			document.addEventListener('dragleave', (event) => {
+				event.target.closest('#drop')?.classList.remove('hot');
+			});
+			document.addEventListener('drop', (event) => {
+				const drop = event.target.closest('#drop');
+				if (!drop) return;
+				event.preventDefault();
+				drop.classList.remove('hot');
+				upload([...event.dataTransfer.files]);
+			});
+
+			// Ctrl/Cmd+S saves the open form.
+			document.addEventListener('keydown', (event) => {
+				if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+					event.preventDefault();
+					document.getElementById('form')?.requestSubmit();
+				}
+			});
+
+			window.addEventListener('hashchange', () => {
+				const next = sectionFromHash();
+				if (next && next !== state.section) {
+					state.section = next;
+					setDirty(false);
+					render();
+					refreshPreview();
+				}
+			});
+
+			state.section = sectionFromHash() ?? 'posts';
+			load(false).catch((error) => toast(`加载失败：${error.message}`, true));
+		</script>
+	</body>
+</html>

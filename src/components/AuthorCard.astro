@@ -29,7 +29,7 @@ const { author, href, note } = Astro.props;
 const name = author?.data.name ?? SITE.author.name;
 const bio = author?.data.bio ?? SITE.author.bio;
 const role = author?.data.role ?? '';
-const avatar = author?.data.avatar ?? asset(SITE.images.avatar);
+const avatar = asset(author?.data.avatar ?? SITE.images.avatar);
 
 const Tag = href ? 'a' : 'aside';
 ---

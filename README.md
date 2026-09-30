@@ -20,10 +20,39 @@
 | 命令 | 作用 |
 | :-- | :-- |
 | `npm install` | 安装依赖 |
-| `npm run dev` | 开发服务器（http://localhost:4321） |
+| `npm run dev` | 开发服务器 + 本地编辑器 |
+| `npm run edit` | 同 `dev`，起编辑器用的入口 |
 | `npm run build` | 产出静态站点到 `./dist/` |
 | `npm run preview` | 预览 `./dist/` |
+| `npm run test:editor` | 编辑器 frontmatter 读写器的自测 |
 | `npm run astro -- --help` | Astro CLI 帮助 |
+
+## 本地编辑器
+
+`npm run dev` 之后打开 **http://localhost:4321/__edit**（终端启动时会打印这个地址）。
+
+它不是一个独立进程，而是挂在 Vite dev server 上的一个中间件，所以：
+
+- **进不了线上。** 插件标了 `apply: 'serve'`，`npm run build` 根本不会构造它 ——
+  `dist/` 里没有任何编辑器相关的东西，Cloudflare 上也没有。
+- **预览是真的。** 右侧预览就是本站在 iframe 里，保存后 Vite 的 HMR 自己刷新。
+- 只在 localhost 上，没有对外暴露任何接口。
+
+四个页签：
+
+| 页签 | 能做什么 |
+| :-- | :-- |
+| **文章** | 建 / 改 / 删文章；标题、日期、摘要、标签、作者、封面（可从图库挑）、草稿、Markdown 正文 |
+| **作者** | 建 / 改 / 删作者；名字、身份、简介、头像、排序、外链、自我介绍 |
+| **图片** | 拖拽上传到 `src/assets/`、显示每张被引用几处、复制文件名、删除（被引用时会警告） |
+| **站点** | 站名、简介、语言、页脚小字、首页两张图、工作页条目、导航 |
+
+`Ctrl/Cmd + S` 保存；有未保存改动时关页面会拦一下。保存是直接写文件，所以在编辑器里
+改完就等于改好了源码，照常 `git commit` 即可。
+
+编辑器的 frontmatter 读写器是手写的一小份 YAML 子集（为它引一个依赖要重写近百条
+lockfile 记录，不划算）。它读不懂的文件会**拒绝写入并显示原文**，而不是猜着改坏，
+所以最坏情况只是那个文件在编辑器里只读。自测：`npm run test:editor`。
 
 ## 部署
 
@@ -48,13 +77,17 @@
 ## 结构
 
 ```
+tools/
+├── editor/              本地编辑器：Vite 插件 + 单文件 UI + frontmatter 读写器
+└── picomatch-esm.mjs    依赖修补，见文末
 src/
-├── config.ts            站点标题、导航、withBase()、asset()、日期格式化
+├── settings.json        站名、导航、图片槽位、工作页条目（编辑器写这个文件）
+├── config.ts            类型化的 SITE + withBase() / asset() / 日期格式化
 ├── authors.ts           作者查找：排序、按 id 取、按作者统计篇数
 ├── content.config.ts    authors / blog 两个内容集合
 ├── content/blog/*.md    文章
-├── content/authors/*.md 作者（头像就放在各自 .md 旁边）
-├── assets/              站点级图片 + 自己的说明
+├── content/authors/*.md 作者
+├── assets/              全部图片都在这里 + 自己的说明
 ├── styles/global.css    设计令牌（颜色 / 字体 / 尺寸）+ 基础排版
 ├── layouts/BaseLayout.astro
 ├── components/
@@ -122,26 +155,40 @@ src/
 | 页脚导航只保留中文 | 报头已经有一遍「中文 / 希腊文」对照，页脚再来一遍太吵 | `SiteFooter.astro` |
 | 增加了回到顶部按钮 | 稿子里没有，但长页面需要 | `BackToTop.astro` |
 
-底边栏中文后的希腊文已去掉；站点名 `Erga kai Hemerai` 在 `src/config.ts` 的 `title`。
+底边栏中文后的希腊文已去掉；站点名在 `src/settings.json` 的 `title`。
 
 ## 换图片
 
-站内一共有 5 处图片位，分两种放法。
+**所有图片都在一个地方：`src/assets/`。** 传进去之后，在需要的地方写**文件名**即可。
 
-### 1. 站点级图片 —— 放进 `src/assets/`，在 config 里写文件名
+最省事的办法是用编辑器（见「本地编辑器」一节）：「图片」页把文件拖进去，然后在作者 /
+文章 / 站点页点「选择…」。手工改的话，文件名写在这几处：
 
-把照片丢进 **`src/assets/`**，然后在 `src/config.ts` 的 `SITE.images` 填**文件名**：
+| 位置 | 写在哪 | 字段 |
+| :-- | :-- | :-- |
+| 首页左边（工作） | `src/settings.json` | `images.heroWork` |
+| 首页右边（时日） | `src/settings.json` | `images.heroDays` |
+| 兜底头像 | `src/settings.json` | `images.avatar` |
+| 工作页卡片 | `src/settings.json` | `works[].image` |
+| 文章封面 | 那篇文章的 frontmatter | `cover` |
+| 作者头像 | 那位作者的 frontmatter | `avatar` |
 
-```ts
-images: {
-  heroWork: 'hero-work.jpg',   // 首页左边那张（工作）
-  heroDays: 'hero-days.jpg',   // 首页奶油色带里那张（时日）
-  avatar:   'avatar.jpg',      // 兜底头像，一般用不到
-},
+```yaml
+# src/content/blog/my-post.md
+---
+title: 标题
+cover: my-photo.jpg      # 文件名，不是路径
+coverAlt: 图片说明
+---
 ```
 
-`avatar` 只在作者没有自己的头像时才用到 —— 作者的头像放在各自那份作者 `.md` 旁边，
-见下面的「作者」一节。
+```yaml
+# src/content/authors/shen-yan.md
+---
+name: 沈砚
+avatar: shen-yan.jpg     # 文件名，不是路径
+---
+```
 
 不用写 `import` —— `asset()` 会在构建时把 `src/assets/` 下的文件全部登记，按名字取用。
 **子目录也认**（文件在 `photos/hero.jpg`，就写 `photos/hero.jpg`）。
@@ -150,44 +197,19 @@ images: {
 
 - **文件名必须和实际完全一致**。写错不会静默降级，而是**直接构建失败**并列出目录里
   现有的文件：
-
   ```
-  [assets] SITE.images points at "hero-days.jpg", but there is no such file in src/assets/.
+  [assets] settings.json points at "hero-days.jpg", but there is no such file in src/assets/.
     In there: free.jpg
     Supported extensions: jpg, jpeg, png, webp, avif, gif (any case).
   ```
-
 - **扩展名不区分大小写**，`IMG_1234.JPG` 和 `img_1234.jpg` 都能用。
 - **只认这几种格式**：`jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`。`.heic`（iPhone 默认）
   和 `.bmp` 不认，先转成 jpg。
 
-留 `''` 就是设计稿那个占位块。首页那两张如果不填，会退回到最新两篇文章的封面。
+留空（`''`）就是设计稿那个占位块。首页那两张如果不填，会退回到最新两篇文章的封面。
 
 > 图片要提交进 Git 才算数 —— Cloudflare 从仓库构建，看不到你本地的文件。原图多大都行，
 > Astro 会另生成压缩版本，只是仓库里会留着原图。
-
-### 工作页的三张卡片
-
-`/works/` 的条目在 `src/config.ts` 的 `SITE.works`，标题、说明和图片一起改：
-
-```ts
-works: [
-  { title: '项目一', meta: '2024 · 进行中', image: 'project-1.jpg' },
-  { title: '项目二', meta: '2023 · 已归档', image: '' },   // 留空 = 占位块
-],
-```
-
-要更多条目就往数组里加，版式会自动排。
-
-### 2. 文章封面 —— 放在文章旁边，写相对路径
-
-```yaml
----
-title: 标题
-cover: ./cover.jpg      # 与这篇 .md 同目录
-coverAlt: 图片说明
----
-```
 
 ### 尺寸与裁剪
 

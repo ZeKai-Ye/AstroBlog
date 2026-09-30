@@ -1,6 +1,7 @@
 // @ts-check
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
+import { localEditor } from './tools/editor/plugin.mjs';
 
 /**
  * `picomatch` is CommonJS-only, and Astro 7.3.5 inlines it into the Vite
@@ -34,6 +35,14 @@ export default defineConfig({
 	base,
 
 	vite: {
+		plugins: [
+			/**
+			 * The local editor, served at /__edit by `npm run dev`. It is a
+			 * `apply: 'serve'` plugin, so a build never constructs it — there is
+			 * no dev-only route that could reach Cloudflare.
+			 */
+			localEditor(),
+		],
 		resolve: {
 			alias: [picomatchShim],
 		},

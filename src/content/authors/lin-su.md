@@ -2,7 +2,7 @@
 name: 林素
 role: 编辑
 bio: 负责把话说到点子上。删掉的比留下的多。
-avatar: ./lin-su.png
+avatar: lin-su.png
 order: 2
 links:
   - label: 邮箱

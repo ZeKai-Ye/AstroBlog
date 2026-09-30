@@ -2,7 +2,7 @@
 name: 周迟
 role: 摄影
 bio: 拍得慢，出得少。大部分时间在等光。
-avatar: ./zhou-chi.png
+avatar: zhou-chi.png
 order: 3
 links:
   - label: 邮箱

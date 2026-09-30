@@ -2,7 +2,7 @@
 name: 沈砚
 role: 主笔
 bio: 写字的人。关心工具、手艺，和一切慢下来的事。
-avatar: ./shen-yan.png
+avatar: shen-yan.png
 order: 1
 links:
   - label: 邮箱

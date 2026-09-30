@@ -20,7 +20,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import AuthorCard from '../../components/AuthorCard.astro';
 import Figure from '../../components/Figure.astro';
 import SearchBox from '../../components/SearchBox.astro';
-import { SITE, formatDateParts, withBase } from '../../config';
+import { SITE, formatDateParts, withBase, asset } from '../../config';
 import { getAuthorIndex, authorOf } from '../../authors';
 
 export async function getStaticPaths() {
@@ -84,7 +84,12 @@ const updated = data.updatedDate ? formatDateParts(data.updatedDate) : null;
 			{
 				data.cover && (
 					<div class="post__cover">
-						<Figure src={data.cover} alt={data.coverAlt ?? data.title} ratio="16 / 9" />
+						<Figure
+							src={asset(data.cover)}
+							alt={data.coverAlt || data.title}
+							ratio="16 / 9"
+							sizes="(max-width: 56rem) 100vw, 60rem"
+						/>
 					</div>
 				)
 			}

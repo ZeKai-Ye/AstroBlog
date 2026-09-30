@@ -7,9 +7,11 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "edit": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test:editor": "node tools/editor/selftest.mjs"
   },
   "dependencies": {
     "astro": "^7.3.5"
