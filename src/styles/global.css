@@ -208,6 +208,63 @@ body.surface--cream {
 }
 
 /* ==========================================================================
+   Feathered edges
+
+   Marks and photographs melt into whatever they sit on instead of reading as
+   rectangles pasted over it: the edge is masked to transparent, so the page
+   colour comes through and there is no border left to see. Transparent is the
+   point — the masthead is cream and the footer is tan, so a fade baked to one
+   colour would be wrong on the other.
+
+   The feather is proportional but bounded at both ends, because a flat
+   percentage is right at one size and swallows another: 20% of the 89px masthead
+   mark is a soft edge, 20% of the 48px 关于 one is most of the picture. Override
+   --feather-x / --feather-y where the element is much bigger or smaller.
+
+   Where `mask-composite` is unsupported the two layers union instead of
+   intersecting, which fades a little less — never nothing, so it degrades
+   softly rather than failing.
+   ========================================================================== */
+
+.feather {
+	--feather-x: clamp(12px, 15%, 48px);
+	--feather-y: clamp(7px, 17%, 22px);
+
+	-webkit-mask-image:
+		linear-gradient(
+			to right,
+			transparent,
+			#000 var(--feather-x),
+			#000 calc(100% - var(--feather-x)),
+			transparent
+		),
+		linear-gradient(
+			to bottom,
+			transparent,
+			#000 var(--feather-y),
+			#000 calc(100% - var(--feather-y)),
+			transparent
+		);
+	-webkit-mask-composite: source-in;
+	mask-image:
+		linear-gradient(
+			to right,
+			transparent,
+			#000 var(--feather-x),
+			#000 calc(100% - var(--feather-x)),
+			transparent
+		),
+		linear-gradient(
+			to bottom,
+			transparent,
+			#000 var(--feather-y),
+			#000 calc(100% - var(--feather-y)),
+			transparent
+		);
+	mask-composite: intersect;
+}
+
+/* ==========================================================================
    Shared primitives
    ========================================================================== */
 

@@ -43,7 +43,7 @@ const eager = size === 'masthead';
 {
 	logo ? (
 		<Image
-			class:list={['mark', 'mark--image', `mark--${size}`, className]}
+			class:list={['mark', 'mark--image', 'feather', `mark--${size}`, className]}
 			src={logo}
 			/* Often the only content of a link, so the alt is what names it. */
 			alt={SITE.title}
@@ -66,55 +66,8 @@ const eager = size === 'masthead';
 	.mark--image {
 		width: auto;
 		max-width: 100%;
-
-		/*
-			The feather is proportional, but bounded at both ends: a plain 20%
-			fade is right on the 89px masthead mark and eats a third of the 48px
-			关于 one, which turns it into a smudge. The floor keeps small marks
-			legible; the ceiling stops large ones from bleeding too far.
-
-			Two gradients crossed with `intersect`: one fades the ends, the other
-			fades top and bottom. At the edges the mask is transparent, so the
-			page colour comes through and there is no border left to see.
-
-			Where `mask-composite` is unsupported the two layers union instead,
-			which fades a little less — never nothing, so it degrades softly.
-		*/
-		--feather-x: clamp(12px, 15%, 48px);
-		--feather-y: clamp(7px, 17%, 22px);
-
-		-webkit-mask-image:
-			linear-gradient(
-				to right,
-				transparent,
-				#000 var(--feather-x),
-				#000 calc(100% - var(--feather-x)),
-				transparent
-			),
-			linear-gradient(
-				to bottom,
-				transparent,
-				#000 var(--feather-y),
-				#000 calc(100% - var(--feather-y)),
-				transparent
-			);
-		-webkit-mask-composite: source-in;
-		mask-image:
-			linear-gradient(
-				to right,
-				transparent,
-				#000 var(--feather-x),
-				#000 calc(100% - var(--feather-x)),
-				transparent
-			),
-			linear-gradient(
-				to bottom,
-				transparent,
-				#000 var(--feather-y),
-				#000 calc(100% - var(--feather-y)),
-				transparent
-			);
-		mask-composite: intersect;
+		/* The melted edge itself comes from `.feather`, shared with the hero
+		   photographs; its --feather-x/y defaults are tuned for a mark. */
 	}
 
 	.mark--image.mark--masthead {

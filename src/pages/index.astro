@@ -44,7 +44,7 @@ const daysCover = asset(SITE.images.heroDays) ?? posts[1]?.data.cover;
 	<section class="hero" aria-label="工作">
 		<div class="container hero__grid">
 			<Figure
-				class="hero__media reveal"
+				class="hero__media reveal feather"
 				src={heroCover}
 				alt="首页主图"
 				label="图片"
@@ -65,7 +65,7 @@ const daysCover = asset(SITE.images.heroDays) ?? posts[1]?.data.cover;
 	<WaveBand class="band">
 		<div class="container band-inner feature">
 			<Figure
-				class="feature__media reveal"
+				class="feature__media reveal feather"
 				src={daysCover}
 				alt="时日主图"
 				label="图片"
@@ -117,15 +117,26 @@ const daysCover = asset(SITE.images.heroDays) ?? posts[1]?.data.cover;
 	}
 
 	/*
-		The two shots sit on the band like prints laid on paper: a wide warm
-		shadow for the lift, plus a tight one so the bottom edge still reads as
-		touching. Tinted brown rather than black so it stays in the palette.
+		The two shots melt into the band rather than sitting on it: `.feather`
+		fades their edges to transparent, so the band colour comes through and
+		there is no line where the picture stops.
+
+		The drop shadow they used to carry is gone, and the reason is measured
+		rather than assumed: a mask applies to everything the element paints,
+		shadow included, and the shadow sits *outside* the box — which is
+		precisely where the mask is already transparent. Rendering the page with
+		it and without it gives byte-identical frames (max channel delta 0), so
+		it was doing nothing except look like it was doing something. Feather
+		and shadow say opposite things anyway; a shadow is cast by an edge.
+
+		These photographs are many times the size of the masthead mark, so the
+		feather is overridden to scale with them — the shared default tops out at
+		48px, which is a soft edge on a 470px mark and invisible on a 640px one.
 	*/
 	.hero__grid :global(.hero__media),
 	.feature :global(.feature__media) {
-		box-shadow:
-			0 1.6rem 3rem -1.2rem rgb(74 48 26 / 0.32),
-			0 0.3rem 0.85rem -0.3rem rgb(74 48 26 / 0.18);
+		--feather-x: clamp(24px, 7%, 90px);
+		--feather-y: clamp(24px, 7%, 90px);
 	}
 
 	.hero__grid {
