@@ -2,21 +2,14 @@
 /**
  * 工作 / Ἔργα.
  *
- * The mockup links to this section from the hero pill but never draws it, so
- * this is a deliberate placeholder: it keeps the design's type and rhythm and
- * documents where real entries should go.
+ * The mockup links to this section from the hero pill but never draws it. The
+ * entries come from `SITE.works` in src/config.ts, so titles and pictures are
+ * edited in one place; on its own the list is just sample copy.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import WaveBand from '../components/WaveBand.astro';
 import Figure from '../components/Figure.astro';
-import { asset } from '../config';
-
-/* `image` is a file name inside src/assets/ — see the README. */
-const placeholder = [
-	{ title: '项目一', meta: '2024 · 进行中', image: '' },
-	{ title: '项目二', meta: '2023 · 已归档', image: '' },
-	{ title: '项目三', meta: '2022 · 已归档', image: '' },
-];
+import { SITE, asset } from '../config';
 ---
 
 <BaseLayout title="工作" surface="tan">
@@ -29,7 +22,7 @@ const placeholder = [
 		<div class="container band-inner">
 			<ul class="works">
 				{
-					placeholder.map((item) => (
+					SITE.works.map((item) => (
 						<li class="works__item">
 							<Figure
 								class="works__media"
@@ -48,7 +41,8 @@ const placeholder = [
 			</ul>
 
 			<p class="works__note">
-				这一页还是空的。真实条目可以在这里接入一个 `works` 内容集合，样式沿用上面的图形 + 说明结构。
+				上面三条是示例。在 <code>src/config.ts</code> 的 <code>SITE.works</code> 里改标题、说明和图片，
+				图片写 <code>src/assets/</code> 里的文件名即可；要更多条目就往数组里加。
 			</p>
 		</div>
 	</WaveBand>

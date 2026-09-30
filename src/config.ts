@@ -116,11 +116,24 @@ export const SITE = {
   ],
 
   /**
+   * 工作页的条目。
+   *
+   * `image` 是 `src/assets/` 里的文件名，留空则该张显示占位块。这三条是示例，
+   * 换成你自己的作品即可；要更多条目就往数组里加。
+   */
+  works: [
+    { title: '项目一', meta: '2024 · 进行中', image: '' },
+    { title: '项目二', meta: '2023 · 已归档', image: '' },
+    { title: '项目三', meta: '2022 · 已归档', image: '' },
+  ],
+
+  /**
    * Pictures, by file name inside `src/assets/`.
    *
    * Put `hero-work.jpg` in that folder and write `heroWork: 'hero-work.jpg'`.
-   * Leave a value as `''` to keep the design's placeholder block. The two hero
-   * slots fall back to the newest posts' covers when left empty.
+   * A name that matches nothing fails the build rather than quietly falling back
+   * to the placeholder. Leave a value as `''` to keep the placeholder on
+   * purpose. The two hero slots fall back to the newest posts' covers.
    */
   images: {
     /** Home page, left shot (the 工作 feature). */
