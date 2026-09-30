@@ -38,9 +38,15 @@ jobs:
       # https://<user>.github.io + /<repo>; for a custom domain it is the domain
       # and an empty base. Feeding these into the build is what makes the
       # canonical URL and every internal link come out right.
+      #
+      # `enablement: true` lets the first run turn Pages on by itself
+      # (Pages build type → "GitHub Actions"); without it the step fails with
+      # "Get Pages site failed" on a repo where Pages was never enabled.
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Build
         run: npm run build

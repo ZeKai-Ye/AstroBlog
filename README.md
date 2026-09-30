@@ -28,7 +28,9 @@
 ## 部署
 
 推送到 `master` 即由 `.github/workflows/deploy.yml` 构建并发布到 GitHub Pages。
-首次使用需要在仓库 **Settings → Pages → Source** 里选 **GitHub Actions**（只需一次）。
+工作流里 `actions/configure-pages` 带了 `enablement: true`，首次运行会自己把
+Pages 打开（构建来源设为 "GitHub Actions"），不需要手动配置。若组织策略不允许
+自动开启，就在 **Settings → Pages → Source** 手动选 **GitHub Actions**。
 
 工作流用 `actions/configure-pages` 解析出站点源与子路径，再通过环境变量传给构建：
 
