@@ -120,6 +120,20 @@
 			.editor { flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem 4rem; min-width: 0; }
 			.editor .empty { color: var(--muted); padding: 3rem 0; text-align: center; }
 
+			/* Shown when the dev server is not answering at all. */
+			.fatal { max-width: 46rem; margin: 3rem auto; line-height: 1.75; }
+			.fatal h2 { margin: 0 0 1rem; font-size: 18px; color: #8c2f2b; }
+			.fatal pre {
+				white-space: pre-wrap;
+				background: #fff;
+				border: 1px solid var(--line);
+				border-left: 4px solid #8c2f2b;
+				border-radius: 8px;
+				padding: 0.9rem 1rem;
+				font-size: 13px;
+			}
+			.fatal code { background: #00000010; padding: 0.05rem 0.35rem; border-radius: 3px; }
+
 			/* ----------------------------------------------------------- forms */
 			fieldset { border: 0; margin: 0 0 1.6rem; padding: 0; }
 			legend { font-weight: 600; padding: 0 0 0.5rem; color: var(--muted); font-size: 12px; letter-spacing: 0.08em; }
@@ -255,15 +269,33 @@
 
 			/* ------------------------------------------------------------- api */
 			async function api(path, options = {}) {
-				const response = await fetch(path, options);
+				let response;
+				try {
+					response = await fetch(path, options);
+				} catch (cause) {
+					/*
+						`fetch` only rejects for network-level failures — an HTTP
+						error still resolves. So this branch means the dev server
+						is not answering, which is exactly the case where a bare
+						"Failed to fetch" tells you nothing.
+					*/
+					const error = new Error(
+						`请求发不出去：${location.origin}${path}\n` +
+							`浏览器报的是「${cause.message}」。\n` +
+							`通常是：dev server 已经停了、换了端口，或者这个页面是服务器重启前的旧标签页。`
+					);
+					error.offline = true;
+					throw error;
+				}
+
 				const text = await response.text();
 				let payload = {};
 				try {
 					payload = text ? JSON.parse(text) : {};
 				} catch {
-					throw new Error(text.slice(0, 300) || `HTTP ${response.status}`);
+					throw new Error(`服务器返回了非 JSON 内容（HTTP ${response.status}）：${text.slice(0, 300)}`);
 				}
-				if (!response.ok) throw new Error(payload.error ?? `HTTP ${response.status}`);
+				if (!response.ok) throw new Error(payload.error ?? `HTTP ${response.status} ${path}`);
 				return payload;
 			}
 
@@ -272,7 +304,23 @@
 				if (bad) node.className = 'bad';
 				node.textContent = message;
 				$('toast').append(node);
-				setTimeout(() => node.remove(), bad ? 6000 : 2600);
+				setTimeout(() => node.remove(), bad ? 8000 : 2600);
+			}
+
+			/** A dev server that is not answering is not a toast-sized problem. */
+			function showFatal(error) {
+				document.querySelector('main').innerHTML = `
+					<div class="fatal">
+						<h2>连不上开发服务器</h2>
+						<pre>${esc(error.message)}</pre>
+						<p>当前页面地址：<code>${esc(location.href)}</code></p>
+						<p>
+							编辑器挂在 <code>npm run dev</code> 上。它启动时会在终端里打印一行
+							<code>➜  Editor: http://localhost:端口/__edit</code> —— 用那一行的地址打开，
+							端口未必是现在这个。
+						</p>
+						<p><button type="button" class="primary" data-retry>重新载入</button></p>
+					</div>`;
 			}
 
 			function setDirty(value) {
@@ -875,6 +923,11 @@
 					return;
 				}
 
+				if (target.closest('[data-retry]')) {
+					location.reload();
+					return;
+				}
+
 				if (target.id === 'browse') document.getElementById('file').click();
 				if (target.closest('#preview-toggle')) {
 					$('preview').classList.toggle('open');
@@ -943,7 +996,7 @@
 			});
 
 			state.section = sectionFromHash() ?? 'posts';
-			load(false).catch((error) => toast(`加载失败：${error.message}`, true));
+			load(false).catch((error) => (error.offline ? showFatal(error) : toast(`加载失败：${error.message}`, true)));
 		</script>
 	</body>
 </html>
