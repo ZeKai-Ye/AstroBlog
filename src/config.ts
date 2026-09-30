@@ -31,7 +31,13 @@ export interface SiteSettings {
 	nav: NavItem[];
 	features: NavItem[];
 	/** File names inside `src/assets/`. `''` keeps the design placeholder. */
-	images: { heroWork: string; heroDays: string; avatar: string };
+	images: {
+		/** Masthead wordmark picture. `''` falls back to `title` as text. */
+		logo: string;
+		heroWork: string;
+		heroDays: string;
+		avatar: string;
+	};
 	works: WorkItem[];
 }
 

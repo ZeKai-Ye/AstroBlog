@@ -174,6 +174,7 @@ src/
 
 | 位置 | 写在哪 | 字段 |
 | :-- | :-- | :-- |
+| 顶部站标 | `src/settings.json` | `images.logo` |
 | 首页左边（工作） | `src/settings.json` | `images.heroWork` |
 | 首页右边（时日） | `src/settings.json` | `images.heroDays` |
 | 兜底头像 | `src/settings.json` | `images.avatar` |
@@ -215,6 +216,9 @@ avatar: shen-yan.jpg     # 文件名，不是路径
   和 `.bmp` 不认，先转成 jpg。
 
 留空（`''`）就是设计稿那个占位块。首页那两张如果不填，会退回到最新两篇文章的封面。
+
+`images.logo` 是报头那块站标：填了图就画图，留空就退回站名**文字**。设计稿里那块是
+960×181，按这个尺寸导出的图放进去正好。图会按高度适应报头，宽度跟着比例走。
 
 > 图片要提交进 Git 才算数 —— Cloudflare 从仓库构建，看不到你本地的文件。原图多大都行，
 > Astro 会另生成压缩版本，只是仓库里会留着原图。

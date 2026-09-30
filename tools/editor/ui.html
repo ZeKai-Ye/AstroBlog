@@ -658,6 +658,13 @@
 						</fieldset>
 
 						<fieldset>
+							<legend>站标</legend>
+							<div class="grid">
+								${imageField('顶部标题图', 'logo', s.images?.logo, '留空则显示站名文字。设计稿那块是 960×181。')}
+							</div>
+						</fieldset>
+
+						<fieldset>
 							<legend>首页图片</legend>
 							<div class="grid">
 								${imageField('左边（工作）', 'heroWork', s.images?.heroWork, '留空则用最新一篇文章的封面。')}
@@ -711,6 +718,7 @@
 						lang: value(form, 'lang'),
 						footerNote: value(form, 'footerNote'),
 						images: {
+							logo: value(form, 'logo'),
 							heroWork: value(form, 'heroWork'),
 							heroDays: value(form, 'heroDays'),
 							avatar: value(form, 'avatar'),
