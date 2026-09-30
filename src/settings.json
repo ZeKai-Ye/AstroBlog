@@ -3,34 +3,65 @@
 	"description": "一个以文字与图像记录工作与时日的个人站点。",
 	"lang": "zh-CN",
 	"footerNote": "底边栏",
-
 	"author": {
 		"name": "名字",
 		"bio": "作者简介"
 	},
-
 	"nav": [
-		{ "href": "/", "zh": "首页", "greek": "οἶκος" },
-		{ "href": "/works/", "zh": "工作", "greek": "Ἔργα" },
-		{ "href": "/blog/", "zh": "时日", "greek": "Ἡμέραι" },
-		{ "href": "/about/", "zh": "关于", "greek": "περί" }
+		{
+			"href": "/",
+			"zh": "首页",
+			"greek": "οἶκος"
+		},
+		{
+			"href": "/works/",
+			"zh": "工作",
+			"greek": "Ἔργα"
+		},
+		{
+			"href": "/blog/",
+			"zh": "时日",
+			"greek": "Ἡμέραι"
+		},
+		{
+			"href": "/about/",
+			"zh": "关于",
+			"greek": "περί"
+		}
 	],
-
 	"features": [
-		{ "href": "/works/", "zh": "工作", "greek": "Ἔργα" },
-		{ "href": "/blog/", "zh": "时日", "greek": "Ἡμέραι" }
+		{
+			"href": "/works/",
+			"zh": "工作",
+			"greek": "Ἔργα"
+		},
+		{
+			"href": "/blog/",
+			"zh": "时日",
+			"greek": "Ἡμέραι"
+		}
 	],
-
 	"images": {
 		"logo": "webheader.png",
 		"heroWork": "work.jpg",
 		"heroDays": "free.jpg",
 		"avatar": ""
 	},
-
 	"works": [
-		{ "title": "项目一", "meta": "2024 · 进行中", "image": "" },
-		{ "title": "项目二", "meta": "2023 · 已归档", "image": "" },
-		{ "title": "项目三", "meta": "2022 · 已归档", "image": "" }
+		{
+			"title": "项目一",
+			"meta": "2024 · 进行中",
+			"image": ""
+		},
+		{
+			"title": "项目二",
+			"meta": "2023 · 已归档",
+			"image": ""
+		},
+		{
+			"title": "项目三",
+			"meta": "2022 · 已归档",
+			"image": ""
+		}
 	]
 }
