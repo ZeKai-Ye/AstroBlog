@@ -431,7 +431,7 @@
 							const title = item.data?.title ?? item.data?.name ?? item.id;
 							const sub =
 								state.section === 'posts'
-									? `${item.data?.pubDate ?? ''}${item.data?.draft ? ' · 草稿' : ''}`
+									? `${item.data?.pubDate ?? ''}${item.data?.draft ? ' · 草稿' : ''}${item.format === 'html' ? ' · HTML' : ''}`
 									: item.data?.role ?? '';
 							return `<button type="button" class="item${item.error ? ' bad' : ''}" data-select="${item.id}" aria-current="${selected === item.id}">
 								<b>${esc(title)}</b><span>${esc(sub)}</span>
@@ -527,7 +527,12 @@
 						</fieldset>
 
 						<fieldset>
-							<legend>正文（Markdown）</legend>
+							<legend>正文（${entry.format === 'html' ? 'HTML' : 'Markdown'}）</legend>
+							${
+								entry.format === 'html'
+									? '<p class="hint">纯 HTML 片段，原样注入文章页：可以用 video / audio / iframe、自己的标签和 &lt;style&gt;、&lt;script&gt;。媒体文件放 <code>public/</code> 下，用普通路径引用（这条不走 Astro 的图片管线）。</p>'
+									: ''
+							}
 							${field('', 'body', entry.body, { type: 'textarea', className: 'body', wide: true })}
 						</fieldset>
 
@@ -895,27 +900,34 @@
 				const create = target.closest('[data-new]');
 				if (create) {
 					const kind = create.dataset.new;
-					const id = window.prompt(kind === 'posts' ? '新文章的文件名（英文/数字/短横线）' : '新作者的文件名');
-					if (!id) return;
+					const typed = window.prompt(
+						kind === 'posts'
+							? '新文章的文件名（英文/数字/短横线）。以 .html 结尾就是纯 HTML 文章，否则是 Markdown。'
+							: '新作者的文件名'
+					);
+					if (!typed) return;
+					const format = kind === 'posts' && /\.html?$/i.test(typed.trim()) ? 'html' : 'md';
+					const id = typed.trim().replace(/\.(md|html?)$/i, '');
 					try {
 						if (kind === 'posts') {
 							await api('/__edit/api/post', {
 								method: 'POST',
 								headers: { 'content-type': 'application/json' },
 								body: JSON.stringify({
-									id: id.trim(),
+									id,
+									format,
 									data: { title: '新文章', pubDate: new Date().toISOString().slice(0, 10), tags: [] },
 									body: '',
 								}),
 							});
-							state.selected.posts = id.trim();
+							state.selected.posts = id;
 						} else {
 							await api('/__edit/api/author', {
 								method: 'POST',
 								headers: { 'content-type': 'application/json' },
-								body: JSON.stringify({ id: id.trim(), data: { name: '新作者', order: 100 }, body: '' }),
+								body: JSON.stringify({ id, data: { name: '新作者', order: 100 }, body: '' }),
 							});
-							state.selected.authors = id.trim();
+							state.selected.authors = id;
 						}
 						await load();
 						toast('已创建');

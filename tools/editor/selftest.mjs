@@ -30,10 +30,12 @@ function check(name, condition, detail = '') {
 
 function walk(dir) {
 	const out = [];
+	// Both blog formats go through the editor's own parser, so both need to
+	// survive a save unchanged.
 	for (const entry of readdirSync(dir)) {
 		const full = join(dir, entry);
 		if (statSync(full).isDirectory()) out.push(...walk(full));
-		else if (entry.endsWith('.md') && entry !== 'README.md') out.push(full);
+		else if (/\.(md|html)$/.test(entry) && entry !== 'README.md') out.push(full);
 	}
 	return out;
 }

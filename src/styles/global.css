@@ -437,3 +437,43 @@ body.surface--cream {
 	border-block-end: 1px solid var(--c-divider);
 	text-align: start;
 }
+
+/* --- Embedded media -------------------------------------------------------
+   An HTML post drops its own markup straight into this container, so the
+   things markdown cannot express — video, audio, embedded players — need the
+   same "fill the column" treatment images already get. */
+
+.prose video,
+.prose audio,
+.prose iframe,
+.prose embed,
+.prose object {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	border-radius: var(--radius);
+}
+
+.prose audio {
+	background: rgb(0 0 0 / 0.05);
+}
+
+/* An embed needs a height before its own content arrives. 16/9 is the shape
+   most players ship with; an author who wants another can override it on the
+   element, since inline styles beat this rule. */
+.prose iframe {
+	aspect-ratio: 16 / 9;
+	height: auto;
+	border: 0;
+}
+
+.prose figure {
+	margin-inline: 0;
+}
+
+.prose figcaption {
+	margin-block-start: 0.7em;
+	font-size: var(--fs-meta);
+	color: var(--c-ink-muted);
+	text-align: center;
+}

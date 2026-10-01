@@ -16,11 +16,14 @@
  */
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { join, extname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseDocument, stringifyDocument } from './frontmatter.mjs';
 
 export const root = fileURLToPath(new URL('../../', import.meta.url));
+
+/** The blog collection's two formats — see src/loaders/html-posts.ts. */
+const POST_FORMATS = ['.md', '.html'];
 
 const PATHS = {
 	posts: join(root, 'src/content/blog'),
@@ -102,68 +105,97 @@ async function writeAtomic(file, contents) {
 
 /* ---------------------------------------------------------------- content --- */
 
-async function listMarkdown(dir) {
+async function listEntries(dir, extensions = ['.md']) {
 	if (!existsSync(dir)) return [];
 	const out = [];
 	for (const entry of await readdir(dir, { withFileTypes: true })) {
 		if (entry.isDirectory()) {
-			for (const nested of await listMarkdown(join(dir, entry.name))) {
+			for (const nested of await listEntries(join(dir, entry.name), extensions)) {
 				out.push(`${entry.name}/${nested}`);
 			}
-		} else if (entry.name.endsWith('.md') && entry.name !== 'README.md') {
+		} else if (
+			entry.name !== 'README.md' &&
+			extensions.some((extension) => entry.name.endsWith(extension))
+		) {
 			out.push(entry.name);
 		}
 	}
 	return out;
 }
 
+/** The file behind an id, which a post may spell `.md` or `.html`. */
+function fileFor(dir, id, extensions) {
+	for (const extension of extensions) {
+		const file = join(dir, `${id}${extension}`);
+		if (existsSync(file)) return file;
+	}
+	return null;
+}
+
 /**
- * Reads one markdown entry. An unreadable file comes back with `error` set and
- * no `data`, which is the signal for the UI to show it read-only.
+ * Reads one entry. An unreadable file comes back with `error` set and no
+ * `data`, which is the signal for the UI to show it read-only.
+ *
+ * `format` is the extension without its dot — the UI uses it to decide whether
+ * the body is markdown or raw HTML.
  */
-async function readEntry(dir, id) {
-	const file = join(dir, `${id}.md`);
+async function readEntry(dir, id, extensions = ['.md']) {
+	const file = fileFor(dir, id, extensions);
+	if (!file) throw new EditorError(`"${id}" does not exist`, 404);
+
 	const text = await readFile(file, 'utf8');
+	const format = extname(file).slice(1).toLowerCase();
+	const path = relative(root, file).replace(/\\/g, '/');
+
 	try {
 		const { data, body } = parseDocument(text);
-		return { id, file: relative(root, file).replace(/\\/g, '/'), data, body };
+		return { id, format, file: path, data, body };
 	} catch (error) {
-		return {
-			id,
-			file: relative(root, file).replace(/\\/g, '/'),
-			error: error.message,
-			raw: text,
-		};
+		return { id, format, file: path, error: error.message, raw: text };
 	}
 }
 
-async function writeEntry(dir, id, data, body) {
+async function writeEntry(dir, id, data, body, { extensions = ['.md'], format } = {}) {
 	const clean = {};
 	for (const [key, value] of Object.entries(data ?? {})) {
 		if (value === undefined || value === null) continue;
 		if (typeof value === 'string' && value.trim() === '' && key !== 'title') continue;
 		clean[key] = typeof value === 'string' ? value.trim() : value;
 	}
-	await writeAtomic(join(dir, `${id}.md`), stringifyDocument(clean, body ?? ''));
-	return readEntry(dir, id);
+
+	// An existing file keeps its format; only a new one takes the requested.
+	const existing = fileFor(dir, id, extensions);
+	const file = existing ?? join(dir, `${id}${format ? `.${format}` : extensions[0]}`);
+
+	await writeAtomic(file, stringifyDocument(clean, body ?? ''));
+	return readEntry(dir, id, extensions);
 }
 
 export async function listPosts() {
-	const ids = await listMarkdown(PATHS.posts);
-	const posts = await Promise.all(ids.map((id) => readEntry(PATHS.posts, id.replace(/\.md$/, ''))));
+	const files = await listEntries(PATHS.posts, POST_FORMATS);
+	const posts = await Promise.all(
+		files.map((name) => readEntry(PATHS.posts, name.replace(/\.[^.]+$/, ''), POST_FORMATS))
+	);
 	return posts.sort((a, b) => String(b.data?.pubDate ?? '').localeCompare(String(a.data?.pubDate ?? '')));
 }
 
-export const readPost = (id) => readEntry(PATHS.posts, assertId(id, 'post id'));
-export const writePost = (id, data, body) => writeEntry(PATHS.posts, assertId(id, 'post id'), data, body);
+export const readPost = (id) => readEntry(PATHS.posts, assertId(id, 'post id'), POST_FORMATS);
+
+export const writePost = (id, data, body, format) =>
+	writeEntry(PATHS.posts, assertId(id, 'post id'), data, body, {
+		extensions: POST_FORMATS,
+		format: format === 'html' ? 'html' : 'md',
+	});
 
 export async function deletePost(id) {
 	assertId(id, 'post id');
-	await rm(join(PATHS.posts, `${id}.md`));
+	const file = fileFor(PATHS.posts, id, POST_FORMATS);
+	if (!file) throw new EditorError(`"${id}" does not exist`, 404);
+	await rm(file);
 }
 
 export async function listAuthors() {
-	const ids = await listMarkdown(PATHS.authors);
+	const ids = await listEntries(PATHS.authors);
 	const authors = await Promise.all(
 		ids.map((id) => readEntry(PATHS.authors, id.replace(/\.md$/, '')))
 	);
@@ -200,10 +232,11 @@ export async function renameEntry(kind, from, to) {
 	assertId(to, `${kind} id`);
 
 	const dir = kind === 'author' ? PATHS.authors : PATHS.posts;
-	const source = join(dir, `${from}.md`);
-	const target = join(dir, `${to}.md`);
+	const extensions = kind === 'author' ? ['.md'] : POST_FORMATS;
+	const source = fileFor(dir, from, extensions);
+	const target = join(dir, `${to}${source ? extname(source) : '.md'}`);
 
-	if (!existsSync(source)) throw new EditorError(`"${from}" does not exist`, 404);
+	if (!source) throw new EditorError(`"${from}" does not exist`, 404);
 	if (existsSync(target)) throw new EditorError(`"${to}" already exists — pick another name`);
 
 	await rename(source, target);

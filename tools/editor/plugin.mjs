@@ -120,7 +120,7 @@ async function handle(req, res) {
 	if (route === 'post') {
 		if (method === 'POST') {
 			const body = await readJsonBody(req);
-			const saved = await store.writePost(body.id, body.data, body.body);
+			const saved = await store.writePost(body.id, body.data, body.body, body.format);
 			sendJson(res, 200, { post: saved });
 			return;
 		}

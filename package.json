@@ -18,5 +18,9 @@
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "devDependencies": {
+    "github-slugger": "^2.0.0",
+    "js-yaml": "^4.3.2"
   }
 }

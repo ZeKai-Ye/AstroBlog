@@ -93,7 +93,9 @@ src/
 ├── config.ts            类型化的 SITE + withBase() / asset() / 日期格式化
 ├── authors.ts           作者查找：排序、按 id 取、按作者统计篇数
 ├── content.config.ts    authors / blog 两个内容集合
-├── content/blog/*.md    文章
+├── loaders/
+│   └── html-posts.ts    让 `.html` 也能当文章（见「用 HTML 写文章」）
+├── content/blog/*.md    文章（也可写成 *.html）
 ├── content/authors/*.md 作者
 ├── assets/              全部图片都在这里 + 自己的说明
 ├── styles/global.css    设计令牌（颜色 / 字体 / 尺寸）+ 基础排版
@@ -255,9 +257,68 @@ description: 摘要，会出现在列表与搜索里
 pubDate: 2024-03-03
 tags: ['随笔']
 draft: false        # true 则不进入任何索引
-# cover: ./cover.jpg  # 可选题图
+# cover: cover.jpg  # 可选题图，src/assets/ 里的文件名
 ---
 ```
+
+正文里插图也可以直接用相对路径（`![](photo.jpg)`，相对这份 `.md` 文件），Astro 一样会
+压缩优化。只是那样图片会散在各个文章目录里，和「所有图片都在 `src/assets/`」的约定
+不一致 —— 想统一就还是用 `cover:` / 编辑器里的「选择…」。
+
+## 用 HTML 写文章
+
+markdown 表达不了的东西 —— `<video>`、`<audio>`、`<iframe>` 嵌入、自定义结构、
+自己的 `<style>` 和 `<script>` —— 就把那篇文章写成 `.html`：
+
+```
+src/content/blog/my-post.html
+```
+
+frontmatter 和 markdown **完全一样**，`---` 之后那部分是一段 **HTML 片段**，原样注入
+文章正文：站标、日期、作者卡、搜索、上下篇都还在，只有正文换成你的标记。两种格式在
+首页、列表、搜索、作者页里没有任何区别。
+
+```html
+---
+title: 标题
+description: 摘要
+pubDate: 2024-03-03
+tags: ['随笔']
+author: shizuku
+---
+
+<h2>随便什么结构</h2>
+<p>正文直接写 HTML，不经过 markdown 解析。</p>
+
+<figure>
+	<img src="/media/photo.jpg" alt="说明" />
+	<figcaption>图注</figcaption>
+</figure>
+
+<video controls src="/media/clip.mp4"></video>
+<iframe src="https://player.bilibili.com/player.html?bvid=..." title="视频"></iframe>
+```
+
+要紧的几条：
+
+- **是片段，不是整页。** 不要写 `<!doctype>` / `<html>` / `<head>` / `<body>` ——
+  那些位置属于站点外壳。写了会直接报错提醒你，而不是偷偷套两层。
+- **媒体文件放 `public/` 下**，用 `/` 开头的普通路径引用：`/media/clip.mp4` 对应
+  `public/media/clip.mp4`。HTML 文章**不走** Astro 的图片管线，所以 `src/assets/`
+  那套「只写文件名」的规则在这里不适用。
+- **`<style>` / `<script>` 会生效。** `<script>` 在页面加载时就运行，不需要
+  `is:inline` 之类的标记。注意它们**没有作用域**，写选择器时想清楚是不是只想影响这一段。
+- **常规标签自动沿用站点排版。** `h2` / `p` / `ul` / `table` / `img` 这些和 markdown
+  文章一样有 `.prose` 的样式；`video` / `audio` / `iframe` 会自动撑满正文列宽
+  （嵌入播放器按 16:9）。想改就在元素上写 `style`，或在自己的 `<style>` 里覆盖。
+- **视频别提交进 Git。** Cloudflare 是从仓库构建的，大文件会把仓库撑坏。视频更适合放
+  外部（B 站 / YouTube / Cloudflare Stream）用 `<iframe>` 嵌，或放对象存储后用
+  `<video src="https://...">`。
+- **`.html` 和 `.md` 不能重名**，它们会抢同一个 URL；撞了会在构建时报错并指出两个文件。
+  文件名仍然只用小写英文、数字和短横线，它决定 `/blog/<文件名>/`。
+
+编辑器里一样能用：「+ 新建」时文件名写 `my-post.html` 就是 HTML 文章，
+列表里会标一个 `· HTML`，正文框按原样编辑，没有 markdown 的那些规矩。
 
 ## 作者
 
@@ -268,7 +329,7 @@ draft: false        # true 则不进入任何索引
 name: 沈砚
 role: 主笔                    # 可选，显示在名字上方
 bio: 一句话简介，出现在卡片和文章侧栏
-avatar: ./shen-yan.png        # 可选，与这份 .md 同目录
+avatar: shen-yan.png          # 可选，src/assets/ 里的文件名（不是相对路径）
 order: 1                      # 可选，作者一览里的排序，小的在前
 links:                        # 可选
   - label: 邮箱
