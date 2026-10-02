@@ -1,5 +1,5 @@
 /**
- * Self-test for the frontmatter reader/writer. Run with:
+ * Self-test for the header readers/writers. Run with:
  *
  *   node tools/editor/selftest.mjs
  *
@@ -10,6 +10,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseDocument, stringifyDocument } from './frontmatter.mjs';
+import { parseHtmlPost, stringifyHtmlPost } from './html-meta.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -45,16 +46,24 @@ function walk(dir) {
  * property worth asserting is not "identity" but "fixpoint": once written, a
  * file must stay byte-identical through any number of further saves. That is
  * what stops the editor from churning a file every time it is opened.
+ *
+ * Each format is read and written with its own reader, and written back in the
+ * header syntax it arrived with — a save must never convert a file.
  */
-function fixpoint(original) {
-	const first = parseDocument(original);
-	const written1 = stringifyDocument(first.data, first.body);
-	const second = parseDocument(written1);
-	const written2 = stringifyDocument(second.data, second.body);
+function fixpoint(original, format = 'md') {
+	const read = format === 'html' ? parseHtmlPost : (text) => ({ ...parseDocument(text), style: 'yaml' });
+	const write = (data, body, style) =>
+		format === 'html' ? stringifyHtmlPost(data, body, style) : stringifyDocument(data, body);
+
+	const first = read(original);
+	const written1 = write(first.data, first.body, first.style);
+	const second = read(written1);
+	const written2 = write(second.data, second.body, second.style);
 	return {
 		written1,
 		written2,
 		data: second.data,
+		style: first.style,
 		stable: written1 === written2,
 	};
 }
@@ -65,9 +74,10 @@ const files = [...walk(join(root, 'src/content')), join(root, 'src/assets/README
 for (const file of files) {
 	const relative = file.replace(root, '').replace(/\\/g, '/');
 	const original = readFileSync(file, 'utf8');
+	const format = file.endsWith('.html') ? 'html' : 'md';
 
 	try {
-		const result = fixpoint(original);
+		const result = fixpoint(original, format);
 		check(
 			`${relative} (${Object.keys(result.data).length} keys)`,
 			result.stable,
@@ -142,6 +152,42 @@ for (const [name, source] of Object.entries({
 		threw = true;
 	}
 	check(name, threw);
+}
+
+console.log('\nthe <meta> header html posts use');
+{
+	const source =
+		'<meta name="title" content="标题">\n' +
+		'<meta name="pubDate" content="2024-03-03">\n' +
+		'<meta name="tags" content="随笔, 工具">\n' +
+		'<meta name="draft" content="false">\n' +
+		'\n<p>正文</p>\n';
+
+	const parsed = parseHtmlPost(source);
+	check('header read as meta', parsed.style === 'meta', parsed.style);
+	check('title read', parsed.data.title === '标题', JSON.stringify(parsed.data.title));
+	check('tags split on both commas', same(parsed.data.tags, ['随笔', '工具']), JSON.stringify(parsed.data.tags));
+	check('draft read as boolean', parsed.data.draft === false, JSON.stringify(parsed.data.draft));
+	check('body is only the markup', parsed.body === '<p>正文</p>\n', JSON.stringify(parsed.body));
+
+	const rewritten = parseHtmlPost(stringifyHtmlPost(parsed.data, parsed.body, 'meta'));
+	check('meta header round-trips', same(rewritten.data, parsed.data) && rewritten.style === 'meta');
+
+	// The whole point of the shape: a header that came back wrapped in a <p>
+	// must not be mistaken for a header at all.
+	const squashed = parseHtmlPost('<p>--- title: x ---</p>\n<p>body</p>\n');
+	check('squashed header is not read as meta', squashed.style === 'yaml');
+
+	const withQuote = { title: '他说 "你好" & 再见', pubDate: '2024-03-03' };
+	const escaped = stringifyHtmlPost(withQuote, '<p>x</p>');
+	check('quotes and ampersands survive', same(parseHtmlPost(escaped).data, withQuote), escaped);
+	check('escaping keeps the tag parseable', escaped.split('\n')[0].endsWith('">'), escaped.split('\n')[0]);
+
+	const old = '<meta name="title" content="旧">\n\n<p>正文</p>\n';
+	const converted = parseHtmlPost(old);
+	check('meta file keeps meta style', converted.style === 'meta');
+	const yamlFile = '---\ntitle: 旧\n---\n\n<p>x</p>\n';
+	check('a "---" html post stays yaml', parseHtmlPost(yamlFile).style === 'yaml');
 }
 
 console.log(`\n${checks - failures}/${checks} passed\n`);

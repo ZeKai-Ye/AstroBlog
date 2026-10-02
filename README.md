@@ -181,7 +181,7 @@ src/
 | 首页右边（时日） | `src/settings.json` | `images.heroDays` |
 | 兜底头像 | `src/settings.json` | `images.avatar` |
 | 工作页卡片 | `src/settings.json` | `works[].image` |
-| 文章封面 | 那篇文章的 frontmatter | `cover` |
+| 文章封面 | 那篇文章的 frontmatter | `cover`（HTML 文章写 `<meta name="cover">`） |
 | 作者头像 | 那位作者的 frontmatter | `avatar` |
 
 ```yaml
@@ -274,18 +274,16 @@ markdown 表达不了的东西 —— `<video>`、`<audio>`、`<iframe>` 嵌入�
 src/content/blog/my-post.html
 ```
 
-frontmatter 和 markdown **完全一样**，`---` 之后那部分是一段 **HTML 片段**，原样注入
+文章头是**一行一个 `<meta>` 标签**，放在文件最开头，下面是一段 **HTML 片段**，原样注入
 文章正文：站标、日期、作者卡、搜索、上下篇都还在，只有正文换成你的标记。两种格式在
 首页、列表、搜索、作者页里没有任何区别。
 
 ```html
----
-title: 标题
-description: 摘要
-pubDate: 2024-03-03
-tags: ['随笔']
-author: shizuku
----
+<meta name="title" content="标题">
+<meta name="description" content="摘要">
+<meta name="pubDate" content="2024-03-03">
+<meta name="tags" content="随笔, 工具">
+<meta name="author" content="shizuku">
 
 <h2>随便什么结构</h2>
 <p>正文直接写 HTML，不经过 markdown 解析。</p>
@@ -299,13 +297,20 @@ author: shizuku
 <iframe src="https://player.bilibili.com/player.html?bvid=..." title="视频"></iframe>
 ```
 
+字段和 markdown 的 frontmatter 一一对应：`title`、`description`、`pubDate`、`updatedDate`、
+`tags`（逗号分隔）、`cover`、`coverAlt`、`author`、`draft`、`slug`。只有 `title` 和
+`pubDate` 是必填。
+
+**为什么用 `<meta>` 而不是 `---`：** `---` 是纯文字，外部 HTML 编辑器（Word 之类）会把它
+当正文，包进 `<p>`、把换行压成空格，文章头就废了。`<meta>` 是编辑器认识的标签，而且是
+**空元素、没有闭合标签**，自动补全没有东西可补。每个字段独立成行，最坏情况也只丢一个字段。
+（`---` 仍然认，方便和 markdown 保持一致；但外部编辑器里请用 `<meta>`。）
+
 要紧的几条：
 
 - **是片段，不是整页。** 不要写 `<!doctype>` / `<html>` / `<head>` / `<body>` ——
   那些位置属于站点外壳。写了会直接报错提醒你，而不是偷偷套两层。
-- **用纯文本编辑器改这些文件**（VS Code、记事本，或站内编辑器 `/__edit`）。Word 之类的
-  富文本 HTML 编辑器会把 `---` 那段当成正文：包进 `<p>`、把换行压成空格，frontmatter
-  就失效了，文章进不了网站。构建时对这类文件会专门提示，而不是只说「没有 frontmatter」。
+- **文章头必须在最开头**，在它之前只能有空白。它不会被当成正文显示出来。
 - **媒体文件放 `public/` 下**，用 `/` 开头的普通路径引用：`/media/clip.mp4` 对应
   `public/media/clip.mp4`。HTML 文章**不走** Astro 的图片管线，所以 `src/assets/`
   那套「只写文件名」的规则在这里不适用。

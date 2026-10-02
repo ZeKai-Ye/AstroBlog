@@ -530,7 +530,7 @@
 							<legend>正文（${entry.format === 'html' ? 'HTML' : 'Markdown'}）</legend>
 							${
 								entry.format === 'html'
-									? '<p class="hint">纯 HTML 片段，原样注入文章页：可以用 video / audio / iframe、自己的标签和 &lt;style&gt;、&lt;script&gt;。媒体文件放 <code>public/</code> 下，用普通路径引用（这条不走 Astro 的图片管线）。</p>'
+									? `<p class="hint">文件开头是上面那些字段写成的 &lt;meta&gt; 文章头（${entry.header === 'meta' ? '这份文件就是这种' : '这份文件用的是 --- 形式'}），下面才是片段本体，这里只编辑本体。片段原样注入文章页：可以用 video / audio / iframe、自己的标签和 &lt;style&gt;、&lt;script&gt;。媒体文件放 <code>public/</code> 下，用普通路径引用（不走 Astro 的图片管线）。</p>`
 									: ''
 							}
 							${field('', 'body', entry.body, { type: 'textarea', className: 'body', wide: true })}

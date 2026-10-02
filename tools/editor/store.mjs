@@ -15,10 +15,11 @@
  *     editor refuses to overwrite it rather than round-tripping it into mush.
  */
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, extname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseDocument, stringifyDocument } from './frontmatter.mjs';
+import { parseHtmlPost, stringifyHtmlPost } from './html-meta.mjs';
 
 export const root = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -137,7 +138,8 @@ function fileFor(dir, id, extensions) {
  * `data`, which is the signal for the UI to show it read-only.
  *
  * `format` is the extension without its dot — the UI uses it to decide whether
- * the body is markdown or raw HTML.
+ * the body is markdown or raw HTML — and `header` is which header syntax the
+ * file uses, so saving it back does not convert the file.
  */
 async function readEntry(dir, id, extensions = ['.md']) {
 	const file = fileFor(dir, id, extensions);
@@ -148,10 +150,23 @@ async function readEntry(dir, id, extensions = ['.md']) {
 	const path = relative(root, file).replace(/\\/g, '/');
 
 	try {
+		if (format === 'html') {
+			const { data, body, style } = parseHtmlPost(text);
+			return { id, format, header: style, file: path, data, body };
+		}
 		const { data, body } = parseDocument(text);
-		return { id, format, file: path, data, body };
+		return { id, format, header: 'yaml', file: path, data, body };
 	} catch (error) {
 		return { id, format, file: path, error: error.message, raw: text };
+	}
+}
+
+/** Which header syntax an existing file uses, so a save preserves it. */
+function headerStyleOf(file) {
+	try {
+		return parseHtmlPost(readFileSync(file, 'utf8')).style;
+	} catch {
+		return 'meta';
 	}
 }
 
@@ -163,11 +178,16 @@ async function writeEntry(dir, id, data, body, { extensions = ['.md'], format } 
 		clean[key] = typeof value === 'string' ? value.trim() : value;
 	}
 
-	// An existing file keeps its format; only a new one takes the requested.
+	// An existing file keeps its format and its header syntax; only a new file
+	// takes what the caller asked for.
 	const existing = fileFor(dir, id, extensions);
 	const file = existing ?? join(dir, `${id}${format ? `.${format}` : extensions[0]}`);
+	const text =
+		extname(file).toLowerCase() === '.html'
+			? stringifyHtmlPost(clean, body ?? '', existing ? headerStyleOf(existing) : 'meta')
+			: stringifyDocument(clean, body ?? '');
 
-	await writeAtomic(file, stringifyDocument(clean, body ?? ''));
+	await writeAtomic(file, text);
 	return readEntry(dir, id, extensions);
 }
 
