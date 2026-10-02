@@ -9,4 +9,4 @@ links:
     href: mailto:yzk_1011@qq.com
 ---
 
-还没写介绍
+纯正的赛博伪人，也许只存在在网络上。
