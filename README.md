@@ -303,6 +303,9 @@ author: shizuku
 
 - **是片段，不是整页。** 不要写 `<!doctype>` / `<html>` / `<head>` / `<body>` ——
   那些位置属于站点外壳。写了会直接报错提醒你，而不是偷偷套两层。
+- **用纯文本编辑器改这些文件**（VS Code、记事本，或站内编辑器 `/__edit`）。Word 之类的
+  富文本 HTML 编辑器会把 `---` 那段当成正文：包进 `<p>`、把换行压成空格，frontmatter
+  就失效了，文章进不了网站。构建时对这类文件会专门提示，而不是只说「没有 frontmatter」。
 - **媒体文件放 `public/` 下**，用 `/` 开头的普通路径引用：`/media/clip.mp4` 对应
   `public/media/clip.mp4`。HTML 文章**不走** Astro 的图片管线，所以 `src/assets/`
   那套「只写文件名」的规则在这里不适用。

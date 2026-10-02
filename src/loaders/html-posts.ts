@@ -51,9 +51,21 @@ async function walk(dir: string): Promise<string[]> {
 function splitFrontmatter(source: string, label: string) {
 	const match = FRONTMATTER.exec(source);
 	if (!match) {
+		// A rich-text editor — Word, or anything else that saves "web pages" —
+		// treats the frontmatter fence as ordinary body text: it wraps the block
+		// in a <p> and collapses the newlines into spaces. The metadata is still
+		// in there, just no longer readable, and the shape is worth naming
+		// because "no frontmatter" alone does not explain where it went.
+		const swallowed = /^\s*<(\w+)\b[^>]*>\s*---/.exec(source);
 		throw new Error(
 			`${label} has no frontmatter. An HTML post starts with a "---" block ` +
-				`holding at least \`title\` and \`pubDate\`, exactly like a markdown post.`
+				`holding at least \`title\` and \`pubDate\`, exactly like a markdown post.` +
+				(swallowed
+					? `\n  This file looks like it came back from a rich-text editor: the "---" block ` +
+						`is now inside a <${swallowed[1]}> with its line breaks collapsed. Put the ` +
+						`frontmatter back as the very first thing in the file, one key per line, and ` +
+						`delete the tag that swallowed it — otherwise that text shows up in the post.`
+					: '')
 		);
 	}
 
