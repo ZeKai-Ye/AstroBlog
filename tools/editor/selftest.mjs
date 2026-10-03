@@ -188,6 +188,40 @@ console.log('\nthe <meta> header html posts use');
 	check('meta file keeps meta style', converted.style === 'meta');
 	const yamlFile = '---\ntitle: 旧\n---\n\n<p>x</p>\n';
 	check('a "---" html post stays yaml', parseHtmlPost(yamlFile).style === 'yaml');
+
+	// An editor that rewrites `name` gets `data-post` as the way out.
+	const aliased = parseHtmlPost(
+		'<meta data-post="title" content="别名">\n<meta data-post="pubDate" content="2024-03-03">\n\n<p>x</p>\n'
+	);
+	check(
+		'data-post stands in for name',
+		aliased.data.title === '别名' && aliased.data.pubDate === '2024-03-03',
+		JSON.stringify(aliased.data)
+	);
+
+	// An editor may prepend its own meta: not a field, and not body either.
+	const withCharset = parseHtmlPost('<meta charset="utf-8">\n<meta name="title" content="T">\n\n<p>x</p>\n');
+	check(
+		'charset meta ignored',
+		withCharset.data.title === 'T' && !('charset' in withCharset.data),
+		JSON.stringify(withCharset.data)
+	);
+	check('charset meta not left in the body', withCharset.body === '<p>x</p>\n', JSON.stringify(withCharset.body));
+
+	// A tag an editor stripped the name off must not block the editor: opening
+	// the post is how it gets repaired.
+	const broken = parseHtmlPost(
+		'<meta content="丢了名字">\n<meta name="pubDate" content="2024-03-03">\n\n<p>x</p>\n'
+	);
+	check(
+		'nameless tag does not block the editor',
+		broken.style === 'meta' && broken.data.pubDate === '2024-03-03' && broken.data.title === undefined,
+		JSON.stringify(broken.data)
+	);
+
+	// And writing it back puts a proper header on it — the repair path.
+	const fixed = stringifyHtmlPost({ ...broken.data, title: '补回来' }, broken.body, 'meta');
+	check('saving repairs the header', /^<meta name="title"/.test(fixed) && parseHtmlPost(fixed).data.title === '补回来', fixed);
 }
 
 console.log(`\n${checks - failures}/${checks} passed\n`);

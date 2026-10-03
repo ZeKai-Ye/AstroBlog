@@ -72,8 +72,17 @@ function parseMeta(text) {
 
 	while ((tag = META_TAG.exec(block[0]))) {
 		const attributes = readAttributes(tag[1]);
-		const name = (attributes.name ?? '').trim();
+
+		// Not a field, just something an editor prepended.
+		if ('charset' in attributes || 'http-equiv' in attributes) continue;
+
+		// `data-post` is the fallback for editors that rewrite `name`. A tag with
+		// neither is skipped rather than refused: that is what a mangled header
+		// looks like, and opening and saving the post is how it gets repaired,
+		// since the header is rewritten from the form's fields.
+		const name = (attributes.name ?? attributes['data-post'] ?? '').trim();
 		if (name === '') continue;
+
 		const value = attributes.content ?? '';
 		// The schema wants a real list and a real boolean; everything else in a
 		// header is text either way.

@@ -48,6 +48,11 @@ const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
  * recognises, and being void there is no closing tag for auto-complete to
  * insert. Each field also stands alone, so at worst an editor costs you one
  * field rather than the whole header.
+ *
+ * `data-post="…"` is accepted in place of `name="…"`, for an editor that
+ * rewrites `name` on a tag whose value it thinks it recognises. A `<meta>`
+ * carrying neither is refused by name rather than left to fail schema
+ * validation with a puzzling "title: Required".
  */
 const META_HEADER = /^(?:[ \t\r\n]|<meta\b[^>]*>)+/i;
 const META_TAG = /<meta\b([^>]*)>/gi;
@@ -120,8 +125,24 @@ function parseMetaHeader(source: string, label: string) {
 
 	while ((tag = META_TAG.exec(block[0]))) {
 		const attributes = readAttributes(tag[1]);
-		const name = (attributes.name ?? '').trim();
-		if (name === '') continue;
+
+		// `<meta charset>` and `<meta http-equiv>` are not fields; an HTML
+		// editor may prepend one, and it means nothing inside a fragment.
+		if ('charset' in attributes || 'http-equiv' in attributes) continue;
+
+		// `data-post` is accepted as well as `name`, for editors that rewrite
+		// `name` on a tag they think they recognise.
+		const name = (attributes.name ?? attributes['data-post'] ?? '').trim();
+		if (name === '') {
+			const carried = (attributes.content ?? '').slice(0, 60);
+			throw new Error(
+				`${label}: a <meta> in the header has no \`name\`, so there is no telling which ` +
+					`field it is (it carries ${carried ? `"${carried}"` : 'nothing'}).\n` +
+					`  Write one field per tag, e.g. <meta name="title" content="…">. ` +
+					`If an HTML editor stripped the attribute, use \`data-post\` instead of ` +
+					`\`name\` — that is accepted too, and no editor has a reason to touch it.`
+			);
+		}
 		if (!HEADER_FIELDS.has(name)) {
 			throw new Error(
 				`${label}: <meta name="${name}"> is not a post field. ` +
