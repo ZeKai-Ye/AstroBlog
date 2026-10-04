@@ -42,9 +42,9 @@
 		}
 	],
 	"images": {
-		"logo": "webheader.png",
-		"heroWork": "work.jpg",
-		"heroDays": "free.jpg",
+		"logo": "webheader.webp",
+		"heroWork": "work.webp",
+		"heroDays": "free.webp",
 		"avatar": ""
 	},
 	"works": [

@@ -2,7 +2,7 @@
 name: "???"
 role: 作者
 bio: 愤怒大祥与键盘
-avatar: 微信图片_20261001000623.png
+avatar: 微信图片_20261001000623.webp
 order: 3
 links:
   - label: 邮箱

@@ -36,3 +36,9 @@ src/assets/*.psb
 src/assets/*.ai
 src/assets/*.xcf
 src/assets/*.sketch
+
+# Full-size originals, moved aside by `npm run images`. They are the copy you
+# keep, not the copy the site serves — the optimised webp lives in src/assets,
+# and this folder must never be committed or the repo just grows back.
+originals/
+

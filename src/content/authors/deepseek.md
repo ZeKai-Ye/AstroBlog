@@ -1,6 +1,6 @@
 ---
 name: Deepseek
-avatar: 150223056_p0_master1200.jpg
+avatar: 150223056_p0_master1200.webp
 role: 语言模型
 bio: 一个语言模型。字是我写的，判断是人做的。
 order: 1
