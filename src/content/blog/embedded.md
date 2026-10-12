@@ -7,7 +7,6 @@ tags:
   - Embedding
   - 工作
 ---
-
 # GPIO和点亮第一个LED
 
 其实我也不是很能搞明白具体这些步骤，总之先写下来
@@ -58,7 +57,7 @@ void GPIO_Init(GPIO_TypeDef* GPIOx, GPIO_InitTypeDef* GPIO_InitStruct);
 typedef struct
 {
   uint16_t GPIO_Pin;
-  /*GPIO_Pin_0 ~ 15 or ALL*/        
+  /*GPIO_Pin_0 ~ 15 or ALL*/  
   GPIOSpeed_TypeDef GPIO_Speed;
   /*
   GPIO_Speed_10MHz = 1,
@@ -101,3 +100,5 @@ LED灯默认是低电平点亮，所以点亮操作只需要设置设定好的�
 
 因为接线还没有搞定，所以单这些代码没有什么用。这时候需要将
 led的负极连接pin0，然后正极（长脚）连接供电（最上面红色一排）。然后将GND引脚接地（最上面蓝色一排），3.3v连接供电，这下终于可以亮了，简单。
+
+![本地图片](./assets/led_light.png 本地图片标题")
