@@ -414,8 +414,19 @@ body.surface--cream {
 	padding: 0;
 }
 
+/* Astro writes the source picture's pixel size onto every image a post gets
+   from `![]()` — `<img width="1080" height="608">` — and a `width`/`height`
+   attribute is a presentational hint, i.e. a real CSS width/height. The
+   `width: 100%` below overrides the width hint, but nothing overrode the
+   height hint, so the picture kept its original pixel height at whatever
+   width the column happened to be: 900x608 instead of 900x507, stretched
+   vertically. `height: auto` hands the ratio back to the attributes, which is
+   what they are for — they still reserve the right box while the file loads.
+   The slots in `Figure.astro` set their own `height: 100%` and crop with
+   `object-fit: cover`, and their rule comes later, so they are unaffected. */
 .prose img {
 	width: 100%;
+	height: auto;
 	border-radius: var(--radius);
 }
 

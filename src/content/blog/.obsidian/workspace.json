@@ -43,7 +43,7 @@
               "state": {
                 "file": "em-DLC.md",
                 "mode": "source",
-                "source": false
+                "source": true
               },
               "icon": "lucide-file",
               "title": "em-DLC"
@@ -216,10 +216,19 @@
   },
   "active": "3386bb16fa2ae14d",
   "lastOpenFiles": [
-    "embedded-2.md",
-    "notes-on-slow-tools.md",
+    "assets/nonoka_ha.webp",
+    "assets/nonoka_ha_cp.png",
+    "assets/nonoka_ha.png",
+    "nonoka_ha.png",
+    "Pasted image 20261013233817.png",
+    "two-ways-to-write-a-post.md",
+    "assets/em-dlc-1.png",
+    "Pasted image 20261013175503.png",
+    "Pasted image 20261013175426.png",
     "em-DLC.md",
     "embedded-1.md",
+    "embedded-2.md",
+    "notes-on-slow-tools.md",
     "未命名.canvas",
     "image",
     "assets/led_light.png",
