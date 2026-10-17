@@ -85,7 +85,7 @@ GPIO_InitTypeDef GPIO_Initstructure0;
 	GPIO_Initstructure0.GPIO_Speed = GPIO_Speed_50MHz;
 ```
 
-LED灯默认是低电平点亮，所以点亮操作只需要设置设定好的输出引脚电平就可以
+~~LED灯默认是低电平点亮~~ 哦不，其实是和推挽输出相关的，所以点亮操作只需要设置设定好的输出引脚电平就可以
 
 ```c
 	GPIO_ResetBits(GPIOA, GPIO_Pin_0);//设置输出位为低
