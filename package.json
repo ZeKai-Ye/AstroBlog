@@ -20,6 +20,8 @@
     "js-yaml": "^4.3.2"
   },
   "devDependencies": {
+    "@astrojs/markdown-satteri": "^0.4.2",
+    "katex": "^0.16.47",
     "sharp": "^0.35.5"
   },
   "allowScripts": {

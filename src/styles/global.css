@@ -488,3 +488,22 @@ body.surface--cream {
 	color: var(--c-ink-muted);
 	text-align: center;
 }
+
+/* --- Math -----------------------------------------------------------------
+   KaTeX renders a display block as its own centred line, and a long one — a
+   matrix, an aligned derivation — is wider than the column at phone widths.
+   Scrolling it keeps the page from gaining a horizontal scrollbar, the same
+   deal `.prose pre` makes for code. The size override is the one thing that
+   needs saying out loud: KaTeX sets formulas at 1.21em of the surrounding
+   text, and the body copy here is already 22px, so the default towers over
+   the line it sits in. */
+.prose .katex {
+	font-size: 1.1em;
+}
+
+.prose .katex-display {
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding-block: 0.2em;
+}
+

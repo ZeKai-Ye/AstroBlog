@@ -1,6 +1,8 @@
 // @ts-check
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
+import { satteri } from '@astrojs/markdown-satteri';
+import { katexMath } from './tools/markdown-katex.mjs';
 import { localEditor } from './tools/editor/plugin.mjs';
 
 /**
@@ -33,6 +35,42 @@ const base = process.env.BASE_PATH ?? '/';
 export default defineConfig({
 	site,
 	base,
+
+	/**
+	 * Math in markdown, the way it is written in Obsidian and on paper:
+	 * `$E = mc^2$` inline, `$$…$$` on its own line for a display block.
+	 *
+	 * Astro 7 parses markdown with Sätteri (Rust), which reads those two forms
+	 * itself but hands the TeX through as text — `features.math` is off by
+	 * default. Turning it on is half the job; `tools/markdown-katex.mjs` is the
+	 * other half, a HAST visitor that swaps each formula for the HTML and MathML
+	 * KaTeX renders, at build time. No KaTeX script reaches the browser, no
+	 * formula is laid out by JavaScript.
+	 *
+	 * The obvious alternative — `remark-math` + `rehype-katex`, as every guide
+	 * shows — is not an option here without a second swap: those are unified
+	 * plugins, so they need `@astrojs/markdown-remark`'s `unified()` processor,
+	 * which would replace Sätteri for the whole site. That costs the Chinese
+	 * typography: Sätteri's smart punctuation opens `这些"低效"的` as
+	 * `这些“低效”的`, while unified's remark-smartypants, written for Latin
+	 * text, closes both (`这些”低效”的`). See the comment in the plugin.
+	 *
+	 * The KaTeX stylesheet is imported by the two pages that render markdown
+	 * (`blog/[...slug].astro` and `authors/[...id].astro`), not by the layout, so
+	 * the front page and the search page never download it; its font files are
+	 * fetched only for the glyphs a formula actually uses.
+	 *
+	 * `strict: 'ignore'` is set in the plugin: KaTeX's strict mode complains
+	 * about unicode text inside math (`$\text{电压}$` written as `$电压$`), which
+	 * is worth a warning in a maths paper and is noise here. A formula with a
+	 * real typo still fails the build, naming the file and the TeX it choked on.
+	 */
+	markdown: {
+		processor: satteri({
+			features: { math: true },
+			hastPlugins: [katexMath],
+		}),
+	},
 
 	vite: {
 		plugins: [

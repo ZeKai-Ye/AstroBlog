@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "embedded-2.md",
+                "file": "em-DLC.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "embedded-2"
+              "title": "em-DLC"
             }
           }
         ],
@@ -205,10 +205,11 @@
   },
   "active": "132ab6f033d528d4",
   "lastOpenFiles": [
+    "__math-test.md",
+    "embedded-2.md",
     "draft/why.html",
     "draft",
     "未命名.md",
-    "embedded-2.md",
     "embedded-1.md",
     "em-DLC2.md",
     "em-DLC.md",
