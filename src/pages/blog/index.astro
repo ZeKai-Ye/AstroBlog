@@ -10,11 +10,15 @@
  */
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SITE, categoryOf, formatMonthDay, isoDate, withBase } from '../../config';
+import Figure from '../../components/Figure.astro';
+import { SITE, asset, categoryOf, formatMonthDay, isoDate, withBase } from '../../config';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+
+/* The 时日 photograph configured in settings.json: a print on the page head. */
+const banner = asset(SITE.images.heroDays);
 
 const tagCounts = new Map<string, number>();
 for (const post of posts) {
@@ -26,14 +30,33 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 ---
 
 <BaseLayout title="时日" description={`${SITE.title} 的全部文章，共 ${posts.length} 篇。`}>
-	<div class="container page-head page-head--lined">
-		<p class="section-kicker">02 — Days / 时日</p>
-		<h1 class="page-head__title">一些很小的日子。</h1>
-		<p class="page-head__lede">
-			共 {posts.length} 篇，从最近的开始。想找某个主题，可以直接
-			<a href={withBase('/search/')}>搜索</a>，或者点左边任意一个标签。
-		</p>
-	</div>
+	<header class="container page-head page-head--lined page-head--split">
+		<div class="page-head__text">
+			<p class="section-kicker">02 — Days / 时日</p>
+			<h1 class="page-head__title">一些很小的日子。</h1>
+			<p class="page-head__lede">
+				共 {posts.length} 篇，从最近的开始。想找某个主题，可以直接
+				<a href={withBase('/search/')}>搜索</a>，或者点左边任意一个标签。
+			</p>
+		</div>
+
+		{
+			banner && (
+				<figure class="print print--banner" style="--print-tilt: 1.8deg">
+					<Figure
+						src={banner}
+						alt="时日：一小片天空与树"
+						label="时日"
+						ratio="4 / 3"
+						sizes="(max-width: 62rem) 80vw, 20rem"
+					/>
+					<figcaption class="print__caption">
+						<span>时日 / Hēmerai</span><span>DAYS</span>
+					</figcaption>
+				</figure>
+			)
+		}
+	</header>
 
 	<div class="container days">
 		<aside class="days__side" data-reveal>
@@ -125,7 +148,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 
 	.now__label {
 		color: var(--accent);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
 	}
@@ -145,13 +168,13 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 
 	.now__list dt {
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.08em;
 	}
 
 	.now__list dd {
 		font-family: var(--font-serif);
-		font-size: 0.8125rem;
+		font-size: 0.9375rem;
 		text-align: right;
 		font-variant-numeric: tabular-nums;
 	}
@@ -171,7 +194,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 		gap: 14px;
 		padding-block: 7px;
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.8125rem;
 		letter-spacing: 0.04em;
 		transition: color 0.2s ease;
 	}
@@ -182,7 +205,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 
 	.tag-list__count {
 		color: var(--muted-soft);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -236,7 +259,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 		width: 7px;
 		height: 7px;
 		content: '';
-		background: var(--paper);
+		background: var(--bg);
 		border: 1px solid var(--line-strong);
 		border-radius: 50%;
 		transition:
@@ -252,7 +275,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 	.day__date {
 		color: var(--accent);
 		font-family: var(--font-serif);
-		font-size: 0.75rem;
+		font-size: 0.84375rem;
 		letter-spacing: 0.02em;
 	}
 
@@ -272,20 +295,20 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 		max-width: 33rem;
 		margin-block-start: 6px;
 		color: var(--muted);
-		font-size: 0.7rem;
+		font-size: 0.84375rem;
 		line-height: 1.85;
 	}
 
 	.day__tag {
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.08em;
 	}
 
 	.days__empty,
 	.days__note {
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.8125rem;
 		line-height: 1.9;
 	}
 
@@ -356,7 +379,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 		.day__tag {
 			grid-column: 2;
 			margin-block-start: -2px;
-			font-size: 0.5rem;
+			font-size: 0.6875rem;
 		}
 	}
 </style>

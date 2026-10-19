@@ -7,6 +7,7 @@
  * ground, and it does that through `html[data-theme]`.
  */
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import BackToTop from '../components/BackToTop.astro';
@@ -29,7 +30,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="theme-color" content="#f2eee5" />
+		<meta name="theme-color" content="#fff1d4" />
 
 		{/*
 			Before first paint: gate the reveal animation behind `.js`, and restore
@@ -53,6 +54,14 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 		</script>
 
 		<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+
+		{/*
+			Client-side routing with the native View Transitions API. It is what
+			makes moving between pages feel like turning a sheet rather than a
+			white flash; the site's own scripts re-attach on `astro:page-load`
+			(see src/scripts/site.ts) and the 3D scene does the same.
+		*/}
+		<ClientRouter />
 		<meta name="generator" content={Astro.generator} />
 		<title>{pageTitle}</title>
 		<meta name="description" content={description} />

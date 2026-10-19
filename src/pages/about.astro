@@ -43,9 +43,11 @@ const firstYear = posts.length
 						alt={`${SITE.title} 的题图`}
 						label="题图"
 						ratio="960 / 181"
-						sizes="(max-width: 80rem) 100vw, 1280px"
+						sizes="(max-width: 60rem) 100vw, 960px"
 					/>
-					<figcaption class="about__banner-caption">站点题图 / MASTHEAD</figcaption>
+					<figcaption class="about__banner-caption">
+						站点题图 / 960 × 181 原尺寸，不作放大
+					</figcaption>
 				</figure>
 			)
 		}
@@ -124,13 +126,16 @@ const firstYear = posts.length
 	/* --- Masthead plate --------------------------------------------------- */
 
 	.about__banner {
+		/* The painting is 960px wide. It is allowed to sit at that size and not
+		   a pixel more — an upscaled wordmark is just a blurry wordmark. */
+		max-width: 60rem;
 		margin-block-end: clamp(40px, 5vw, 68px);
 	}
 
 	.about__banner-caption {
 		margin-block-start: 10px;
 		color: var(--muted-soft);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.16em;
 		text-align: right;
 	}
@@ -151,7 +156,7 @@ const firstYear = posts.length
 	.about__note {
 		color: var(--muted);
 		font-family: var(--font-sans);
-		font-size: 0.6875rem;
+		font-size: 0.8125rem;
 	}
 
 	.about__meta {
@@ -170,13 +175,13 @@ const firstYear = posts.length
 
 	.about__meta dt {
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.11em;
 	}
 
 	.about__meta dd {
 		font-family: var(--font-serif);
-		font-size: 0.8125rem;
+		font-size: 0.9375rem;
 		text-align: right;
 		font-variant-numeric: tabular-nums;
 	}
@@ -199,7 +204,7 @@ const firstYear = posts.length
 	.colophon {
 		padding-block: 26px clamp(40px, 5vw, 64px);
 		color: var(--muted-soft);
-		font-size: 0.5625rem;
+		font-size: 0.71875rem;
 		line-height: 2;
 		letter-spacing: 0.04em;
 	}

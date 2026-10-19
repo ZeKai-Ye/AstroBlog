@@ -12,17 +12,39 @@ import Figure from '../components/Figure.astro';
 import { SITE, asset } from '../config';
 
 const works = SITE.works;
+
+/* The 工作 photograph configured in settings.json: a print on the page head. */
+const banner = asset(SITE.images.heroWork);
 ---
 
 <BaseLayout title="工作" description={`${SITE.title} 的工作档案：${works.length} 则。`}>
-	<div class="container page-head page-head--lined">
-		<p class="section-kicker">03 — Work / 工作</p>
-		<h1 class="page-head__title">做过的一些事。</h1>
-		<p class="page-head__lede">
-			不是完整的作品集，只是一些工作档案。条目、年份与图片都在
-			<code>src/settings.json</code> 的 <code>works</code> 里，这个页面会跟着变。
-		</p>
-	</div>
+	<header class="container page-head page-head--lined page-head--split">
+		<div class="page-head__text">
+			<p class="section-kicker">03 — Work / Erga</p>
+			<h1 class="page-head__title">做过的一些事。</h1>
+			<p class="page-head__lede">
+				不是完整的作品集，只是一些工作档案。条目、年份与图片都在
+				<code>src/settings.json</code> 的 <code>works</code> 里，这个页面会跟着变。
+			</p>
+		</div>
+
+		{
+			banner && (
+				<figure class="print print--banner" style="--print-tilt: -1.8deg">
+					<Figure
+						src={banner}
+						alt="工作：一张桌面上的速写"
+						label="工作"
+						ratio="4 / 3"
+						sizes="(max-width: 62rem) 80vw, 20rem"
+					/>
+					<figcaption class="print__caption">
+						<span>工作 / Erga</span><span>WORK</span>
+					</figcaption>
+				</figure>
+			)
+		}
+	</header>
 
 	<div class="container works">
 		<ol class="works__grid">
@@ -100,14 +122,14 @@ const works = SITE.works;
 		justify-content: space-between;
 		gap: 14px;
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.1em;
 	}
 
 	.work__index {
 		color: var(--accent);
 		font-family: var(--font-serif);
-		font-size: 0.65rem;
+		font-size: 0.8125rem;
 	}
 
 	.work__art {
@@ -209,14 +231,14 @@ const works = SITE.works;
 	.work__type {
 		margin-block-start: 8px;
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.8125rem;
 		letter-spacing: 0.04em;
 	}
 
 	.footnote {
 		margin-block-start: clamp(26px, 4vw, 40px);
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.8125rem;
 		line-height: 1.9;
 	}
 

@@ -40,9 +40,10 @@ const writing = posts.slice(1, 6);
 const authors = await getAuthorIndex();
 const year = new Date().getFullYear();
 
-/* A file named in settings.json wins; otherwise the newest post's cover. */
-const featureCover = asset(SITE.images.heroWork) ?? asset(latest?.data.cover);
-const aboutPhoto = asset(SITE.images.heroDays);
+/* The latest post's cover, when it has one. The two photographs configured in
+   settings.json are the 工作 / 时日 banner prints on their own pages now, so
+   the home feature is drawn in paper rather than cropping one of them. */
+const featureCover = asset(latest?.data.cover);
 
 /* Rendered at build time, corrected in the browser by site.ts — so the page
    still carries a plausible date when the script never runs. */
@@ -158,13 +159,36 @@ const contents = [
 					</div>
 
 					<div class="feature__art" data-reveal style="--reveal-delay:120ms">
-						<Figure
-							src={featureCover}
-							alt={latest.data.coverAlt || latest.data.title}
-							label="题图"
-							ratio="4 / 4.5"
-							sizes="(max-width: 60rem) 100vw, 46vw"
-						/>
+						{
+							featureCover ? (
+								<figure class="feature__print print" style="--print-tilt: 1.4deg">
+									<Figure
+										src={featureCover}
+										alt={latest.data.coverAlt || latest.data.title}
+										label="题图"
+										ratio="4 / 4.5"
+										sizes="(max-width: 60rem) 100vw, 40vw"
+									/>
+									<figcaption class="print__caption">
+										<span>最近一篇</span><span>LATEST</span>
+									</figcaption>
+								</figure>
+							) : (
+								/* No cover: the demo's own device — two sheets of paper,
+								   a rule, a dot and one character. */
+								<figure class="paper-art">
+									<span class="paper-art__sheet paper-art__sheet--back" aria-hidden="true"
+									></span>
+									<span class="paper-art__sheet paper-art__sheet--front" aria-hidden="true">
+										<span class="paper-art__char">工</span>
+									</span>
+									<span class="paper-art__rule" aria-hidden="true"></span>
+									<span class="paper-art__dot" aria-hidden="true"></span>
+									<span class="paper-art__note" aria-hidden="true">WORK NOTE / 001</span>
+									<figcaption>工作笔记 / 关于此刻</figcaption>
+								</figure>
+							)
+						}
 					</div>
 				</div>
 			</section>
@@ -302,16 +326,6 @@ const contents = [
 			</div>
 
 			<div class="about__side" data-reveal style="--reveal-delay:160ms">
-				<div class="about__photo">
-					<Figure
-						src={aboutPhoto}
-						alt="站点的一帧日常"
-						label="日子"
-						ratio="4 / 5"
-						sizes="(max-width: 60rem) 60vw, 20rem"
-					/>
-				</div>
-
 				<dl class="about__meta">
 					<div><dt>文章</dt><dd>{posts.length} 篇</dd></div>
 					<div><dt>作者</dt><dd>{authors.list.length} 位</dd></div>
@@ -357,7 +371,7 @@ const contents = [
 		justify-content: space-between;
 		gap: 20px;
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.15em;
 		text-transform: uppercase;
 	}
@@ -379,7 +393,7 @@ const contents = [
 		gap: 13px;
 		margin-block-end: clamp(24px, 3vw, 38px);
 		color: var(--muted);
-		font-size: 0.5625rem;
+		font-size: 0.71875rem;
 		letter-spacing: 0.17em;
 	}
 
@@ -433,7 +447,7 @@ const contents = [
 
 	.hero__aside-text {
 		color: var(--ink-soft);
-		font-size: 0.8rem;
+		font-size: 0.9375rem;
 		line-height: 2;
 	}
 
@@ -450,7 +464,7 @@ const contents = [
 		margin-block-start: 24px;
 		color: var(--muted);
 		font-family: var(--font-hand);
-		font-size: 0.875rem;
+		font-size: 1rem;
 		line-height: 1.2;
 		letter-spacing: 0.05em;
 		transform: rotate(-2deg);
@@ -469,7 +483,7 @@ const contents = [
 		place-items: center;
 		color: var(--accent);
 		font-family: var(--font-hand);
-		font-size: 0.75rem;
+		font-size: 0.84375rem;
 		line-height: 1;
 		border: 1px solid var(--accent);
 		transform: rotate(4deg);
@@ -494,7 +508,7 @@ const contents = [
 		align-items: baseline;
 		padding-block: 3px;
 		color: var(--muted);
-		font-size: 0.6rem;
+		font-size: 0.75rem;
 		letter-spacing: 0.08em;
 		transition: color 0.25s ease;
 	}
@@ -506,7 +520,7 @@ const contents = [
 	.contents__num {
 		color: var(--accent);
 		font-family: var(--font-serif);
-		font-size: 0.625rem;
+		font-size: 0.75rem;
 	}
 
 	.contents__leader {
@@ -522,7 +536,7 @@ const contents = [
 
 	.contents__count {
 		color: var(--muted-soft);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -537,7 +551,7 @@ const contents = [
 		gap: 20px;
 		padding-block: 20px 24px;
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.15em;
 		text-transform: uppercase;
 		border-block-start: 1px solid var(--line);
@@ -595,7 +609,7 @@ const contents = [
 	.hero__mark {
 		color: var(--ink);
 		font-family: var(--font-serif);
-		font-size: 0.6875rem;
+		font-size: 0.8125rem;
 		letter-spacing: 0.16em;
 	}
 
@@ -705,7 +719,7 @@ const contents = [
 		max-width: 33rem;
 		margin-block-start: 24px;
 		color: var(--ink-soft);
-		font-size: 0.82rem;
+		font-size: 0.96875rem;
 		line-height: 1.95;
 	}
 
@@ -718,7 +732,134 @@ const contents = [
 	}
 
 	.feature__art {
+		justify-self: end;
+		width: min(100%, 26rem);
 		min-width: 0;
+	}
+
+	.feature__print {
+		width: 100%;
+	}
+
+	/* The demo's feature artwork, drawn in CSS: two loose sheets, a rule, a dot
+	   and one character. It keeps the feature from depending on a photograph
+	   that would have to be cropped to fit. */
+	.paper-art {
+		position: relative;
+		margin: 0;
+		aspect-ratio: 4 / 4.4;
+		overflow: hidden;
+		background:
+			linear-gradient(135deg, rgb(255 255 255 / 0.45), transparent 46%),
+			var(--paper-soft);
+		border: 1px solid var(--line);
+	}
+
+	.paper-art::before {
+		position: absolute;
+		inset: 0;
+		content: '';
+		background:
+			linear-gradient(90deg, transparent 49.9%, var(--line) 50%, transparent 50.1%),
+			linear-gradient(0deg, transparent 49.9%, var(--line) 50%, transparent 50.1%);
+		opacity: 0.5;
+	}
+
+	.paper-art__sheet {
+		position: absolute;
+		display: block;
+		background: var(--sheet);
+		border: 1px solid var(--line);
+		box-shadow: 0 20px 40px rgb(58 42 26 / 0.12);
+		transition: transform 0.8s var(--ease);
+	}
+
+	.paper-art__sheet--back {
+		inset-block-start: 11%;
+		inset-inline-start: 9%;
+		width: 52%;
+		height: 60%;
+		transform: rotate(-6deg);
+	}
+
+	.paper-art__sheet--front {
+		inset-block-start: 22%;
+		inset-inline-start: 31%;
+		display: grid;
+		width: 56%;
+		height: 64%;
+		place-items: end start;
+		padding: 0 0 9% 12%;
+		transform: rotate(2.5deg);
+	}
+
+	.paper-art__sheet--front::before {
+		position: absolute;
+		inset-block-start: 24%;
+		inset-inline: 12%;
+		height: 1px;
+		content: '';
+		background: var(--line-strong);
+		box-shadow:
+			0 14px 0 var(--line),
+			0 28px 0 var(--line),
+			0 42px 0 var(--line);
+	}
+
+	.paper-art__char {
+		color: var(--rose);
+		font-family: var(--font-serif);
+		font-size: clamp(2.2rem, 3.6vw, 3.4rem);
+		line-height: 1;
+		opacity: 0.9;
+	}
+
+	.paper-art__rule {
+		position: absolute;
+		inset-block-end: 15%;
+		inset-inline-start: 10%;
+		width: 34%;
+		height: 1px;
+		background: var(--accent);
+		opacity: 0.7;
+	}
+
+	.paper-art__dot {
+		position: absolute;
+		inset-block-end: 19%;
+		inset-inline-end: 13%;
+		width: 9px;
+		height: 9px;
+		background: var(--orange);
+		border-radius: 50%;
+		box-shadow: 0 0 0 9px rgb(235 157 96 / 0.16);
+	}
+
+	.paper-art__note {
+		position: absolute;
+		inset-block-start: 16px;
+		inset-inline-end: 16px;
+		color: var(--muted-soft);
+		font-size: 0.6875rem;
+		letter-spacing: 0.16em;
+	}
+
+	.paper-art figcaption {
+		position: absolute;
+		inset-block-end: 14px;
+		inset-inline-start: 16px;
+		color: var(--muted);
+		font-family: var(--font-serif);
+		font-size: 0.8125rem;
+		letter-spacing: 0.08em;
+	}
+
+	.paper-art:hover .paper-art__sheet--back {
+		transform: rotate(-8deg) translate(-7px, 4px);
+	}
+
+	.paper-art:hover .paper-art__sheet--front {
+		transform: rotate(1deg) translate(8px, -6px);
 	}
 
 	/* ======================================================================
@@ -763,7 +904,7 @@ const contents = [
 	.preview__category {
 		margin-block-start: 20px;
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.15em;
 		text-transform: uppercase;
 	}
@@ -780,7 +921,7 @@ const contents = [
 	.preview__excerpt {
 		margin-block-start: 16px;
 		color: var(--muted);
-		font-size: 0.75rem;
+		font-size: 0.84375rem;
 		line-height: 1.9;
 	}
 
@@ -788,7 +929,7 @@ const contents = [
 		margin-block-start: 22px;
 		padding-block-start: 12px;
 		color: var(--muted-soft);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.06em;
 		border-block-start: 1px solid var(--line);
 	}
@@ -796,7 +937,7 @@ const contents = [
 	.footnote {
 		margin-block-start: clamp(28px, 4vw, 44px);
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.8125rem;
 		line-height: 1.9;
 	}
 
@@ -835,14 +976,14 @@ const contents = [
 		justify-content: space-between;
 		gap: 14px;
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.1em;
 	}
 
 	.work-card__index {
 		color: var(--accent);
 		font-family: var(--font-serif);
-		font-size: 0.65rem;
+		font-size: 0.8125rem;
 	}
 
 	.work-card__art {
@@ -944,7 +1085,7 @@ const contents = [
 	.work-card__type {
 		margin-block-start: 8px;
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.8125rem;
 		letter-spacing: 0.04em;
 	}
 
@@ -975,16 +1116,12 @@ const contents = [
 		max-width: 35rem;
 		margin-block-start: 28px;
 		color: var(--muted);
-		font-size: 0.8rem;
+		font-size: 0.9375rem;
 		line-height: 2;
 	}
 
 	.about__link {
 		margin-block-start: 30px;
-	}
-
-	.about__photo {
-		margin-block-end: 24px;
 	}
 
 	.about__meta {
@@ -1003,14 +1140,14 @@ const contents = [
 
 	.about__meta dt {
 		color: var(--muted);
-		font-size: 0.5rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.11em;
 		text-transform: uppercase;
 	}
 
 	.about__meta dd {
 		font-family: var(--font-serif);
-		font-size: 0.8125rem;
+		font-size: 0.9375rem;
 		text-align: right;
 	}
 
@@ -1121,10 +1258,6 @@ const contents = [
 			align-items: start;
 		}
 
-		.about__photo {
-			margin: 0;
-		}
-
 		.about__meta {
 			border-block-start: 1px solid var(--line-strong);
 		}
@@ -1163,13 +1296,13 @@ const contents = [
 		}
 
 		.hero__contents a {
-			font-size: 0.55rem;
+			font-size: 0.71875rem;
 		}
 
 		.hero__foot {
 			gap: 12px;
 			padding-block: 19px;
-			font-size: 0.5rem;
+			font-size: 0.6875rem;
 		}
 
 		.hero__mark {
@@ -1178,7 +1311,7 @@ const contents = [
 
 		.hero__note {
 			margin-block-start: 20px;
-			font-size: 0.8125rem;
+			font-size: 0.9375rem;
 		}
 
 		.feature__title {
@@ -1201,11 +1334,6 @@ const contents = [
 
 		.about__side {
 			display: block;
-		}
-
-		.about__photo {
-			max-width: 18rem;
-			margin-block-end: 22px;
 		}
 	}
 

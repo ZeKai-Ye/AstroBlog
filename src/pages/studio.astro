@@ -1,0 +1,254 @@
+---
+/**
+ * 工作间 — the desk, modelled.
+ *
+ * The scene itself lives in src/scenes/desk.ts (three.js). This page owns the
+ * frame, the state label and the switch; the switch just asks the site to flip
+ * its theme, so the lamp, the page and the picture all change together.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { withBase } from '../config';
+---
+
+<BaseLayout
+	title="工作间"
+	description="一张桌子，两种时刻：白天是工作，夜里是生活。"
+>
+	<header class="container page-head page-head--lined">
+		<p class="section-kicker">05 — Studio / 工作间</p>
+		<h1 class="page-head__title">一张桌子，两种时刻。</h1>
+		<p class="page-head__lede">
+			白天，窗户亮着，台灯熄着，桌上是一台开着的电脑；夜里，窗外暗下来，台灯亮起，
+			电脑变回一本摊开的书。拖动画面可以转着看。
+		</p>
+	</header>
+
+	<div class="container studio">
+		<div class="stage">
+			<div class="stage__canvas" data-desk-scene></div>
+
+			<div class="stage__hud">
+				<span class="stage__state" data-desk-state>工作 / 白天</span>
+				<button
+					class="stage__switch"
+					type="button"
+					data-desk-switch
+					aria-pressed="false"
+				>
+					关灯 · 进入生活
+				</button>
+			</div>
+		</div>
+
+		<p class="studio__hint">
+			three.js · 拖动旋转 · 与报头的「工作 / 生活」开关同步
+		</p>
+	</div>
+
+	<div class="container studio__note">
+		<p>
+			这张桌子是用 three.js 的几何体直接搭出来的：桌子、台灯、显示器、摊开的书和窗户，
+			没有外部模型文件。昼夜只由一个数字驱动——0 是白天，1 是夜里——灯、窗外、
+			电脑与书都从这个数字取值，所以它们不会各走各的。
+		</p>
+		<p>
+			切到「生活」之后，页面和场景一起熄灯；
+			<a href={withBase('/')}>回到首页</a>，那边也是同一盏灯。
+		</p>
+	</div>
+</BaseLayout>
+
+<script>
+	import { createDeskScene, type DeskScene } from '../scenes/desk';
+
+	let scene: DeskScene | null = null;
+	let host: HTMLElement | null = null;
+	let uiObserver: MutationObserver | null = null;
+	let themeObserver: MutationObserver | null = null;
+
+	const isNight = () => document.documentElement.dataset.theme === 'night';
+
+	const syncUi = () => {
+		const night = isNight();
+
+		const label = document.querySelector('[data-desk-state]');
+		if (label) label.textContent = night ? '生活 / 夜里' : '工作 / 白天';
+
+		const button = document.querySelector<HTMLButtonElement>('[data-desk-switch]');
+		if (button) {
+			button.textContent = night ? '开灯 · 回到工作' : '关灯 · 进入生活';
+			button.setAttribute('aria-pressed', String(night));
+		}
+	};
+
+	const start = () => {
+		if (host) return;
+
+		host = document.querySelector<HTMLElement>('[data-desk-scene]');
+		if (!host) return;
+
+		try {
+			scene = createDeskScene(host);
+		} catch (error) {
+			console.warn('[studio] the desk scene could not start', error);
+			host.classList.add('stage__canvas--failed');
+			host.textContent = '这个浏览器没有可用的 WebGL，画面暂时看不到。';
+			return;
+		}
+
+		const button = document.querySelector('[data-desk-switch]');
+		button?.addEventListener('click', () => {
+			window.dispatchEvent(new CustomEvent('erga:toggle-theme'));
+		});
+
+		syncUi();
+		uiObserver = new MutationObserver(syncUi);
+		uiObserver.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-theme'],
+		});
+
+		/* Keep the desk in step even if something else flips the theme. */
+		themeObserver = new MutationObserver(() => {
+			scene?.setNight(isNight());
+		});
+		themeObserver.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-theme'],
+		});
+	};
+
+	const stop = () => {
+		scene?.destroy();
+		scene = null;
+		uiObserver?.disconnect();
+		uiObserver = null;
+		themeObserver?.disconnect();
+		themeObserver = null;
+		host = null;
+	};
+
+	document.addEventListener('astro:page-load', start);
+	document.addEventListener('astro:before-swap', stop);
+	start();
+</script>
+
+<style>
+	.studio {
+		padding-block-end: clamp(28px, 4vw, 44px);
+	}
+
+	.stage {
+		position: relative;
+		aspect-ratio: 16 / 10;
+		min-height: 320px;
+		overflow: hidden;
+		background: var(--paper-soft);
+		border: 1px solid var(--line);
+	}
+
+	.stage__canvas {
+		position: absolute;
+		inset: 0;
+	}
+
+	.stage__canvas canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.stage__canvas--failed {
+		display: grid;
+		place-items: center;
+		padding: 2rem;
+		color: var(--muted);
+		font-size: 1rem;
+		text-align: center;
+	}
+
+	.stage__hud {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 16px 18px;
+		pointer-events: none;
+	}
+
+	.stage__state {
+		padding: 6px 10px;
+		color: var(--accent-ink);
+		font-size: 0.8125rem;
+		letter-spacing: 0.1em;
+		background: var(--ink);
+	}
+
+	.stage__switch {
+		pointer-events: auto;
+		padding: 8px 14px;
+		color: var(--ink);
+		font-size: 0.875rem;
+		letter-spacing: 0.06em;
+		background: var(--paper);
+		border: 1px solid var(--line-strong);
+		transition:
+			color 0.25s ease,
+			background 0.25s ease,
+			border-color 0.25s ease;
+	}
+
+	.stage__switch:hover {
+		color: var(--accent-ink);
+		background: var(--ink);
+		border-color: var(--ink);
+	}
+
+	.studio__hint {
+		margin-block-start: 14px;
+		color: var(--muted);
+		font-size: 0.8125rem;
+		letter-spacing: 0.04em;
+	}
+
+	.studio__note {
+		max-width: 46rem;
+		padding-block: clamp(30px, 4vw, 52px) var(--section-pad);
+		color: var(--muted);
+		font-size: 1rem;
+		line-height: 1.95;
+	}
+
+	.studio__note p + p {
+		margin-block-start: 1em;
+	}
+
+	.studio__note a {
+		text-decoration: underline;
+		text-underline-offset: 0.24em;
+		text-decoration-color: var(--line-strong);
+	}
+
+	.studio__note a:hover {
+		color: var(--accent);
+		text-decoration-color: var(--accent);
+	}
+
+	@media (max-width: 48rem) {
+		.stage {
+			aspect-ratio: 4 / 5;
+			min-height: 0;
+		}
+
+		.stage__hud {
+			padding: 12px;
+		}
+
+		.stage__state,
+		.stage__switch {
+			font-size: 0.75rem;
+		}
+	}
+</style>
