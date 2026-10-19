@@ -29,18 +29,6 @@
 			"greek": "περί"
 		}
 	],
-	"features": [
-		{
-			"href": "/works/",
-			"zh": "工作",
-			"greek": "Ἔργα"
-		},
-		{
-			"href": "/blog/",
-			"zh": "时日",
-			"greek": "Ἡμέραι"
-		}
-	],
 	"images": {
 		"logo": "webheader.webp",
 		"heroWork": "work.webp",

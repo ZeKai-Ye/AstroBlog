@@ -66,6 +66,26 @@ export default defineConfig({
 	 * real typo still fails the build, naming the file and the TeX it choked on.
 	 */
 	markdown: {
+		/**
+		 * Two highlight themes, chosen by the paper / night switch.
+		 *
+		 * Astro's default is a single `github-dark`, which paints every code
+		 * block its own dark rectangle — a black tile in the middle of warm
+		 * paper, and the one place the redesign could not reach. Declaring both
+		 * themes and `defaultColor: false` makes Shiki emit `--shiki-light` /
+		 * `--shiki-dark` variables instead of inline colours, so `global.css`
+		 * can pick one per theme on the same `html[data-theme]` switch the rest
+		 * of the site uses.
+		 *
+		 * This has to live here rather than inside `satteri()`: that wrapper
+		 * only forwards `features` / `mdastPlugins` / `hastPlugins`, while the
+		 * highlighter options come from this level.
+		 */
+		shikiConfig: {
+			themes: { light: 'github-light', dark: 'github-dark' },
+			defaultColor: false,
+		},
+
 		processor: satteri({
 			features: { math: true },
 			hastPlugins: [katexMath],

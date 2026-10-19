@@ -1,74 +1,362 @@
 ---
 /**
- * 时日 / Ἡμέραι — the blog index.
+ * 时日 — the blog index.
  *
- * The mockup has no listing screen, so this reuses the language it does define:
- * the 64px section label, the hairline-separated rows from 推荐, and the
- * post page's cream surface.
+ * The demo's 时日 section is a vertical timeline rather than a table of rows, so
+ * the index reads as a ledger of days: date on the left, the entry in the
+ * middle, its category on the right. The left column carries a live 此刻 card
+ * (the demo's Now panel, filled with the clock instead of invented copy) and the
+ * tag list, which links into the search page.
  */
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostRow from '../../components/PostRow.astro';
-import { SITE } from '../../config';
+import { SITE, categoryOf, formatMonthDay, isoDate, withBase } from '../../config';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+
+const tagCounts = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
+const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 ---
 
-<BaseLayout title="时日" surface="cream">
-	<div class="container listing">
-		<header class="listing__head">
-			<h1 class="section-label">时日</h1>
-			<p class="listing__sub">Ἡμέραι · 共 {posts.length} 篇</p>
-		</header>
+<BaseLayout title="时日" description={`${SITE.title} 的全部文章，共 ${posts.length} 篇。`}>
+	<div class="container page-head page-head--lined">
+		<p class="section-kicker">02 — Days / 时日</p>
+		<h1 class="page-head__title">一些很小的日子。</h1>
+		<p class="page-head__lede">
+			共 {posts.length} 篇，从最近的开始。想找某个主题，可以直接
+			<a href={withBase('/search/')}>搜索</a>，或者点左边任意一个标签。
+		</p>
+	</div>
+
+	<div class="container days">
+		<aside class="days__side" data-reveal>
+			<div class="now">
+				<p class="now__label">Now / 此刻</p>
+				<dl class="now__list">
+					<div><dt>日期</dt><dd data-now-date>—</dd></div>
+					<div><dt>时刻</dt><dd data-clock-time>00:00</dd></div>
+					<div><dt>一天已过</dt><dd data-now-progress>0%</dd></div>
+					<div><dt>篇目</dt><dd>{posts.length}</dd></div>
+				</dl>
+			</div>
+
+			{
+				tags.length > 0 && (
+					<div class="tag-list">
+						<p class="now__label">Tags / 标签</p>
+						<ul class="tag-list__items">
+							{tags.map(([tag, count]) => (
+								<li>
+									<a href={`${withBase('/search/')}?q=${encodeURIComponent(tag)}`}>
+										<span>{tag}</span>
+										<span class="tag-list__count">{count}</span>
+									</a>
+								</li>
+							))}
+						</ul>
+					</div>
+				)
+			}
+
+			<a class="text-link days__search" href={withBase('/search/')}>
+				搜索全部 <span class="text-link__arrow">↗</span>
+			</a>
+		</aside>
 
 		{
 			posts.length > 0 ? (
-				<ol class="listing__list">
+				<ol class="timeline" data-reveal style="--reveal-delay:100ms">
 					{posts.map((post) => (
-						<PostRow post={post} />
+						<li class="day">
+							<time class="day__date" datetime={isoDate(post.data.pubDate)}>
+								{formatMonthDay(post.data.pubDate)}
+							</time>
+
+							<div class="day__body">
+								<a class="day__title" href={withBase(`/blog/${post.id}/`)}>
+									{post.data.title}
+								</a>
+								{post.data.description && (
+									<p class="day__desc">{post.data.description}</p>
+								)}
+							</div>
+
+							<span class="day__tag">{categoryOf(post)}</span>
+						</li>
 					))}
 				</ol>
 			) : (
-				<p class="listing__empty">还没有文章。把 Markdown 放进 src/content/blog 即可。</p>
+				<p class="days__empty">
+					还没有文章。把 Markdown 放进 <code>src/content/blog</code> 即可。
+				</p>
 			)
 		}
 	</div>
 
-	<p class="container listing__note">{SITE.description}</p>
+	<p class="container days__note">
+		这里按日期倒序排列。每一行都是单独的一页，点进去就是全文。
+	</p>
 </BaseLayout>
 
 <style>
-	.listing {
-		padding-block: var(--section-pad) 0;
-	}
-
-	.listing__head {
+	.days {
 		display: grid;
-		gap: 0.5rem;
-		margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
+		grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+		gap: clamp(42px, 7vw, 118px);
+		align-items: start;
 	}
 
-	.listing__sub {
-		font-size: var(--fs-meta);
-		color: var(--c-ink-muted);
+	.days__side {
+		position: sticky;
+		inset-block-start: 112px;
+	}
+
+	.now {
+		padding-block-start: 20px;
+		border-block-start: 1px solid var(--line-strong);
+	}
+
+	.now__label {
+		color: var(--accent);
+		font-size: 0.5rem;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+	}
+
+	.now__list {
+		margin-block-start: 14px;
+	}
+
+	.now__list div {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 18px;
+		padding-block: 10px;
+		border-block-end: 1px solid var(--line);
+	}
+
+	.now__list dt {
+		color: var(--muted);
+		font-size: 0.5rem;
+		letter-spacing: 0.08em;
+	}
+
+	.now__list dd {
+		font-family: var(--font-serif);
+		font-size: 0.8125rem;
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.tag-list {
+		margin-block-start: 38px;
+	}
+
+	.tag-list__items {
+		margin-block-start: 12px;
+	}
+
+	.tag-list__items a {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 14px;
+		padding-block: 7px;
+		color: var(--muted);
+		font-size: 0.6875rem;
 		letter-spacing: 0.04em;
+		transition: color 0.2s ease;
 	}
 
-	.listing__list {
-		margin: 0;
-		padding: 0;
-		list-style: none;
+	.tag-list__items a:hover {
+		color: var(--ink);
 	}
 
-	.listing__empty,
-	.listing__note {
-		font-size: var(--fs-meta);
-		color: var(--c-ink-muted);
+	.tag-list__count {
+		color: var(--muted-soft);
+		font-size: 0.5rem;
+		font-variant-numeric: tabular-nums;
 	}
 
-	.listing__note {
+	.days__search {
+		margin-block-start: 28px;
+	}
+
+	/* --- Timeline --------------------------------------------------------- */
+
+	.timeline {
+		position: relative;
+		padding-inline-start: 34px;
+	}
+
+	.timeline::before {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 5px;
+		width: 1px;
+		content: '';
+		background: var(--line-strong);
+		transform-origin: top;
+	}
+
+	:global(html.js) .timeline::before {
+		transform: scaleY(0);
+		transition: transform 1.6s var(--ease) 0.15s;
+	}
+
+	:global(html.js) .timeline.is-visible::before {
+		transform: scaleY(1);
+	}
+
+	.day {
+		position: relative;
+		display: grid;
+		grid-template-columns: 3.4rem minmax(0, 1fr) auto;
+		gap: 17px;
+		align-items: baseline;
+		padding-block-end: 30px;
+	}
+
+	.day:last-child {
+		padding-block-end: 0;
+	}
+
+	.day::before {
+		position: absolute;
+		inset-block-start: 7px;
+		inset-inline-start: -33px;
+		width: 7px;
+		height: 7px;
+		content: '';
+		background: var(--paper);
+		border: 1px solid var(--line-strong);
+		border-radius: 50%;
+		transition:
+			background 0.3s ease,
+			border-color 0.3s ease;
+	}
+
+	.day:hover::before {
+		background: var(--accent);
+		border-color: var(--accent);
+	}
+
+	.day__date {
+		color: var(--accent);
+		font-family: var(--font-serif);
+		font-size: 0.75rem;
+		letter-spacing: 0.02em;
+	}
+
+	.day__title {
+		font-family: var(--font-serif);
+		font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+		line-height: 1.45;
+		letter-spacing: -0.025em;
+		transition: color 0.25s ease;
+	}
+
+	.day__title:hover {
+		color: var(--accent);
+	}
+
+	.day__desc {
+		max-width: 33rem;
+		margin-block-start: 6px;
+		color: var(--muted);
+		font-size: 0.7rem;
+		line-height: 1.85;
+	}
+
+	.day__tag {
+		color: var(--muted);
+		font-size: 0.5rem;
+		letter-spacing: 0.08em;
+	}
+
+	.days__empty,
+	.days__note {
+		color: var(--muted);
+		font-size: 0.6875rem;
+		line-height: 1.9;
+	}
+
+	.days__note {
 		padding-block: var(--section-pad);
+	}
+
+	@media (max-width: 62rem) {
+		.days {
+			grid-template-columns: 1fr;
+			gap: 44px;
+		}
+
+		/* On a phone the list is the reason for the page, so it comes first and
+		   the Now card / tags follow it. */
+		.timeline {
+			order: 1;
+		}
+
+		.days__side {
+			order: 2;
+			position: static;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+			gap: 26px;
+			align-items: start;
+		}
+
+		.now {
+			padding-block-start: 16px;
+		}
+
+		.tag-list {
+			margin-block-start: 16px;
+		}
+
+		.days__search {
+			margin-block-start: 16px;
+			align-self: end;
+		}
+	}
+
+	@media (max-width: 48rem) {
+		.tag-list__items {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 0 22px;
+		}
+
+		.timeline {
+			padding-inline-start: 25px;
+		}
+
+		.timeline::before {
+			inset-inline-start: 3px;
+		}
+
+		.day {
+			grid-template-columns: 2.9rem minmax(0, 1fr);
+			gap: 12px;
+			padding-block-end: 26px;
+		}
+
+		.day::before {
+			inset-inline-start: -25px;
+		}
+
+		.day__tag {
+			grid-column: 2;
+			margin-block-start: -2px;
+			font-size: 0.5rem;
+		}
 	}
 </style>

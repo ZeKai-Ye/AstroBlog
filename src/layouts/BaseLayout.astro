@@ -1,9 +1,10 @@
 ---
 /**
- * Page shell: masthead, slot, footer.
+ * Page shell: the paper sheet, the masthead, the footer.
  *
- * `surface` picks which of the two frame fills from `ui设计.free` the page sits
- * on — tan (#F0D9C7) for the home page, cream (#FCF4E3) for post pages.
+ * One surface for every page now — the design's warm paper — so there is no
+ * `surface` prop any more: night mode (时日) is the only thing that changes the
+ * ground, and it does that through `html[data-theme]`.
  */
 import '../styles/global.css';
 import SiteHeader from '../components/SiteHeader.astro';
@@ -15,11 +16,9 @@ interface Props {
 	/** Page title; the site name is appended automatically. */
 	title?: string;
 	description?: string;
-	/** Frame fill behind the page. */
-	surface?: 'tan' | 'cream';
 }
 
-const { title, description = SITE.description, surface = 'tan' } = Astro.props;
+const { title, description = SITE.description } = Astro.props;
 
 const pageTitle = title ? `${title} — ${SITE.title}` : SITE.title;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined;
@@ -30,15 +29,27 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#f2eee5" />
 
 		{/*
-			Gates the `.reveal` entrance animation. Only added when the observer
-			that triggers it can exist, so the hidden state is never left on
-			without something to clear it. Inline and first, so the class is on
-			<html> before the first paint and nothing flashes.
+			Before first paint: gate the reveal animation behind `.js`, and restore
+			the night theme so a reader who left it dark never sees a paper flash.
+			Inline and first in <head> because anything later is too late.
 		*/}
 		<script is:inline>
-			if ('IntersectionObserver' in window) document.documentElement.classList.add('reveal-ready');
+			(() => {
+				const root = document.documentElement;
+				root.classList.add('js');
+				try {
+					if (localStorage.getItem('erga-theme') === 'night') {
+						root.dataset.theme = 'night';
+						const meta = document.querySelector('meta[name="theme-color"]');
+						if (meta) meta.setAttribute('content', '#171812');
+					}
+				} catch (error) {
+					/* private mode, storage disabled — keep the paper default */
+				}
+			})();
 		</script>
 
 		<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
@@ -50,63 +61,47 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content={pageTitle} />
 		<meta property="og:description" content={description} />
+		<meta property="og:site_name" content={SITE.title} />
 		<meta property="og:locale" content="zh_CN" />
 
 		{/*
-			The mockup sets everything in LXGW WenKai Mono TC with Inter for the
-			section labels. Both come from jsDelivr's Fontsource builds, which
-			ship the CJK face as ~130 unicode-ranged woff2 chunks — the browser
-			only fetches the handful a page actually uses.
+			The display face is Noto Serif SC, loaded from jsDelivr's Fontsource
+			build: the CJK family ships as ~130 unicode-ranged woff2 chunks, so the
+			browser downloads only the handful a page uses. 400 carries the titles,
+			600 the few places that need a real bold (no synthetic slant). The sans
+			face stays on the system stack — the interface only uses it at 9–13px.
 		*/}
 		<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 		<link
 			rel="stylesheet"
-			href="https://cdn.jsdelivr.net/npm/@fontsource/lxgw-wenkai-mono-tc@5.3.0/400.css"
+			href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5/400.css"
 		/>
 		<link
 			rel="stylesheet"
-			href="https://cdn.jsdelivr.net/npm/@fontsource/lxgw-wenkai-mono-tc@5.3.0/700.css"
+			href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5/600.css"
 		/>
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/400.css" />
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/500.css" />
 	</head>
 
-	<body class:list={['surface', `surface--${surface}`]}>
+	<body>
 		<a class="skip-link" href="#main">跳到主要内容</a>
 
-		<SiteHeader />
+		<div class="scroll-progress" data-scroll-progress aria-hidden="true"></div>
+		<div class="sky-wash" data-sky-wash aria-hidden="true"></div>
 
-		<main id="main">
-			<slot />
-		</main>
+		<div class="page">
+			<SiteHeader />
 
-		<SiteFooter />
+			<main id="main">
+				<slot />
+			</main>
+
+			<SiteFooter />
+		</div>
 
 		<BackToTop />
 
-		{/*
-			Reveal on arrival. The bottom margin means an element has to be a
-			little way in before it counts, so it animates where you can see it
-			rather than finishing off-screen. Each one is unobserved once shown.
-		*/}
-		<script is:inline>
-			(() => {
-				const items = document.querySelectorAll('.reveal');
-				if (!items.length || !('IntersectionObserver' in window)) return;
-
-				const observer = new IntersectionObserver(
-					(entries) => {
-						for (const entry of entries) {
-							if (!entry.isIntersecting) continue;
-							entry.target.classList.add('is-visible');
-							observer.unobserve(entry.target);
-						}
-					},
-					{ rootMargin: '0px 0px -12% 0px' }
-				);
-
-				for (const item of items) observer.observe(item);
-			})();
+		<script>
+			import '../scripts/site';
 		</script>
 	</body>
 </html>

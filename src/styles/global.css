@@ -1,82 +1,100 @@
 /* ==========================================================================
-   Design tokens — read out of `ui设计.free` (a Lunacy 14.1 document).
+   Paper & ink — the site's design system.
 
-   Both frames in the mockup are 1920x4320, i.e. a Full-HD page four screens
-   tall. Every colour below is a literal fill taken from those frames; the
-   fonts and sizes are the ones the design assigns.
+   Rewritten after `demo/oneside-demo` (direction A, 工作与时日): a warm paper
+   ground, a serif display face, hairline rules, dot leaders and a lot of air.
+   The palette, type scale and motion are lifted from that demo's scheme-a.css;
+   everything structural here (the content column, prose, editor-facing tokens)
+   is this site's own.
 
-   The mockup draws images as flat #ABA4A4 rectangles. Those are position
-   placeholders, not colours, so nothing in this site paints #ABA4A4 — the
-   value survives only as `--c-image-slot`, used for a soft image fallback.
+   Two surfaces only: `--paper` for the page, `--paper-deep` for a band that
+   needs to step back. Both flip under `html[data-theme="night"]` (时日 / 关灯),
+   and every colour below is a token so nothing has to be re-declared twice.
    ========================================================================== */
 
 :root {
-	/* --- Surfaces --------------------------------------------------------- */
-	--c-tan: #f0d9c7;        /* masthead, hero band, footer (frame fill)      */
-	--c-cream: #fff1d4;      /* the wavy content bands on the home page       */
-	--c-cream-soft: #fcf4e3; /* post page background, search box, author card */
+	/* --- Paper (day) ------------------------------------------------------ */
+	--paper: #f2eee5;
+	--paper-soft: #eae4d9;
+	--paper-deep: #e3dbce;
 
 	/* --- Ink -------------------------------------------------------------- */
-	--c-ink: #000000;        /* Palette / Primary Text                        */
-	--c-ink-muted: #757575;  /* Palette / Secondary Text                      */
-	--c-divider: #bdbdbd;    /* Palette / Divider                             */
-	--c-rule: #808080;       /* 1px border on the search box / author card    */
+	--ink: #3b372f;
+	--ink-soft: #4c473e;
+	--muted: #6f6a5e;
+	--muted-soft: #8d8678;
 
-	/* --- Accents (section labels + the round badges on the hero pills) ----- */
-	--c-rose: #f29191;       /* badge on the hero pill                        */
-	--c-rose-soft: #f49d99;  /* the 推荐 label                                 */
-	--c-orange: #eb9d60;     /* second badge                                  */
-	--c-peach: #ecb181;      /* the 关于 label                                 */
+	/* --- Rules and accent ------------------------------------------------- */
+	--line: rgb(53 50 43 / 0.15);
+	--line-strong: rgb(53 50 43 / 0.29);
+	--accent: #9c5a3d;
+	--accent-soft: rgb(156 90 61 / 0.1);
+	--accent-ink: #f2eee5;
 
-	/* --- Image fallback --------------------------------------------------- */
-	/* The mockup paints these #ABA4A4. That grey marks "photo goes here", not a
-	   colour from the palette, so the empty state uses a warm sand instead —
-	   still clearly a block against both the tan and the cream fills. */
-	--c-image-slot: #e0c8ab;
-
-	/* --- Palette declared in the design file's variable collection ---------
-	   document.json ships a Material-ish palette alongside the frames. Neither
-	   frame actually uses it, so it is exposed here for reference and for any
-	   control that needs a semantic colour the mockup never specified. */
-	--p-primary: #4caf50;
-	--p-primary-dark: #388e3c;
-	--p-primary-light: #c8e6c9;
-	--p-secondary: #3a6b3c;
-	--p-secondary-dark: #285329;
-	--p-accent: #ffc107;
+	/* --- Chrome ----------------------------------------------------------- */
+	--header-bg: rgb(242 238 229 / 0.9);
+	--header-bg-solid: rgb(242 238 229 / 0.96);
+	--sheet: #f8f4ea; /* loose sheets laid on the paper, in the CSS artwork  */
+	--letter-bg: #1b1a16;
+	--letter-ink: #f2eee5;
+	--art-muted: #6f6a5e;
+	--selection-bg: #3b372f;
+	--selection-ink: #f2eee5;
 
 	/* --- Type ------------------------------------------------------------- */
-	/* The mockup sets everything in LXGW WenKai Mono TC (Bold), with Inter for
-	   the three big section labels (推荐 / 关于 / 正文). */
-	--font-display: 'LXGW WenKai Mono TC', 'LXGW WenKai TC', 'Noto Serif SC',
-		'Songti SC', 'STSong', serif;
-	--font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', 'PingFang SC',
-		'Microsoft YaHei', sans-serif;
-
-	/* Design px at a 1920 viewport → clamped, so desktop matches the mockup
-	   and small screens scale down. */
-	--fs-lead: clamp(1.0625rem, 0.42rem + 1.71vw, 2.25rem);   /* 36px: date, title, pill */
-	--fs-nav: clamp(0.875rem, 0.4rem + 1.15vw, 1.5rem);       /* 24px: masthead nav */
-	--fs-label: clamp(1.5rem, 0.44rem + 2.92vw, 4rem);        /* 64px: 推荐 / 关于 / 正文      */
-	--fs-meta: clamp(0.875rem, 0.48rem + 0.83vw, 1.5rem);     /* 24px: 搜索, 作者简介          */
-	--fs-prose: clamp(1.0625rem, 0.85rem + 0.5vw, 1.375rem);  /* 22px: body copy (not in mockup) */
+	/* Noto Serif SC is fetched in BaseLayout; the rest are the stacks the demo
+	   names, so an offline build still lands on a Song-style face. */
+	--font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun',
+		Georgia, serif;
+	--font-sans: 'Noto Sans SC', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+		'Microsoft YaHei', system-ui, sans-serif;
+	--font-hand: 'KaiTi', 'STKaiti', 'SimKai', 'Noto Serif SC', serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
 
 	/* --- Layout ----------------------------------------------------------- */
-	/* The mockup's nav row and hero grid both span x 320–1600 of a 1920 frame,
-	   i.e. a 1280px column with 320px gutters. Everything shares it. */
+	/* The page caps at 1600px, like the demo; a 1280px content column keeps
+	   long-form copy readable and leaves the wide type room to breathe. */
+	--page: 1600px;
 	--content: 1280px;
-	--gutter: clamp(1.25rem, 0.5rem + 3vw, 5rem);
-	--wave-h: clamp(28px, 5vw, 96px);                         /* amplitude of the band edges */
-	--band-pad: clamp(2rem, 0.75rem + 3.5vw, 5rem);           /* inside a wavy band */
-	/* Bands in the mockup are a full 1080px screen, so the 关于 band stays airy
-	   even though its copy is short. 1080 minus the two wave edges ≈ 888px. */
-	--band-min: clamp(18rem, 5rem + 42vw, 55.5rem);
-	--section-pad: clamp(3rem, 1rem + 5vw, 7rem);             /* between bands */
-	--radius: 10px;                                           /* search box / author card */
-	--radius-pill: 999px;
+	--measure: 44rem; /* article column: about 700px */
+	--pad: clamp(22px, 4.5vw, 72px);
+	--section-pad: clamp(68px, 8.5vw, 128px);
+	--rule: 1px;
+	--radius: 0; /* the paper design is square — no rounded rectangles */
 
 	/* --- Motion ----------------------------------------------------------- */
-	--ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+	--ease: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* 时日 / 关灯 — the night reading theme. Warm greys, never pure black on white:
+   the demo keeps its contrast low so a long article at 1am is not a headlight. */
+html[data-theme='night'] {
+	color-scheme: dark;
+
+	--paper: #171812;
+	--paper-soft: #1d1e18;
+	--paper-deep: #22231c;
+
+	--ink: #d8d2c5;
+	--ink-soft: #c7c1b4;
+	--muted: #999487;
+	--muted-soft: #7f7b6f;
+
+	--line: rgb(216 210 197 / 0.16);
+	--line-strong: rgb(216 210 197 / 0.3);
+	--accent: #c49172;
+	--accent-soft: rgb(196 145 114 / 0.13);
+	--accent-ink: #171812;
+
+	--header-bg: rgb(23 24 18 / 0.9);
+	--header-bg-solid: rgb(23 24 18 / 0.96);
+	--sheet: #2a2922;
+	--letter-bg: #0a0b08;
+	--letter-ink: #ddd7ca;
+	--art-muted: #6f6a5e;
+	--selection-bg: #d8d2c5;
+	--selection-ink: #171812;
 }
 
 /* ==========================================================================
@@ -89,36 +107,55 @@
 	box-sizing: border-box;
 }
 
-* {
-	margin: 0;
-}
-
 html {
 	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
 	scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	html {
-		scroll-behavior: auto;
-	}
-	*,
-	*::before,
-	*::after {
-		animation-duration: 0.01ms !important;
-		transition-duration: 0.01ms !important;
-	}
+	scroll-padding-top: 6.5rem;
+	overflow-x: hidden;
+	overflow-x: clip;
 }
 
 body {
-	background: var(--c-tan);
-	color: var(--c-ink);
-	font-family: var(--font-display);
-	font-size: var(--fs-prose);
-	font-weight: 400;
+	min-height: 100vh;
+	margin: 0;
+	color: var(--ink);
+	font-family: var(--font-sans);
+	font-size: 0.9375rem;
 	line-height: 1.75;
+	background: var(--paper);
 	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 	text-rendering: optimizeLegibility;
+	transition:
+		background-color 0.4s var(--ease),
+		color 0.4s var(--ease);
+}
+
+/* Paper grain. One fixed SVG tile at 2.6% opacity — enough to stop the flat
+   fills reading as plastic, never enough to look like a texture swatch. */
+body::before {
+	position: fixed;
+	inset: 0;
+	z-index: 95;
+	pointer-events: none;
+	content: '';
+	opacity: 0.026;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+html[data-theme='night'] body::before {
+	opacity: 0.036;
+}
+
+.page {
+	display: flex;
+	min-height: 100vh;
+	flex-direction: column;
+}
+
+main {
+	flex: 1 0 auto;
 }
 
 img,
@@ -137,44 +174,87 @@ button,
 input,
 select,
 textarea {
+	/* `font: inherit` first so a reset does not flatten the family stack. */
 	font: inherit;
 	color: inherit;
 }
 
-:focus-visible {
-	outline: 2px solid var(--c-ink);
-	outline-offset: 3px;
-	border-radius: 2px;
+button {
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+ul,
+ol {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+figure,
+blockquote,
+dl,
+dd {
+	margin: 0;
+}
+
+time {
+	font-variant-numeric: tabular-nums;
 }
 
 ::selection {
-	background: var(--c-rose);
-	color: var(--c-ink);
+	color: var(--selection-ink);
+	background: var(--selection-bg);
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 4px;
+}
+
+[hidden] {
+	display: none !important;
 }
 
 /* ==========================================================================
-   Page surfaces
-
-   The home page sits on the tan frame fill, with the cream WaveBands laid over
-   it and a cream masthead plate on top. A post page replaces the tan with the
-   #FCF4E3 fill and makes the same masthead translucent (the mockup's CCFFF1D4).
+   Shell
    ========================================================================== */
 
-body.surface--cream {
-	background: var(--c-cream-soft);
-	--masthead-bg: rgb(255 241 212 / 0.8);
+.page {
+	width: min(100%, var(--page));
+	margin-inline: auto;
+}
+
+.container {
+	width: min(100% - var(--pad) * 2, var(--content));
+	margin-inline: auto;
+}
+
+/* Full-bleed band of a slightly deeper paper. */
+.band {
+	background: var(--paper-deep);
 }
 
 .skip-link {
-	position: absolute;
-	inset-block-start: 0;
-	inset-inline-start: 0;
-	z-index: 10;
-	padding: 0.7rem 1.1rem;
-	background: var(--c-ink);
-	color: var(--c-cream);
-	font-size: var(--fs-meta);
-	translate: 0 -110%;
+	position: fixed;
+	inset-block-start: 14px;
+	inset-inline-start: 14px;
+	z-index: 200;
+	padding: 0.6rem 1rem;
+	color: var(--paper);
+	font-size: 0.75rem;
+	letter-spacing: 0.06em;
+	background: var(--ink);
+	translate: 0 -160%;
 	transition: translate 0.2s var(--ease);
 }
 
@@ -182,153 +262,239 @@ body.surface--cream {
 	translate: 0;
 }
 
+/* Page-scroll progress: the demo's 2px accent hairline under the header. */
+.scroll-progress {
+	position: fixed;
+	inset-block-start: 0;
+	inset-inline: 0;
+	z-index: 120;
+	height: 2px;
+	pointer-events: none;
+	background: var(--accent);
+	transform: scaleX(0);
+	transform-origin: left;
+}
+
+/* The circular day/night wash that covers the screen while the theme flips.
+   BaseLayout renders it; site.ts drives --wash-x / --wash-y and .is-running. */
+.sky-wash {
+	position: fixed;
+	inset: 0;
+	z-index: 130;
+	pointer-events: none;
+	background: var(--wash-bg, #171812);
+	opacity: 0;
+	clip-path: circle(0 at var(--wash-x, 88%) var(--wash-y, 4%));
+	will-change: clip-path, opacity;
+}
+
+.sky-wash.is-running {
+	animation: sky-wash 1.15s cubic-bezier(0.65, 0, 0.2, 1) forwards;
+}
+
+@keyframes sky-wash {
+	0% {
+		clip-path: circle(0 at var(--wash-x, 88%) var(--wash-y, 4%));
+		opacity: 1;
+	}
+
+	58%,
+	78% {
+		clip-path: circle(155% at var(--wash-x, 88%) var(--wash-y, 4%));
+		opacity: 1;
+	}
+
+	100% {
+		clip-path: circle(155% at var(--wash-x, 88%) var(--wash-y, 4%));
+		opacity: 0;
+	}
+}
+
 /* ==========================================================================
    Entrance
 
-   Anything marked `.reveal` fades up as it arrives, so a photograph is placed
-   on the page rather than snapping into it.
-
-   The hiding rule is scoped to `.reveal-ready`, a class an inline script adds
-   to <html> only when IntersectionObserver exists. So if that script never runs
-   — JS off, an old browser, a stripped-down renderer — nothing is ever hidden
-   and the page is simply static. The hidden state must never be the default.
+   `data-reveal` is only hidden once the inline script has added `.js`, so a
+   render without JavaScript leaves everything visible. site.ts observes the
+   marked nodes, shows them on arrival, and force-shows anything still hidden
+   after 2.4s — a fail-safe, not a decoration.
    ========================================================================== */
 
-.reveal-ready .reveal {
+.js [data-reveal] {
 	opacity: 0;
-	translate: 0 1.75rem;
+	translate: 0 22px;
+	transition:
+		opacity 0.8s var(--ease),
+		translate 0.8s var(--ease);
+	transition-delay: var(--reveal-delay, 0ms);
 }
 
-.reveal-ready .reveal.is-visible {
+.js [data-reveal].is-visible {
 	opacity: 1;
 	translate: 0 0;
-	transition:
-		opacity 0.9s var(--ease),
-		translate 0.9s var(--ease);
 }
 
 /* ==========================================================================
-   Feathered edges
-
-   Marks and photographs melt into whatever they sit on instead of reading as
-   rectangles pasted over it: the edge is masked to transparent, so the page
-   colour comes through and there is no border left to see. Transparent is the
-   point — the masthead is cream and the footer is tan, so a fade baked to one
-   colour would be wrong on the other.
-
-   The feather is proportional but bounded at both ends, because a flat
-   percentage is right at one size and swallows another: 20% of the 89px masthead
-   mark is a soft edge, 20% of the 48px 关于 one is most of the picture. Override
-   --feather-x / --feather-y where the element is much bigger or smaller.
-
-   Where `mask-composite` is unsupported the two layers union instead of
-   intersecting, which fades a little less — never nothing, so it degrades
-   softly rather than failing.
+   Section furniture
    ========================================================================== */
 
-.feather {
-	--feather-x: clamp(12px, 15%, 48px);
-	--feather-y: clamp(7px, 17%, 22px);
-
-	-webkit-mask-image:
-		linear-gradient(
-			to right,
-			transparent,
-			#000 var(--feather-x),
-			#000 calc(100% - var(--feather-x)),
-			transparent
-		),
-		linear-gradient(
-			to bottom,
-			transparent,
-			#000 var(--feather-y),
-			#000 calc(100% - var(--feather-y)),
-			transparent
-		);
-	-webkit-mask-composite: source-in;
-	mask-image:
-		linear-gradient(
-			to right,
-			transparent,
-			#000 var(--feather-x),
-			#000 calc(100% - var(--feather-x)),
-			transparent
-		),
-		linear-gradient(
-			to bottom,
-			transparent,
-			#000 var(--feather-y),
-			#000 calc(100% - var(--feather-y)),
-			transparent
-		);
-	mask-composite: intersect;
+.section {
+	padding-block: var(--section-pad);
 }
 
-/* ==========================================================================
-   Shared primitives
-   ========================================================================== */
-
-.container {
-	width: min(100% - var(--gutter) * 2, var(--content));
-	margin-inline: auto;
+.section--lined {
+	border-block-start: var(--rule) solid var(--line);
 }
 
-/**
- * Padding for content sitting *inside* a <WaveBand>.
- *
- * Astro's scoped styles only tag elements in the file that declares them — a
- * component's root element keeps its own scope id — so `.band .container`
- * written inside a page would never match. This lives in the global sheet so
- * any page can opt in without fighting the scoping.
- */
-.band-inner {
-	min-height: var(--band-min);
-	padding-block: var(--band-pad);
-}
-
-/**
- * The big 64px labels the mockup uses as section headings
- * (推荐 in rose, 关于 in peach, 正文 in ink).
- */
-.section-label {
-	font-family: var(--font-sans);
-	font-size: var(--fs-label);
-	font-weight: 400;
-	line-height: 1.28;
-	letter-spacing: 0.01em;
-}
-
-.section-label--rose {
-	color: var(--c-rose-soft);
-}
-
-.section-label--peach {
-	color: var(--c-peach);
-}
-
-/**
- * The bilingual two-line nav / pill label: Chinese on top, Greek beneath.
- */
-.bilingual {
-	display: inline-flex;
-	flex-direction: column;
+.section-kicker {
+	display: flex;
 	align-items: center;
-	gap: 0.1em;
-	line-height: 1.25;
+	gap: 13px;
+	color: var(--muted);
+	font-size: 0.5625rem;
+	letter-spacing: 0.17em;
+	text-transform: uppercase;
 }
 
-.bilingual__greek {
-	font-size: 1em;
+.section-kicker::before {
+	width: 27px;
+	height: 1px;
+	flex: none;
+	content: '';
+	background: var(--accent);
+}
+
+.section-title {
+	margin-block-start: 18px;
+	font-family: var(--font-serif);
+	font-size: clamp(2.25rem, 4.6vw, 4.25rem);
 	font-weight: 400;
-	letter-spacing: 0.04em;
+	line-height: 1.1;
+	letter-spacing: -0.055em;
 }
 
-/* Screen-reader-only text. */
+.section-head {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 34px;
+	margin-block-end: clamp(38px, 5vw, 66px);
+}
+
+.section-note {
+	max-width: 300px;
+	padding-block-end: 6px;
+	color: var(--muted);
+	font-size: 0.72rem;
+	line-height: 1.9;
+	text-align: right;
+}
+
+.section-note a,
+.footnote a {
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.25em;
+	text-decoration-color: var(--line-strong);
+	transition: color 0.25s ease, text-decoration-color 0.25s ease;
+}
+
+.section-note a:hover,
+.footnote a:hover {
+	color: var(--ink);
+	text-decoration-color: var(--accent);
+}
+
+/* A small rule + label that opens a table of contents. */
+.lede {
+	font-family: var(--font-serif);
+	font-size: clamp(1.15rem, 1.5vw, 1.5rem);
+	font-weight: 400;
+	line-height: 1.8;
+	letter-spacing: -0.01em;
+	color: var(--ink-soft);
+}
+
+.meta-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 18px;
+	color: var(--muted);
+	font-size: 0.6875rem;
+	letter-spacing: 0.06em;
+}
+
+/* The dot between two meta items, as in the demo's article rows. */
+.meta-line > * + * {
+	position: relative;
+	padding-inline-start: 18px;
+}
+
+.meta-line > * + *::before {
+	position: absolute;
+	inset-inline-start: 0;
+	inset-block-start: 50%;
+	width: 3px;
+	height: 3px;
+	content: '';
+	background: var(--accent);
+	border-radius: 50%;
+	transform: translateY(-50%);
+	opacity: 0.9;
+}
+
+.text-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	padding-block-end: 6px;
+	font-size: 0.72rem;
+	letter-spacing: 0.09em;
+	border-block-end: 1px solid var(--line-strong);
+	transition:
+		color 0.25s ease,
+		border-color 0.25s ease;
+}
+
+.text-link__arrow {
+	display: inline-block;
+	font-size: 0.95rem;
+	line-height: 1;
+	transition: transform 0.3s var(--ease);
+}
+
+.text-link:hover {
+	color: var(--accent);
+	border-color: var(--accent);
+}
+
+.text-link:hover .text-link__arrow {
+	transform: translate(3px, -3px);
+}
+
+/* Round hairline button with an arrow inside — the article-row affordance. */
+.circle-link {
+	display: grid;
+	width: 28px;
+	height: 28px;
+	place-items: center;
+	font-size: 0.8125rem;
+	line-height: 1;
+	border: 1px solid var(--line);
+	border-radius: 50%;
+	transition:
+		color 0.3s ease,
+		background 0.3s ease,
+		border-color 0.3s ease,
+		transform 0.3s var(--ease);
+}
+
 .sr-only {
 	position: absolute;
 	width: 1px;
 	height: 1px;
 	padding: 0;
+	margin: -1px;
 	overflow: hidden;
 	clip-path: inset(50%);
 	white-space: nowrap;
@@ -336,123 +502,238 @@ body.surface--cream {
 }
 
 /* ==========================================================================
-   Article body
+   Page head — the opening block of an inner page.
+   ========================================================================== */
+
+.page-head {
+	padding-block: clamp(56px, 7vw, 104px) clamp(34px, 4.5vw, 58px);
+}
+
+.page-head__title {
+	margin-block-start: 20px;
+	font-family: var(--font-serif);
+	font-size: clamp(2.4rem, 5.4vw, 4.6rem);
+	font-weight: 400;
+	line-height: 1.08;
+	letter-spacing: -0.06em;
+}
+
+.page-head__lede {
+	max-width: 42rem;
+	margin-block-start: 22px;
+	color: var(--muted);
+	font-size: 0.82rem;
+	line-height: 2;
+}
+
+.page-head__lede a {
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.26em;
+	text-decoration-color: var(--line-strong);
+}
+
+.page-head__lede a:hover {
+	color: var(--ink);
+	text-decoration-color: var(--accent);
+}
+
+/* A hairline ledger: the parent of a list of PostRow. */
+.rows {
+	border-block-start: 1px solid var(--line-strong);
+}
+
+/* ==========================================================================
+   Article body — the post page and any markdown dropped into it.
    ========================================================================== */
 
 .prose {
-	font-size: var(--fs-prose);
-	line-height: 1.95;
+	font-family: var(--font-serif);
+	font-size: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+	line-height: 2.06;
+	color: var(--ink-soft);
+	overflow-wrap: break-word;
 }
 
 .prose > * + * {
-	margin-block-start: 1.4em;
+	margin-block-start: 1.45em;
 }
 
 .prose h2,
-.prose h3 {
-	font-family: var(--font-display);
-	font-weight: 700;
+.prose h3,
+.prose h4 {
+	color: var(--ink);
+	font-family: var(--font-serif);
+	font-weight: 400;
 	line-height: 1.4;
-	margin-block-start: 2.2em;
+	letter-spacing: -0.035em;
 }
 
 .prose h2 {
-	font-size: 1.5em;
+	margin-block-start: 2.6em;
+	font-size: 1.62em;
 }
 
 .prose h3 {
-	font-size: 1.22em;
+	margin-block-start: 2.2em;
+	font-size: 1.26em;
+}
+
+.prose h4 {
+	margin-block-start: 1.9em;
+	font-size: 1.08em;
+}
+
+.prose strong {
+	font-weight: 600;
+	color: var(--ink);
 }
 
 .prose a {
 	text-decoration: underline;
 	text-decoration-thickness: 1px;
-	text-underline-offset: 0.25em;
-	text-decoration-color: var(--c-divider);
-	transition: text-decoration-color 0.2s var(--ease);
+	text-underline-offset: 0.26em;
+	text-decoration-color: var(--line-strong);
+	transition:
+		color 0.2s ease,
+		text-decoration-color 0.2s ease;
 }
 
 .prose a:hover {
-	text-decoration-color: currentColor;
+	color: var(--accent);
+	text-decoration-color: var(--accent);
 }
 
 .prose ul,
 .prose ol {
-	padding-inline-start: 1.4em;
+	padding-inline-start: 1.35em;
+}
+
+.prose ul {
+	list-style: disc;
+}
+
+.prose ol {
+	list-style: decimal;
 }
 
 .prose li + li {
-	margin-block-start: 0.4em;
+	margin-block-start: 0.5em;
+}
+
+.prose li::marker {
+	color: var(--accent);
 }
 
 .prose blockquote {
 	margin-inline: 0;
-	padding-inline-start: 1.2em;
-	border-inline-start: 2px solid var(--c-divider);
-	color: var(--c-ink-muted);
+	padding: 2px 0 2px 24px;
+	color: var(--accent);
+	font-size: 1.16em;
+	line-height: 1.75;
+	letter-spacing: -0.02em;
+	border-inline-start: 1px solid var(--line-strong);
+}
+
+.prose blockquote p {
+	margin: 0;
 }
 
 .prose code {
-	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-	font-size: 0.9em;
-	background: rgb(0 0 0 / 0.05);
-	padding: 0.15em 0.4em;
-	border-radius: 4px;
+	font-family: var(--font-mono);
+	font-size: 0.87em;
+	background: color-mix(in srgb, var(--paper-deep) 82%, transparent);
+	padding: 0.14em 0.38em;
+	border-block-end: 1px solid var(--line);
 }
 
 .prose pre {
 	overflow-x: auto;
-	padding: 1.1em 1.2em;
-	border-radius: var(--radius);
-	background: rgb(0 0 0 / 0.05);
-	font-size: 0.9em;
-	line-height: 1.7;
+	padding: 1.1em 1.25em;
+	font-size: 0.85em;
+	line-height: 1.75;
+	background: color-mix(in srgb, var(--paper-deep) 70%, transparent);
+	border: 1px solid var(--line);
+}
+
+/* Shiki is configured with two themes and `defaultColor: false`, so tokens
+   arrive as `--shiki-light` / `--shiki-dark` variables and the colours are
+   chosen here, on the same switch as the rest of the page. */
+.prose pre.astro-code,
+.prose pre.astro-code span {
+	color: var(--shiki-light);
+}
+
+html[data-theme='night'] .prose pre.astro-code,
+html[data-theme='night'] .prose pre.astro-code span {
+	color: var(--shiki-dark);
 }
 
 .prose pre code {
 	background: none;
 	padding: 0;
+	border: 0;
+	font-size: 1em;
 }
 
 /* Astro writes the source picture's pixel size onto every image a post gets
-   from `![]()` — `<img width="1080" height="608">` — and a `width`/`height`
-   attribute is a presentational hint, i.e. a real CSS width/height. The
-   `width: 100%` below overrides the width hint, but nothing overrode the
-   height hint, so the picture kept its original pixel height at whatever
-   width the column happened to be: 900x608 instead of 900x507, stretched
-   vertically. `height: auto` hands the ratio back to the attributes, which is
-   what they are for — they still reserve the right box while the file loads.
-   The slots in `Figure.astro` set their own `height: 100%` and crop with
-   `object-fit: cover`, and their rule comes later, so they are unaffected. */
+   from `![]()`; `height: auto` hands the ratio back to those attributes so the
+   picture is never stretched. */
 .prose img {
 	width: 100%;
 	height: auto;
-	border-radius: var(--radius);
+	border: 1px solid var(--line);
+	background: var(--paper-deep);
+}
+
+.prose figure {
+	margin-inline: 0;
+}
+
+.prose figcaption {
+	margin-block-start: 0.75em;
+	color: var(--muted);
+	font-family: var(--font-sans);
+	font-size: 0.6875rem;
+	letter-spacing: 0.04em;
+	text-align: center;
 }
 
 .prose hr {
+	margin-block: 2.6em;
 	border: 0;
-	border-block-start: 1px solid var(--c-divider);
-	margin-block: 2.4em;
+	border-block-start: 1px solid var(--line);
 }
 
 .prose table {
 	width: 100%;
 	border-collapse: collapse;
-	font-size: 0.94em;
+	font-family: var(--font-sans);
+	font-size: 0.82em;
+	line-height: 1.7;
+}
+
+.prose th {
+	color: var(--muted);
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	text-align: start;
 }
 
 .prose th,
 .prose td {
-	padding: 0.5em 0.7em;
-	border-block-end: 1px solid var(--c-divider);
-	text-align: start;
+	padding: 0.55em 0.7em;
+	border-block-end: 1px solid var(--line);
+	vertical-align: top;
 }
 
-/* --- Embedded media -------------------------------------------------------
-   An HTML post drops its own markup straight into this container, so the
-   things markdown cannot express — video, audio, embedded players — need the
-   same "fill the column" treatment images already get. */
+.prose tr:first-child th {
+	border-block-start: 1px solid var(--line-strong);
+}
+
+/* --- Embedded media ------------------------------------------------------
+   An HTML post drops its own markup into `.prose`, so what markdown cannot
+   express — video, audio, players — needs the same "fill the column" deal. */
 
 .prose video,
 .prose audio,
@@ -462,43 +743,26 @@ body.surface--cream {
 	display: block;
 	width: 100%;
 	max-width: 100%;
-	border-radius: var(--radius);
+	border: 1px solid var(--line);
 }
 
 .prose audio {
-	background: rgb(0 0 0 / 0.05);
+	background: color-mix(in srgb, var(--paper-deep) 70%, transparent);
 }
 
-/* An embed needs a height before its own content arrives. 16/9 is the shape
-   most players ship with; an author who wants another can override it on the
-   element, since inline styles beat this rule. */
 .prose iframe {
 	aspect-ratio: 16 / 9;
 	height: auto;
 	border: 0;
 }
 
-.prose figure {
-	margin-inline: 0;
-}
+/* --- Math ----------------------------------------------------------------
+   KaTeX sets formulas at 1.21em of the surrounding text; our body copy is
+   already large enough, so pull it back and let a wide display block scroll
+   instead of widening the page. */
 
-.prose figcaption {
-	margin-block-start: 0.7em;
-	font-size: var(--fs-meta);
-	color: var(--c-ink-muted);
-	text-align: center;
-}
-
-/* --- Math -----------------------------------------------------------------
-   KaTeX renders a display block as its own centred line, and a long one — a
-   matrix, an aligned derivation — is wider than the column at phone widths.
-   Scrolling it keeps the page from gaining a horizontal scrollbar, the same
-   deal `.prose pre` makes for code. The size override is the one thing that
-   needs saying out loud: KaTeX sets formulas at 1.21em of the surrounding
-   text, and the body copy here is already 22px, so the default towers over
-   the line it sits in. */
 .prose .katex {
-	font-size: 1.1em;
+	font-size: 1.02em;
 }
 
 .prose .katex-display {
@@ -507,3 +771,52 @@ body.surface--cream {
 	padding-block: 0.2em;
 }
 
+/* ==========================================================================
+   Night reading tweaks that tokens cannot express
+   ========================================================================== */
+
+html[data-theme='night'] .prose code,
+html[data-theme='night'] .prose pre {
+	color: #cfc9bc;
+}
+
+/* ==========================================================================
+   Responsive section furniture
+   ========================================================================== */
+
+@media (max-width: 48rem) {
+	.section-head {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 18px;
+	}
+
+	.section-note {
+		max-width: 34rem;
+		padding-block-end: 0;
+		text-align: left;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+
+	.js [data-reveal] {
+		opacity: 1;
+		translate: 0;
+	}
+
+	.sky-wash {
+		display: none;
+	}
+}

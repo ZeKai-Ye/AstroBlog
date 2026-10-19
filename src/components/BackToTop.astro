@@ -2,10 +2,11 @@
 /**
  * Back to top.
  *
- * The design has no such control, so this borrows its vocabulary: a round cream
- * plate with the masthead's own 0/6/4 shadow, holding an ink arrow. It is kept
- * out of the tab order and the accessibility tree (via `visibility: hidden`)
- * until the reader is past the first screen.
+ * Not in the design, but a long ledger needs it. It borrows the paper
+ * vocabulary: a 40px circle, one hairline, an ink arrow. Kept out of the tab
+ * order and the accessibility tree until the reader is past the first screen —
+ * site.ts toggles `.is-visible` from the same scroll handler as the progress
+ * line, so there is one scroll listener rather than two.
  */
 ---
 
@@ -16,7 +17,7 @@
 			d="M12 19V5M12 5 6 11M12 5l6 6"
 			fill="none"
 			stroke="currentColor"
-			stroke-width="1.8"
+			stroke-width="1.4"
 			stroke-linecap="round"
 			stroke-linejoin="round"></path>
 	</svg>
@@ -25,20 +26,18 @@
 <style>
 	.to-top {
 		position: fixed;
-		z-index: 5;
+		z-index: 60;
 		inset-block-end: clamp(1rem, 2.2vw, 2rem);
 		inset-inline-end: clamp(1rem, 2.2vw, 2rem);
 		display: grid;
-		place-items: center;
-		width: clamp(2.75rem, 3.4vw, 3.25rem);
+		width: clamp(2.5rem, 3.2vw, 2.9rem);
 		aspect-ratio: 1;
-		padding: 0;
-		border: 0;
+		place-items: center;
+		color: var(--ink);
+		background: var(--paper-soft);
+		border: 1px solid var(--line);
 		border-radius: 50%;
-		background: var(--c-cream);
-		color: var(--c-ink);
-		box-shadow: 0 6px 4px rgb(0 0 0 / 0.25);
-		cursor: pointer;
+		box-shadow: 0 10px 24px rgb(58 49 35 / 0.08);
 
 		/* Hidden until the reader is past the first screen. */
 		opacity: 0;
@@ -47,7 +46,9 @@
 		transition:
 			opacity 0.25s var(--ease),
 			translate 0.25s var(--ease),
-			visibility 0.25s;
+			visibility 0.25s,
+			background 0.25s ease,
+			border-color 0.25s ease;
 	}
 
 	.to-top.is-visible {
@@ -57,12 +58,13 @@
 	}
 
 	.to-top:hover {
-		background: var(--c-tan);
+		background: var(--paper-deep);
+		border-color: var(--line-strong);
 	}
 
 	.to-top__icon {
-		width: 55%;
-		height: 55%;
+		width: 50%;
+		height: 50%;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
@@ -71,23 +73,3 @@
 		}
 	}
 </style>
-
-<script>
-	const button = document.querySelector<HTMLButtonElement>('[data-to-top]');
-
-	if (button) {
-		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-		const THRESHOLD = 600;
-
-		const sync = () => {
-			button.classList.toggle('is-visible', window.scrollY > THRESHOLD);
-		};
-
-		sync();
-		window.addEventListener('scroll', sync, { passive: true });
-
-		button.addEventListener('click', () => {
-			window.scrollTo({ top: 0, behavior: reduced.matches ? 'auto' : 'smooth' });
-		});
-	}
-</script>
