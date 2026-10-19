@@ -298,7 +298,13 @@ time {
 	transform-origin: left;
 }
 
-/* The circular day/night wash that covers the screen while the theme flips. */
+/* The wash that covers the page while the theme flips.
+
+   It used to animate `clip-path: circle()` — a full-screen property that has to
+   be re-rasterised on every frame, which is exactly what made the switch feel
+   stuck. A scaled, faded radial bloom does the same job with `transform` and
+   `opacity` only, so the compositor handles it and the main thread stays free
+   for the theme change itself. */
 .sky-wash {
 	position: fixed;
 	inset: 0;
@@ -306,30 +312,41 @@ time {
 	pointer-events: none;
 	background: var(--wash-bg, #171812);
 	opacity: 0;
-	clip-path: circle(0 at var(--wash-x, 88%) var(--wash-y, 4%));
-	will-change: clip-path, opacity;
+	transform: scale(1);
+	will-change: opacity, transform;
 }
 
 .sky-wash.is-running {
-	animation: sky-wash 1.15s cubic-bezier(0.65, 0, 0.2, 1) forwards;
+	animation: sky-wash 0.95s cubic-bezier(0.55, 0, 0.25, 1) forwards;
 }
 
 @keyframes sky-wash {
 	0% {
-		clip-path: circle(0 at var(--wash-x, 88%) var(--wash-y, 4%));
+		opacity: 0;
+		transform: scale(1);
+	}
+
+	24% {
 		opacity: 1;
 	}
 
-	58%,
-	78% {
-		clip-path: circle(155% at var(--wash-x, 88%) var(--wash-y, 4%));
+	62% {
 		opacity: 1;
+		transform: scale(1.04);
 	}
 
 	100% {
-		clip-path: circle(155% at var(--wash-x, 88%) var(--wash-y, 4%));
 		opacity: 0;
+		transform: scale(1.06);
 	}
+}
+
+/* Only the big surfaces have their colour transition suppressed for the flip:
+   a universal selector here would invalidate every element's style twice. */
+html.is-theme-switching body,
+html.is-theme-switching .page,
+html.is-theme-switching .site-header {
+	transition: none !important;
 }
 
 /* ==========================================================================

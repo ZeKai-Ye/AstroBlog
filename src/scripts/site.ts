@@ -175,15 +175,22 @@ const init = () => {
 		}
 
 		skyWash.style.setProperty('--wash-bg', WASH_BG[next]);
+
+		/* Colour transitions are off for the duration (they would animate
+		   hundreds of properties behind the wash), so the flip is one paint. */
+		root.classList.add('is-theme-switching');
+
 		skyWash.classList.remove('is-running');
 		void skyWash.offsetWidth; /* restart the animation */
 		skyWash.classList.add('is-running');
 
-		switchTimer = window.setTimeout(() => applyTheme(next), 680);
+		/* Swap the theme under the opaque middle of the bloom. */
+		switchTimer = window.setTimeout(() => applyTheme(next), 380);
 		washTimer = window.setTimeout(() => {
 			skyWash.classList.remove('is-running');
+			root.classList.remove('is-theme-switching');
 			switching = false;
-		}, 1250);
+		}, 980);
 	};
 
 	applyTheme(

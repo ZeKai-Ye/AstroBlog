@@ -1,76 +1,138 @@
 /**
- * 工作间 — the desk, modelled in three.js for the home page's concept demo.
+ * 概念演示 — a desk, modelled as a small collectible diorama in three.js.
  *
- * A lamp, a desk, an open book and a window. Daylight: the lamp is off, the
- * window is bright and a computer sits on the desk (工作). Night: the lamp is
- * on, the window goes dark and the computer becomes the open book (生活).
+ * The reference for the look is `demo/reference.html`: a miniature on a slate
+ * plinth with a brass lip, cel-shaded surfaces, procedural canvas
+ * textures and a warm/cool light split. The model itself is this site's own —
+ * a desk, a lamp, a book, a computer and a window — but it is dressed with the
+ * same ideas: a plinth, a rug, a chair, a shelf, books, a plant, pens.
  *
- * Performance notes, because this now lives on the front page:
+ * Performance, because this sits on the front page:
  *
- *   - no real-time shadow maps (the single biggest cost); soft contact shadows
- *     are painted as radial-gradient planes instead, which is also the look a
- *     flat illustration wants;
- *   - the camera is fixed — no OrbitControls — so the frame only changes when
- *     the theme does;
- *   - nothing renders on a loop. Frames are drawn on demand: once on layout,
- *     during a theme transition, and on resize. An idle desk costs zero GPU.
- *
- * Everything is built from three.js primitives — no external model.
+ *   - no shadow maps and no OrbitControls; the camera is fixed;
+ *   - nothing renders on a loop; frames are drawn on layout, on a theme
+ *     change and on resize, and a theme change is throttled while it runs;
+ *   - three.js is imported lazily by the page when the section approaches.
  */
 import * as THREE from 'three';
 
 const DAY = {
-	paper: 0xfff1d4,
-	desk: 0xfdf7ec,
-	wood: 0xc9a27a,
 	wall: 0xf0d9c7,
-	floor: 0xd8b68d,
-	bg: 0xe8d3bb,
+	floor: 0xe9d2b6,
+	desk: 0xfdf6e9,
+	/* Textured materials are tinted white in the day and darkened at night —
+	   a coloured tint on top of a coloured map would multiply into mud. */
+	wood: 0xffffff,
+	rug: 0xffffff,
+	rugEdge: 0xfff1d4,
 	ink: 0x2a221b,
 	lamp: 0x2f2a24,
-	accent: 0xa65a3c,
-	sky: 0x9cc2dc,
+	plinth: 0x2c2219,
+	brass: 0xc9a15b,
+	paper: 0xfff8ea,
+	rose: 0xf29191,
+	peach: 0xecb181,
+	orange: 0xeb9d60,
+	green: 0x7c8c5a,
+	pot: 0xd9b08c,
+	bg: 0xe8d3bb,
 };
 
 const NIGHT = {
-	paper: 0x2a2a22,
-	desk: 0x2a2820,
+	wall: 0x1e1f18,
+	floor: 0x17150f,
+	desk: 0x2e2b22,
 	wood: 0x6d5138,
-	wall: 0x1d1e17,
-	floor: 0x15140f,
-	bg: 0x0b0c09,
+	rug: 0x3a2a26,
+	rugEdge: 0x4a3a30,
 	ink: 0x14130f,
 	lamp: 0x1b1915,
-	accent: 0xc49172,
-	sky: 0x3a4a66,
+	plinth: 0x14110c,
+	brass: 0x6e5230,
+	paper: 0x2a2a22,
+	rose: 0x8a5654,
+	peach: 0x8a6a4e,
+	orange: 0x8a6242,
+	green: 0x3c4630,
+	pot: 0x5a4632,
+	bg: 0x0b0c09,
 };
 
-/** A soft radial gradient, used for light pools and contact shadows. */
-function radialTexture(inner: string, outer: string, size = 256) {
+/* --- Procedural textures (Canvas2D -> THREE.CanvasTexture) --------------- */
+
+function canvasTexture(width: number, height: number, paint: (ctx: CanvasRenderingContext2D) => void) {
 	const canvas = document.createElement('canvas');
-	canvas.width = size;
-	canvas.height = size;
+	canvas.width = width;
+	canvas.height = height;
 	const ctx = canvas.getContext('2d');
-	if (ctx) {
-		const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-		gradient.addColorStop(0, inner);
-		gradient.addColorStop(0.5, inner);
-		gradient.addColorStop(1, outer);
-		ctx.fillStyle = gradient;
-		ctx.fillRect(0, 0, size, size);
-	}
+	if (ctx) paint(ctx);
 	const texture = new THREE.CanvasTexture(canvas);
 	texture.colorSpace = THREE.SRGBColorSpace;
+	texture.anisotropy = 2;
 	return texture;
+}
+
+/** A 4-step ramp for MeshToonMaterial: the reference's cel-shading in a file. */
+function toonGradient() {
+	const texture = canvasTexture(4, 1, (ctx) => {
+		const steps = ['#c8c8c8', '#dedede', '#f0f0f0', '#ffffff'];
+		steps.forEach((shade, index) => {
+			ctx.fillStyle = shade;
+			ctx.fillRect(index, 0, 1, 1);
+		});
+	});
+	texture.minFilter = THREE.NearestFilter;
+	texture.magFilter = THREE.NearestFilter;
+	texture.generateMipmaps = false;
+	return texture;
+}
+
+/** Warm wood grain, drawn once and shared by the desk top and legs. */
+function woodTexture() {
+	return canvasTexture(256, 256, (ctx) => {
+		ctx.fillStyle = '#c9a27a';
+		ctx.fillRect(0, 0, 256, 256);
+		for (let i = 0; i < 46; i++) {
+			const y = Math.random() * 256;
+			const width = 40 + Math.random() * 200;
+			ctx.strokeStyle = `rgba(122, 84, 52, ${0.05 + Math.random() * 0.12})`;
+			ctx.lineWidth = 0.6 + Math.random() * 1.8;
+			ctx.beginPath();
+			ctx.moveTo(0, y);
+			ctx.bezierCurveTo(80, y + 4, 170, y - 5, 256, y + 2);
+			ctx.stroke();
+			void width;
+		}
+		for (let i = 0; i < 10; i++) {
+			ctx.strokeStyle = 'rgba(86, 58, 34, 0.18)';
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			const x = Math.random() * 256;
+			ctx.ellipse(x, Math.random() * 256, 10 + Math.random() * 22, 3 + Math.random() * 6, Math.random(), 0, Math.PI * 2);
+			ctx.stroke();
+		}
+	});
+}
+
+/** A rug: warm ground, cream border, a couple of quiet stripes. */
+function rugTexture() {
+	return canvasTexture(256, 160, (ctx) => {
+		ctx.fillStyle = '#e8b9a8';
+		ctx.fillRect(0, 0, 256, 160);
+		ctx.strokeStyle = 'rgba(255, 241, 212, 0.85)';
+		ctx.lineWidth = 8;
+		ctx.strokeRect(10, 10, 236, 140);
+		ctx.strokeStyle = 'rgba(255, 241, 212, 0.45)';
+		ctx.lineWidth = 3;
+		ctx.strokeRect(22, 22, 212, 116);
+		ctx.fillStyle = 'rgba(166, 90, 60, 0.18)';
+		for (let x = 30; x < 230; x += 24) ctx.fillRect(x, 30, 8, 100);
+	});
 }
 
 /** The view outside the window: warm daylight, or a deep night with stars. */
 function skyTexture(night: boolean) {
-	const canvas = document.createElement('canvas');
-	canvas.width = 512;
-	canvas.height = 512;
-	const ctx = canvas.getContext('2d');
-	if (ctx) {
+	return canvasTexture(512, 512, (ctx) => {
 		const gradient = ctx.createLinearGradient(0, 0, 0, 512);
 		if (night) {
 			gradient.addColorStop(0, '#070b18');
@@ -97,19 +159,28 @@ function skyTexture(night: boolean) {
 			}
 			ctx.globalAlpha = 1;
 		} else {
-			ctx.fillStyle = 'rgba(255, 246, 220, 0.9)';
+			ctx.fillStyle = 'rgba(255, 246, 220, 0.92)';
 			ctx.beginPath();
-			ctx.arc(370, 150, 46, 0, Math.PI * 2);
+			ctx.arc(360, 150, 46, 0, Math.PI * 2);
 			ctx.fill();
-			ctx.fillStyle = 'rgba(126, 148, 106, 0.35)';
+			ctx.fillStyle = 'rgba(126, 148, 106, 0.4)';
 			ctx.beginPath();
-			ctx.ellipse(180, 470, 220, 90, 0, 0, Math.PI * 2);
+			ctx.ellipse(170, 460, 210, 82, 0, 0, Math.PI * 2);
 			ctx.fill();
 		}
-	}
-	const texture = new THREE.CanvasTexture(canvas);
-	texture.colorSpace = THREE.SRGBColorSpace;
-	return texture;
+	});
+}
+
+/** Soft radial gradient for light pools and contact shadows. */
+function radialTexture(inner: string, outer: string) {
+	return canvasTexture(256, 256, (ctx) => {
+		const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+		gradient.addColorStop(0, inner);
+		gradient.addColorStop(0.5, inner);
+		gradient.addColorStop(1, outer);
+		ctx.fillStyle = gradient;
+		ctx.fillRect(0, 0, 256, 256);
+	});
 }
 
 const easeInOut = (value: number) =>
@@ -129,177 +200,254 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 	scene.background = new THREE.Color(DAY.bg);
 
 	const camera = new THREE.PerspectiveCamera(30, 16 / 8.2, 0.1, 60);
-	const target = new THREE.Vector3(-0.2, 1.18, -0.15);
-	const viewDirection = new THREE.Vector3(0.56, 0.23, 0.79).normalize();
+	const target = new THREE.Vector3(0, 1.12, -0.35);
+	const viewDirection = new THREE.Vector3(0.5, 0.24, 0.83).normalize();
 
-	const renderer = new THREE.WebGLRenderer({
-		antialias: true,
-		alpha: false,
-		powerPreference: 'high-performance',
-	});
+	const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 1.05;
+	renderer.toneMappingExposure = 1.04;
 	renderer.domElement.setAttribute('aria-hidden', 'true');
 	host.appendChild(renderer.domElement);
 
 	/* --- Materials ------------------------------------------------------- */
 
-	const wallMat = new THREE.MeshStandardMaterial({ color: DAY.wall, roughness: 0.98 });
-	const deskMat = new THREE.MeshStandardMaterial({ color: DAY.desk, roughness: 0.85 });
-	const woodMat = new THREE.MeshStandardMaterial({ color: DAY.wood, roughness: 0.8 });
-	const inkMat = new THREE.MeshStandardMaterial({ color: DAY.ink, roughness: 0.75 });
-	const lampMat = new THREE.MeshStandardMaterial({ color: DAY.lamp, roughness: 0.5, metalness: 0.2 });
-	const paperMat = new THREE.MeshStandardMaterial({ color: DAY.paper, roughness: 0.96 });
-	const floorMat = new THREE.MeshStandardMaterial({ color: DAY.floor, roughness: 0.95 });
-	const frameMat = new THREE.MeshStandardMaterial({ color: 0xf7e9cf, roughness: 0.72 });
+	const gradientMap = toonGradient();
+	const grain = woodTexture();
+	const rugMap = rugTexture();
+
+	const toon = (color: number, extra: Partial<THREE.MeshToonMaterialParameters> = {}) =>
+		new THREE.MeshToonMaterial({ color, gradientMap, ...extra });
+
+	const wallMat = toon(DAY.wall);
+	const floorMat = toon(DAY.floor);
+	const deskMat = toon(DAY.desk);
+	const woodMat = toon(DAY.wood, { map: grain });
+	const rugMat = toon(DAY.rug, { map: rugMap });
+	const inkMat = toon(DAY.ink);
+	const lampMat = toon(DAY.lamp, { map: grain });
+	const plinthMat = toon(DAY.plinth);
+	const brassMat = new THREE.MeshStandardMaterial({ color: DAY.brass, roughness: 0.5, metalness: 0.2 });
+	const paperMat = toon(DAY.paper);
+	const frameMat = toon(0xf7e9cf);
+	const bookReds = [toon(DAY.rose), toon(DAY.peach), toon(DAY.orange)];
+	const potMat = toon(DAY.pot);
+	const leafMat = toon(DAY.green);
+	const greenMat = toon(0x6f8b52);
+
+	/* --- Diorama base ---------------------------------------------------- */
+
+	const plinthBody = new THREE.Mesh(new THREE.BoxGeometry(6.7, 0.55, 5.1), plinthMat);
+	plinthBody.position.set(0, -0.3, -0.1);
+	scene.add(plinthBody);
+
+	const plinthLip = new THREE.Mesh(new THREE.BoxGeometry(6.98, 0.07, 5.38), brassMat);
+	/* The lip's top has to stay below the room floor, or this box paints over
+	   the whole floor with its dark material. */
+	plinthLip.position.set(0, -0.09, -0.1);
+	scene.add(plinthLip);
 
 	/* --- Room ------------------------------------------------------------ */
 
-	const wall = new THREE.Mesh(new THREE.PlaneGeometry(16, 9), wallMat);
-	wall.position.set(0, 3.2, -2.45);
-	scene.add(wall);
-
-	const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 10), floorMat);
+	const floor = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 4.6), floorMat);
 	floor.rotation.x = -Math.PI / 2;
-	floor.position.set(0, -0.02, 1.6);
+	floor.position.set(0, 0.012, -0.1);
 	scene.add(floor);
 
-	const baseboard = new THREE.Mesh(new THREE.BoxGeometry(16, 0.12, 0.05), frameMat);
-	baseboard.position.set(0, 0.06, -2.42);
+	const backWall = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 3.4), wallMat);
+	backWall.position.set(0, 1.7, -2.4);
+	scene.add(backWall);
+
+	const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 3.4), wallMat);
+	leftWall.rotation.y = Math.PI / 2;
+	leftWall.position.set(-3.1, 1.7, -0.1);
+	scene.add(leftWall);
+
+	const baseboard = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.12, 0.05), frameMat);
+	baseboard.position.set(0, 0.06, -2.37);
 	scene.add(baseboard);
+
+	const baseboardLeft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 4.6), frameMat);
+	baseboardLeft.position.set(-3.07, 0.06, -0.1);
+	scene.add(baseboardLeft);
+
+	const rug = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.3), rugMat);
+	rug.rotation.x = -Math.PI / 2;
+	rug.position.set(-0.1, 0.02, 0.6);
+	scene.add(rug);
 
 	/* --- Window, left of the frame --------------------------------------- */
 
 	const windowGroup = new THREE.Group();
-	windowGroup.position.set(-1.85, 2.05, -2.42);
+	windowGroup.position.set(-1.62, 1.92, -2.38);
 	scene.add(windowGroup);
 
 	const skyDay = new THREE.Mesh(
-		new THREE.PlaneGeometry(1.85, 2.25),
+		new THREE.PlaneGeometry(1.5, 1.9),
 		new THREE.MeshBasicMaterial({ map: skyTexture(false), transparent: true }),
 	);
 	const skyNight = new THREE.Mesh(
-		new THREE.PlaneGeometry(1.85, 2.25),
+		new THREE.PlaneGeometry(1.5, 1.9),
 		new THREE.MeshBasicMaterial({ map: skyTexture(true), transparent: true, opacity: 0 }),
 	);
 	skyDay.position.z = 0.01;
 	skyNight.position.z = 0.012;
 	windowGroup.add(skyDay, skyNight);
 
-	const frameBar = (w: number, h: number, x: number, y: number) => {
-		const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.07), frameMat);
-		bar.position.set(x, y, 0.06);
-		windowGroup.add(bar);
+	const bar = (w: number, h: number, x: number, y: number) => {
+		const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.07), frameMat);
+		mesh.position.set(x, y, 0.06);
+		windowGroup.add(mesh);
 	};
-	frameBar(2.05, 0.09, 0, 1.17);
-	frameBar(2.05, 0.09, 0, -1.17);
-	frameBar(0.09, 2.43, -0.98, 0);
-	frameBar(0.09, 2.43, 0.98, 0);
-	frameBar(0.06, 2.35, 0, 0);
-	frameBar(2.0, 0.06, 0, 0.12);
+	bar(1.66, 0.08, 0, 0.99);
+	bar(1.66, 0.08, 0, -0.99);
+	bar(0.08, 2.06, -0.79, 0);
+	bar(0.08, 2.06, 0.79, 0);
+	bar(0.05, 2.0, 0, 0);
+	bar(1.6, 0.05, 0, 0.12);
 
-	const sill = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.08, 0.26), frameMat);
-	sill.position.set(0, -1.24, 0.1);
+	const sill = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.07, 0.24), frameMat);
+	sill.position.set(0, -1.05, 0.1);
 	windowGroup.add(sill);
 
-	/* The light the window throws into the room, painted on the floor. */
-	const windowPool = new THREE.Mesh(
-		new THREE.PlaneGeometry(4.6, 3.2),
-		new THREE.MeshBasicMaterial({
-			map: radialTexture('rgba(255, 241, 208, 0.5)', 'rgba(255, 241, 208, 0)'),
+	const windowGlow = new THREE.Sprite(
+		new THREE.SpriteMaterial({
+			map: radialTexture('rgba(255, 248, 226, 0.7)', 'rgba(255, 248, 226, 0)'),
 			transparent: true,
-			opacity: 0.5,
+			opacity: 0.32,
 			depthWrite: false,
 			blending: THREE.AdditiveBlending,
 		}),
 	);
-	windowPool.rotation.x = -Math.PI / 2;
-	windowPool.position.set(-1.5, 0.005, 0.4);
-	scene.add(windowPool);
+	windowGlow.position.set(-1.62, 1.95, -2.22);
+	windowGlow.scale.set(2.6, 2.9, 1);
+	scene.add(windowGlow);
 
-	/* A print on the wall, right of the window. */
-	const printFrame = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.2, 0.05), frameMat);
-	printFrame.position.set(2.15, 2.6, -2.4);
+	/* --- Wall furniture -------------------------------------------------- */
+
+	const printFrame = new THREE.Mesh(new THREE.BoxGeometry(0.82, 1.02, 0.05), frameMat);
+	printFrame.position.set(1.55, 2.05, -2.37);
 	scene.add(printFrame);
 
-	const printPaper = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 1.07), paperMat);
-	printPaper.position.set(2.15, 2.6, -2.37);
+	const printPaper = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.9), paperMat);
+	printPaper.position.set(1.55, 2.05, -2.34);
 	scene.add(printPaper);
+
+	/* A shelf with a few books, right of the window. */
+	const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.26), woodMat);
+	shelf.position.set(0.42, 2.52, -2.24);
+	scene.add(shelf);
+
+	const shelfBooks = new THREE.Group();
+	shelfBooks.position.set(0.42, 2.55, -2.2);
+	scene.add(shelfBooks);
+	const shelfColors = [DAY.rose, DAY.paper, DAY.peach, 0x8aa07a, DAY.orange];
+	shelfColors.forEach((colour, index) => {
+		const height = 0.26 + (index % 3) * 0.03;
+		const bookMesh = new THREE.Mesh(
+			new THREE.BoxGeometry(0.06 + (index % 2) * 0.02, height, 0.2),
+			toon(colour),
+		);
+		bookMesh.position.set(-0.62 + index * 0.11, height / 2, 0);
+		shelfBooks.add(bookMesh);
+	});
 
 	/* --- Desk ------------------------------------------------------------ */
 
 	const desk = new THREE.Group();
-	desk.position.set(0, 0, 0.15);
+	desk.position.set(0, 0, 0.1);
 	scene.add(desk);
 
-	const top = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.1, 1.65), deskMat);
+	const top = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.1, 1.4), deskMat);
 	top.position.set(0, 0.96, 0);
 	desk.add(top);
 
-	const legGeometry = new THREE.BoxGeometry(0.11, 0.95, 0.11);
+	const legGeometry = new THREE.BoxGeometry(0.1, 0.95, 0.1);
 	for (const [x, z] of [
-		[-1.78, -0.68],
-		[1.78, -0.68],
-		[-1.78, 0.68],
-		[1.78, 0.68],
+		[-1.5, -0.56],
+		[1.5, -0.56],
+		[-1.5, 0.56],
+		[1.5, 0.56],
 	]) {
 		const leg = new THREE.Mesh(legGeometry, woodMat);
 		leg.position.set(x, 0.48, z);
 		desk.add(leg);
 	}
 
-	/* --- Desk lamp, right side ------------------------------------------- */
+	/* --- Chair, pulled out to one side ----------------------------------- */
+
+	const chair = new THREE.Group();
+	chair.position.set(2.05, 0, 0.55);
+	chair.rotation.y = -0.7;
+	scene.add(chair);
+
+	const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.05, 0.5), woodMat);
+	seat.position.set(0, 0.55, 0);
+	chair.add(seat);
+
+	const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.05), woodMat);
+	chairBack.position.set(0, 0.83, -0.24);
+	chair.add(chairBack);
+
+	for (const [x, z] of [
+		[-0.23, -0.2],
+		[0.23, -0.2],
+		[-0.23, 0.2],
+		[0.23, 0.2],
+	]) {
+		const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.55, 0.05), woodMat);
+		leg.position.set(x, 0.27, z);
+		chair.add(leg);
+	}
+
+	/* --- Desk lamp ------------------------------------------------------- */
 
 	const lamp = new THREE.Group();
-	lamp.position.set(1.28, 1.01, -0.3);
+	lamp.position.set(1.15, 1.01, -0.42);
 	desk.add(lamp);
 
-	const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.06, 24), lampMat);
+	const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.06, 20), lampMat);
 	lamp.add(lampBase);
 
-	const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.035, 1.0, 16), lampMat);
-	stem.position.set(0, 0.52, 0);
+	const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.032, 0.95, 14), lampMat);
+	stem.position.set(0, 0.5, 0);
 	lamp.add(stem);
 
-	const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 16), lampMat);
-	elbow.position.set(0, 1.02, 0);
+	const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.05, 14, 14), lampMat);
+	elbow.position.set(0, 0.98, 0);
 	lamp.add(elbow);
 
-	const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.78, 16), lampMat);
-	arm.position.set(-0.3, 1.16, 0);
+	const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.028, 0.72, 14), lampMat);
+	arm.position.set(-0.28, 1.1, 0);
 	arm.rotation.z = Math.PI / 2.55;
 	lamp.add(arm);
 
-	const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.34, 0.36, 24, 1, true), lampMat);
-	shade.position.set(-0.62, 1.1, 0);
+	const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.32, 0.34, 20, 1, true), lampMat);
+	shade.position.set(-0.58, 1.05, 0);
 	shade.rotation.z = -0.42;
 	lamp.add(shade);
 
-	const shadeInnerMat = new THREE.MeshStandardMaterial({
+	const shadeInnerMat = new THREE.MeshToonMaterial({
 		color: 0xffe9c4,
-		roughness: 0.4,
 		emissive: 0xffcf8a,
 		emissiveIntensity: 0,
 		side: THREE.BackSide,
+		gradientMap,
 	});
-	const shadeInner = new THREE.Mesh(
-		new THREE.CylinderGeometry(0.15, 0.33, 0.34, 24, 1, true),
-		shadeInnerMat,
-	);
+	const shadeInner = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.31, 0.32, 20, 1, true), shadeInnerMat);
 	shadeInner.position.copy(shade.position);
 	shadeInner.rotation.copy(shade.rotation);
 	lamp.add(shadeInner);
 
-	const bulbMat = new THREE.MeshStandardMaterial({
+	const bulbMat = new THREE.MeshToonMaterial({
 		color: 0xfff4dc,
 		emissive: 0xffc072,
 		emissiveIntensity: 0,
-		roughness: 0.35,
+		gradientMap,
 	});
-	const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 20), bulbMat);
-	bulb.position.set(-0.66, 0.96, 0);
+	const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), bulbMat);
+	bulb.position.set(-0.62, 0.92, 0);
 	lamp.add(bulb);
 
 	const halo = new THREE.Sprite(
@@ -312,20 +460,11 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		}),
 	);
 	halo.position.copy(bulb.position);
-	halo.scale.set(1.25, 1.25, 1.25);
+	halo.scale.set(1.15, 1.15, 1);
 	lamp.add(halo);
 
-	const lampSpot = new THREE.PointLight(0xffc08a, 0, 3.6, 1.7);
-	lampSpot.position.set(1.28 - 0.66, 1.01 + 0.92, -0.3);
-	scene.add(lampSpot);
-
-	const lampFill = new THREE.PointLight(0xffbc80, 0, 5, 1.8);
-	lampFill.position.set(0.62, 2.05, -0.3);
-	scene.add(lampFill);
-
-	/* Warm spill on the desk under the lamp. */
 	const lightPool = new THREE.Mesh(
-		new THREE.PlaneGeometry(3.2, 2.5),
+		new THREE.PlaneGeometry(3, 2.3),
 		new THREE.MeshBasicMaterial({
 			map: radialTexture('rgba(255, 202, 132, 0.55)', 'rgba(255, 190, 120, 0)'),
 			transparent: true,
@@ -335,89 +474,129 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		}),
 	);
 	lightPool.rotation.x = -Math.PI / 2;
-	lightPool.position.set(0.15, 1.012, -0.12);
+	lightPool.position.set(0.1, 1.013, -0.25);
 	desk.add(lightPool);
 
-	/* --- The two things that swap ---------------------------------------- */
+	/* --- Computer / book ------------------------------------------------- */
 
 	const computer = new THREE.Group();
-	computer.position.set(-0.35, 1.01, -0.15);
+	computer.position.set(-0.4, 1.01, -0.2);
 	desk.add(computer);
 
-	const screenBody = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.62, 0.05), inkMat);
-	screenBody.position.set(0, 0.52, 0);
-	screenBody.rotation.x = -0.1;
+	const screenBody = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.58, 0.05), inkMat);
+	screenBody.position.set(0, 0.5, 0);
+	screenBody.rotation.x = -0.08;
 	computer.add(screenBody);
 
-	const screenMat = new THREE.MeshStandardMaterial({
-		color: 0xdfe9f2,
+	const screenMat = new THREE.MeshToonMaterial({
+		color: 0xe6eef4,
 		emissive: 0x9cc2dc,
-		emissiveIntensity: 0.55,
-		roughness: 0.4,
+		emissiveIntensity: 0.5,
+		gradientMap,
 		transparent: true,
 	});
-	const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.52), screenMat);
-	screen.position.set(0, 0.52, 0.028);
-	screen.rotation.x = -0.1;
+	const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.48), screenMat);
+	screen.position.set(0, 0.5, 0.028);
+	screen.rotation.x = -0.08;
 	computer.add(screen);
 
-	const stand = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 0.16), inkMat);
+	const stand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.14), inkMat);
 	stand.position.set(0, 0.1, 0);
 	computer.add(stand);
 
-	const foot = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.24), inkMat);
+	const foot = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.03, 0.22), inkMat);
 	foot.position.set(0, 0.015, 0);
 	computer.add(foot);
 
-	const keyboard = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.03, 0.24), inkMat);
-	keyboard.position.set(0, 0.015, 0.62);
+	const keyboard = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.03, 0.22), inkMat);
+	keyboard.position.set(0, 0.015, 0.56);
 	computer.add(keyboard);
 
 	const book = new THREE.Group();
-	book.position.set(-0.35, 1.012, 0.02);
+	book.position.set(-0.4, 1.012, 0);
 	desk.add(book);
 
-	const coverMat = new THREE.MeshStandardMaterial({ color: DAY.accent, roughness: 0.7, transparent: true });
-	const bookCover = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.62), coverMat);
+	const coverMat = toon(DAY.rose, { transparent: true });
+	const bookCover = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.05, 0.6), coverMat);
 	book.add(bookCover);
 
-	const pageMat = new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.95, transparent: true });
+	const pageMats: THREE.MeshToonMaterial[] = [];
 	for (const side of [-1, 1]) {
-		const page = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.035, 0.56), pageMat.clone());
-		page.position.set(side * 0.3, 0.055, 0);
+		const pageMat = toon(DAY.paper, { transparent: true });
+		pageMats.push(pageMat);
+		const page = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.035, 0.54), pageMat);
+		page.position.set(side * 0.29, 0.055, 0);
 		page.rotation.z = side * 0.09;
 		book.add(page);
 	}
 
-	const bookmarkMat = new THREE.MeshStandardMaterial({ color: DAY.accent, roughness: 0.9, transparent: true });
-	const bookmark = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.002, 0.24), bookmarkMat);
-	bookmark.position.set(0.08, 0.075, 0.16);
+	const bookmark = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.002, 0.22), toon(DAY.brass, { transparent: true }));
+	bookmark.position.set(0.08, 0.075, 0.15);
 	book.add(bookmark);
 
-	/* --- Small props ------------------------------------------------------ */
+	/* --- Desk props ------------------------------------------------------ */
 
-	const mug = new THREE.Mesh(
-		new THREE.CylinderGeometry(0.1, 0.09, 0.16, 20),
-		new THREE.MeshStandardMaterial({ color: 0xf6e6cc, roughness: 0.85 }),
-	);
-	mug.position.set(-1.35, 1.09, 0.42);
+	/* A stack of books, offset so the shelf and the stack do not repeat. */
+	const stack = new THREE.Group();
+	stack.position.set(-1.16, 1.012, -0.38);
+	stack.rotation.y = 0.2;
+	desk.add(stack);
+	[0.055, 0.05, 0.06].forEach((height, index) => {
+		const cover = new THREE.Mesh(
+			new THREE.BoxGeometry(0.62 - index * 0.04, height, 0.44 - index * 0.03),
+			bookReds[index],
+		);
+		cover.position.set(0, height / 2 + index * 0.058, 0);
+		cover.rotation.y = index * 0.14 - 0.1;
+		stack.add(cover);
+		const pages = new THREE.Mesh(
+			new THREE.BoxGeometry(0.56 - index * 0.04, height * 0.7, 0.38 - index * 0.03),
+			toon(0xfff8ea),
+		);
+		pages.position.set(0, height / 2 + index * 0.058, 0);
+		pages.rotation.y = index * 0.14 - 0.1;
+		stack.add(pages);
+	});
+
+	/* Pen cup with three pencils. */
+	const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.16, 16), potMat);
+	cup.position.set(1.32, 1.09, 0.42);
+	desk.add(cup);
+	[-0.03, 0.01, 0.04].forEach((offset, index) => {
+		const pencil = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.34, 8), toon(index === 1 ? DAY.brass : DAY.ink));
+		pencil.position.set(1.32 + offset, 1.23 + index * 0.015, 0.42 + offset * 0.6);
+		pencil.rotation.z = (index - 1) * 0.22;
+		pencil.rotation.x = (index - 1) * 0.12;
+		desk.add(pencil);
+	});
+
+	/* A small plant. */
+	const plant = new THREE.Group();
+	plant.position.set(-1.42, 1.012, 0.42);
+	desk.add(plant);
+	const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.08, 0.15, 14), potMat);
+	pot.position.y = 0.075;
+	plant.add(pot);
+	for (let i = 0; i < 5; i++) {
+		const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.24, 5), leafMat);
+		const angle = (i / 5) * Math.PI * 2;
+		leaf.position.set(Math.cos(angle) * 0.05, 0.24, Math.sin(angle) * 0.05);
+		leaf.rotation.z = Math.cos(angle) * 0.6;
+		leaf.rotation.x = Math.sin(angle) * 0.6;
+		plant.add(leaf);
+	}
+
+	const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.15, 18), toon(0xf6e6cc));
+	mug.position.set(-0.78, 1.085, 0.44);
 	desk.add(mug);
 
-	const sheetMat = new THREE.MeshStandardMaterial({
-		color: 0xfff8ea,
-		roughness: 0.95,
-		emissive: 0x2a2013,
-		emissiveIntensity: 0.1,
-	});
-	const sheets = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.7), sheetMat);
+	const sheets = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.62), toon(0xfff8ea));
 	sheets.rotation.x = -Math.PI / 2;
-	sheets.rotation.z = 0.18;
-	sheets.position.set(0.62, 1.013, 0.5);
+	sheets.rotation.z = 0.16;
+	sheets.position.set(0.62, 1.013, 0.44);
 	desk.add(sheets);
 
-	/* --- Painted shadows -------------------------------------------------
-	   No shadow maps: a dark radial gradient under the desk and under the
-	   objects that sit on it. Cheap, soft, and in keeping with the flat look. */
+	/* --- Painted shadows ------------------------------------------------- */
 
 	const shadowMat = (opacity: number) =>
 		new THREE.MeshBasicMaterial({
@@ -426,39 +605,39 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 			depthWrite: false,
 		});
 
-	const deskShadow = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 2.9), shadowMat(0.42));
+	const deskShadow = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.2), shadowMat(0.32));
 	deskShadow.rotation.x = -Math.PI / 2;
-	deskShadow.position.set(0.25, 0.002, 0.35);
+	deskShadow.position.set(0.15, 0.026, 0.3);
 	scene.add(deskShadow);
 
-	const objectShadow = shadowMat(0.14);
-	const contact = (x: number, z: number, w: number, h: number) => {
-		const patch = new THREE.Mesh(new THREE.PlaneGeometry(w, h), objectShadow);
-		patch.rotation.x = -Math.PI / 2;
-		patch.position.set(x, 1.013, z);
-		desk.add(patch);
-	};
-	contact(0.66, -0.3, 0.75, 0.75); /* lamp base */
-	contact(-0.35, -0.1, 1.4, 0.9); /* computer / book */
-	contact(-1.35, 0.42, 0.4, 0.4); /* mug */
+	const chairShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), shadowMat(0.18));
+	chairShadow.rotation.x = -Math.PI / 2;
+	chairShadow.position.set(2.05, 0.027, 0.55);
+	scene.add(chairShadow);
 
-	/* --- Light ------------------------------------------------------------
-	   Day: window light + bounce. Night: the lamp, a cool rim from the window
-	   and a warm glow on the wall behind the lamp. */
+	/* --- Lights ---------------------------------------------------------- */
 
-	const ambient = new THREE.AmbientLight(0xfff1dc, 0.22);
+	const ambient = new THREE.AmbientLight(0xfff1dc, 0.85);
 	scene.add(ambient);
 
-	const hemi = new THREE.HemisphereLight(0xfff1d8, 0xc0a180, 0.72);
+	const hemi = new THREE.HemisphereLight(0xfff1d8, 0xd6bd9e, 0.8);
 	scene.add(hemi);
 
-	const sun = new THREE.DirectionalLight(0xfff3d6, 1.2);
-	sun.position.set(-4.2, 5.2, 2.4);
+	const sun = new THREE.DirectionalLight(0xfff3d6, 1.1);
+	sun.position.set(-3.6, 4.6, 2.2);
 	scene.add(sun);
 
-	const moon = new THREE.PointLight(0x8ea3cc, 0, 10, 1.5);
-	moon.position.set(-1.8, 2.1, -0.5);
+	const moon = new THREE.PointLight(0x8ea3cc, 0, 9, 1.5);
+	moon.position.set(-1.8, 2.1, -0.8);
 	scene.add(moon);
+
+	const lampLight = new THREE.PointLight(0xffc08a, 0, 3.4, 1.7);
+	lampLight.position.set(1.15 - 0.62, 1.01 + 0.92, -0.42);
+	scene.add(lampLight);
+
+	const lampFill = new THREE.PointLight(0xffbc80, 0, 5, 1.8);
+	lampFill.position.set(1.15 - 0.5, 2.0, -0.42);
+	scene.add(lampFill);
 
 	const wallGlow = new THREE.Sprite(
 		new THREE.SpriteMaterial({
@@ -469,74 +648,87 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 			blending: THREE.AdditiveBlending,
 		}),
 	);
-	wallGlow.position.set(0.9, 1.9, -2.3);
-	wallGlow.scale.set(4.4, 4.4, 1);
+	wallGlow.position.set(0.7, 1.8, -2.3);
+	wallGlow.scale.set(4, 4, 1);
 	scene.add(wallGlow);
-
-	const windowGlow = new THREE.Sprite(
-		new THREE.SpriteMaterial({
-			map: radialTexture('rgba(255, 248, 226, 0.65)', 'rgba(255, 248, 226, 0)'),
-			transparent: true,
-			opacity: 0.35,
-			depthWrite: false,
-			blending: THREE.AdditiveBlending,
-		}),
-	);
-	windowGlow.position.set(-1.85, 2.05, -2.25);
-	windowGlow.scale.set(3.1, 3.4, 1);
-	scene.add(windowGlow);
 
 	/* --- Mode ------------------------------------------------------------ */
 
 	let night = false;
-	let current = 0; /* 0 = day, 1 = night */
+	let current = 0;
 	let targetValue = 0;
 	let transitionFrom = 0;
 	let transitionStart = 0;
 	let transitionDone = true;
-	const duration = reduced ? 0 : 1.5;
+	const duration = reduced ? 0 : 1.25;
+
+	const colors = {
+		wallDay: new THREE.Color(DAY.wall),
+		wallNight: new THREE.Color(NIGHT.wall),
+		floorDay: new THREE.Color(DAY.floor),
+		floorNight: new THREE.Color(NIGHT.floor),
+		deskDay: new THREE.Color(DAY.desk),
+		deskNight: new THREE.Color(NIGHT.desk),
+		woodDay: new THREE.Color(DAY.wood),
+		woodNight: new THREE.Color(NIGHT.wood),
+		rugDay: new THREE.Color(DAY.rug),
+		rugNight: new THREE.Color(NIGHT.rug),
+		inkDay: new THREE.Color(DAY.ink),
+		inkNight: new THREE.Color(NIGHT.ink),
+		lampDay: new THREE.Color(DAY.lamp),
+		lampNight: new THREE.Color(NIGHT.lamp),
+		paperDay: new THREE.Color(DAY.paper),
+		paperNight: new THREE.Color(NIGHT.paper),
+		plinthDay: new THREE.Color(DAY.plinth),
+		plinthNight: new THREE.Color(NIGHT.plinth),
+		brassDay: new THREE.Color(DAY.brass),
+		brassNight: new THREE.Color(NIGHT.brass),
+		hemiSkyDay: new THREE.Color(0xfff1d8),
+		hemiSkyNight: new THREE.Color(0x5a6078),
+		hemiGroundDay: new THREE.Color(0xc0a180),
+		hemiGroundNight: new THREE.Color(0x1c1a14),
+		bgDay: new THREE.Color(DAY.bg),
+		bgNight: new THREE.Color(NIGHT.bg),
+	};
 
 	const applyMode = (t: number) => {
 		current = t;
 
-		ambient.intensity = lerp(0.22, 0.12, t);
-		hemi.intensity = lerp(0.72, 0.34, t);
-		hemi.color.lerpColors(new THREE.Color(0xfff1d8), new THREE.Color(0x5a6078), t);
-		hemi.groundColor.lerpColors(new THREE.Color(0xc0a180), new THREE.Color(0x1c1a14), t);
+		ambient.intensity = lerp(0.85, 0.18, t);
+		hemi.intensity = lerp(0.8, 0.3, t);
+		hemi.color.lerpColors(colors.hemiSkyDay, colors.hemiSkyNight, t);
+		hemi.groundColor.lerpColors(colors.hemiGroundDay, colors.hemiGroundNight, t);
 
-		sun.intensity = lerp(1.2, 0.03, t);
+		sun.intensity = lerp(1.1, 0.03, t);
 		moon.intensity = lerp(0, 4.2, t);
-		lampSpot.intensity = lerp(0, 20, t);
-		lampFill.intensity = lerp(0, 1.4, t);
+		lampLight.intensity = lerp(0, 22, t);
+		lampFill.intensity = lerp(0, 1.6, t);
 
 		shadeInnerMat.emissiveIntensity = lerp(0, 0.9, t);
 		bulbMat.emissiveIntensity = lerp(0, 3.2, t);
 		(halo.material as THREE.SpriteMaterial).opacity = lerp(0, 0.9, t);
-		(lightPool.material as THREE.MeshBasicMaterial).opacity = lerp(0, 0.85, t);
-		(wallGlow.material as THREE.SpriteMaterial).opacity = lerp(0, 0.6, t);
-		(windowGlow.material as THREE.SpriteMaterial).opacity = lerp(0.32, 0.12, t);
-		(windowPool.material as THREE.MeshBasicMaterial).opacity = lerp(0.48, 0.2, t);
-		(windowPool.material as THREE.MeshBasicMaterial).color.lerpColors(
-			new THREE.Color(0xfff1d0),
-			new THREE.Color(0x9fb4d8),
-			t,
-		);
+		(lightPool.material as THREE.MeshBasicMaterial).opacity = lerp(0, 0.8, t);
+		(wallGlow.material as THREE.SpriteMaterial).opacity = lerp(0, 0.55, t);
+		(windowGlow.material as THREE.SpriteMaterial).opacity = lerp(0.3, 0.1, t);
 
 		(skyDay.material as THREE.MeshBasicMaterial).opacity = 1 - t;
 		(skyNight.material as THREE.MeshBasicMaterial).opacity = t;
 		skyNight.visible = t > 0.01;
 		skyDay.visible = t < 0.99;
 
-		(scene.background as THREE.Color).lerpColors(new THREE.Color(DAY.bg), new THREE.Color(NIGHT.bg), t);
-		wallMat.color.lerpColors(new THREE.Color(DAY.wall), new THREE.Color(NIGHT.wall), t);
-		floorMat.color.lerpColors(new THREE.Color(DAY.floor), new THREE.Color(NIGHT.floor), t);
-		deskMat.color.lerpColors(new THREE.Color(DAY.desk), new THREE.Color(NIGHT.desk), t);
-		woodMat.color.lerpColors(new THREE.Color(DAY.wood), new THREE.Color(NIGHT.wood), t);
-		lampMat.color.lerpColors(new THREE.Color(DAY.lamp), new THREE.Color(NIGHT.lamp), t);
-		paperMat.color.lerpColors(new THREE.Color(DAY.paper), new THREE.Color(NIGHT.paper), t);
-		screenMat.emissiveIntensity = lerp(0.55, 0, t);
+		(scene.background as THREE.Color).lerpColors(colors.bgDay, colors.bgNight, t);
+		wallMat.color.lerpColors(colors.wallDay, colors.wallNight, t);
+		floorMat.color.lerpColors(colors.floorDay, colors.floorNight, t);
+		deskMat.color.lerpColors(colors.deskDay, colors.deskNight, t);
+		woodMat.color.lerpColors(colors.woodDay, colors.woodNight, t);
+		rugMat.color.lerpColors(colors.rugDay, colors.rugNight, t);
+		inkMat.color.lerpColors(colors.inkDay, colors.inkNight, t);
+		lampMat.color.lerpColors(colors.lampDay, colors.lampNight, t);
+		paperMat.color.lerpColors(colors.paperDay, colors.paperNight, t);
+		plinthMat.color.lerpColors(colors.plinthDay, colors.plinthNight, t);
+		brassMat.color.lerpColors(colors.brassDay, colors.brassNight, t);
+		screenMat.emissiveIntensity = lerp(0.5, 0, t);
 
-		/* The swap: the computer squashes away as the book unfolds. */
 		const computerAmount = Math.max(0, 1 - t * 1.6);
 		const bookAmount = Math.max(0, (t - 0.2) * 1.6);
 
@@ -549,29 +741,31 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		book.visible = bookAmount > 0.01;
 		book.scale.setScalar(0.5 + 0.5 * bookAmount);
 		book.rotation.y = (1 - bookAmount) * -0.35;
-		for (const material of [coverMat, bookmarkMat]) material.opacity = bookAmount;
-		book.traverse((object) => {
-			const mesh = object as THREE.Mesh;
-			if (mesh.isMesh && mesh.material) {
-				const material = mesh.material as THREE.MeshStandardMaterial;
-				material.transparent = true;
-				material.opacity = bookAmount;
-			}
-		});
+		coverMat.opacity = bookAmount;
+		for (const material of pageMats) material.opacity = bookAmount;
+		bookmark.visible = bookAmount > 0.5;
+		(bookmark.material as THREE.MeshToonMaterial).opacity = bookAmount;
 
-		renderer.toneMappingExposure = lerp(1.05, 0.99, t);
+		renderer.toneMappingExposure = lerp(1.08, 0.99, t);
 	};
 
-	/* --- On-demand rendering --------------------------------------------- */
+	/* --- On-demand rendering, ~24fps while transitioning ------------------ */
 
 	let rafId = 0;
+	let lastDraw = 0;
+	let inView = true;
 
 	const draw = (now: number) => {
 		rafId = 0;
 
 		if (!transitionDone) {
-			const progress =
-				duration === 0 ? 1 : Math.min(1, (now - transitionStart) / (duration * 1000));
+			if (now - lastDraw < 42) {
+				rafId = requestAnimationFrame(draw);
+				return;
+			}
+			lastDraw = now;
+
+			const progress = duration === 0 ? 1 : Math.min(1, (now - transitionStart) / (duration * 1000));
 			applyMode(lerp(transitionFrom, targetValue, easeInOut(progress)));
 			transitionDone = progress >= 1;
 			if (!transitionDone) rafId = requestAnimationFrame(draw);
@@ -581,15 +775,26 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 	};
 
 	const requestRender = () => {
-		if (rafId) return;
+		if (rafId || !inView) return;
 		rafId = requestAnimationFrame(draw);
 	};
+
+	const visibility = new IntersectionObserver(
+		([entry]) => {
+			inView = entry.isIntersecting;
+			if (inView) requestRender();
+		},
+		{ threshold: 0.02 },
+	);
+	visibility.observe(host);
 
 	const setNight = (value: boolean, immediate = false) => {
 		night = value;
 		targetValue = value ? 1 : 0;
 
-		if (immediate || duration === 0) {
+		/* Changing the lamp while the desk is off-screen does not need an
+		   animation: it is already correct when it scrolls back in. */
+		if (immediate || duration === 0 || !inView) {
 			transitionDone = true;
 			applyMode(targetValue);
 			requestRender();
@@ -602,9 +807,7 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		requestRender();
 	};
 
-	/* --- Size ------------------------------------------------------------
-	   The camera is fixed, so framing is just a distance that keeps the desk
-	   whole at any aspect — a tall screen steps back rather than cropping. */
+	/* --- Size ------------------------------------------------------------ */
 
 	const resize = () => {
 		const width = host.clientWidth;
@@ -615,7 +818,7 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		camera.aspect = width / height;
 		camera.updateProjectionMatrix();
 
-		const distance = camera.aspect < 1.2 ? 9.6 : 7.9;
+		const distance = camera.aspect < 1.2 ? 10.2 : 8.4;
 		camera.position.copy(target).addScaledVector(viewDirection, distance);
 		camera.lookAt(target);
 
@@ -634,6 +837,7 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		destroy: () => {
 			cancelAnimationFrame(rafId);
 			rafId = 0;
+			visibility.disconnect();
 			observer.disconnect();
 			renderer.dispose();
 			scene.traverse((object) => {
@@ -648,3 +852,5 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		},
 	};
 }
+
+
