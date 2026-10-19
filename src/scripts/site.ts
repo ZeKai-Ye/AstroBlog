@@ -10,10 +10,10 @@
  * already in the DOM, and `data-reveal` is only hidden once `.js` is present —
  * a render without this file shows the whole page, not a blank one.
  */
+import { getTimes as getSunTimes } from 'suncalc';
 
 const root = document.documentElement;
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
 const pick = <T extends Element = HTMLElement>(selector: string, scope: ParentNode = document) =>
 	scope.querySelector<T>(selector);
 
@@ -23,6 +23,76 @@ const pickAll = <T extends Element = HTMLElement>(selector: string, scope: Paren
 const NIGHT = 'night';
 const DAY = 'day';
 const THEME_KEY = 'erga-theme';
+const MANUAL_KEY = 'erga-theme-manual';
+
+/**
+ * The site follows the sun at 东八区 / 北纬 23° — a point in southern China, so
+ * the daylight hours are the ones this blog's own time (Asia/Shanghai) has.
+ *
+ * Day means 工作, night means 生活: the switch is conceptual, not just a colour
+ * flip, so the home page shows a different edition in each. `suncalc` does the
+ * astronomy (NOAA's algorithm, maintained since 2011); we only compare clocks.
+ */
+const SUN = { lat: 23, lng: 113, label: '东八区 · 北纬 23°' };
+
+const timeZoneClock = new Intl.DateTimeFormat('en-GB', {
+	timeZone: 'Asia/Shanghai',
+	hour: '2-digit',
+	minute: '2-digit',
+	hourCycle: 'h23',
+});
+
+const localDateParts = new Intl.DateTimeFormat('en-CA', {
+	timeZone: 'Asia/Shanghai',
+	year: 'numeric',
+	month: '2-digit',
+	day: '2-digit',
+});
+
+interface SolarDay {
+	sunrise: Date | null;
+	sunset: Date | null;
+	isNight: boolean;
+	/** The next sunrise or sunset, or null when the sun does not set. */
+	next: Date | null;
+}
+
+/**
+ * Sun times for the local (Asia/Shanghai) day containing `now`.
+ *
+ * `getTimes` works from the UTC day of the date it is given, so it is fed local
+ * noon converted to UTC — otherwise a lookup at 02:00 local would land on the
+ * previous UTC day and report the wrong sunrise.
+ */
+const solarDay = (now: Date): SolarDay => {
+	const noonUtc = (offsetDays = 0) => {
+		const parts = localDateParts.formatToParts(new Date(now.getTime() + offsetDays * 86_400_000));
+		const year = Number(parts.find((part) => part.type === 'year')?.value);
+		const month = Number(parts.find((part) => part.type === 'month')?.value);
+		const day = Number(parts.find((part) => part.type === 'day')?.value);
+		/* 04:00 UTC is noon in UTC+8. */
+		return new Date(Date.UTC(year, month - 1, day, 4));
+	};
+
+	const times = getSunTimes(noonUtc(), SUN.lat, SUN.lng);
+	const sunrise = times.sunrise ?? null;
+	const sunset = times.sunset ?? null;
+
+	if (!sunrise || !sunset) {
+		/* Polar day/night cannot happen at 23°N, but the fallback is cheap. */
+		const hour = Number(timeZoneClock.format(now).slice(0, 2));
+		return { sunrise, sunset, isNight: hour < 6 || hour >= 18, next: null };
+	}
+
+	const isNight = now < sunrise || now >= sunset;
+	let next: Date | null;
+	if (now < sunrise) next = sunrise;
+	else if (now < sunset) next = sunset;
+	else next = getSunTimes(noonUtc(1), SUN.lat, SUN.lng).sunrise ?? null;
+
+	return { sunrise, sunset, isNight, next };
+};
+
 
 let initialized = false;
 const cleanups: Array<() => void> = [];
@@ -151,10 +221,10 @@ const init = () => {
 		}
 	};
 
-	const switchTheme = () => {
-		if (switching) return;
+	const currentTheme = () => (root.dataset.theme === NIGHT ? NIGHT : DAY);
 
-		const next = root.dataset.theme === NIGHT ? DAY : NIGHT;
+	const transitionTo = (next: 'day' | 'night') => {
+		if (switching || currentTheme() === next) return;
 
 		if (reducedMotion.matches || !skyWash) {
 			applyTheme(next);
@@ -193,10 +263,90 @@ const init = () => {
 		}, 980);
 	};
 
-	applyTheme(
-		root.dataset.theme === NIGHT || readStoredTheme() === NIGHT ? NIGHT : DAY,
-		{ persist: false },
-	);
+	/* --- Following the sun ------------------------------------------------ */
+
+	let solarTimer = 0;
+
+	const isManual = () => {
+		try {
+			return localStorage.getItem(MANUAL_KEY) === '1';
+		} catch {
+			return false;
+		}
+	};
+
+	const markManual = () => {
+		try {
+			localStorage.setItem(MANUAL_KEY, '1');
+		} catch {
+			/* storage can be unavailable; the choice still holds for this view */
+		}
+		window.clearTimeout(solarTimer);
+		solarTimer = 0;
+	};
+
+	/** Write "日出 06:12 · 日落 18:41" wherever the page asks for it. */
+	const paintSunLabel = (solar: SolarDay) => {
+		if (!solar.sunrise || !solar.sunset) return;
+		const text = `日出 ${timeZoneClock.format(solar.sunrise)} · 日落 ${timeZoneClock.format(solar.sunset)}`;
+		pickAll('[data-sun-times]').forEach((node) => {
+			node.textContent = text;
+		});
+		if (themeToggle) {
+			themeToggle.title = `${SUN.label} · ${text} · 亮灯是工作，熄灯是生活`;
+		}
+	};
+
+	/** Ask for a theme change at the next sunrise or sunset. */
+	const scheduleSolar = () => {
+		window.clearTimeout(solarTimer);
+		if (isManual()) return;
+
+		const solar = solarDay(new Date());
+		if (!solar.next) return;
+
+		const wait = Math.max(15_000, solar.next.getTime() - Date.now() + 2_000);
+		if (wait > 24 * 60 * 60 * 1000) return;
+
+		solarTimer = window.setTimeout(() => {
+			if (isManual()) return;
+			const now = solarDay(new Date());
+			paintSunLabel(now);
+			transitionTo(now.isNight ? NIGHT : DAY);
+			scheduleSolar();
+		}, wait);
+
+		cleanups.push(() => window.clearTimeout(solarTimer));
+	};
+
+	const switchTheme = () => {
+		/* A hand on the switch means the reader outranks the sun for now. */
+		markManual();
+		transitionTo(currentTheme() === NIGHT ? DAY : NIGHT);
+	};
+
+	const solarNow = solarDay(new Date());
+	paintSunLabel(solarNow);
+
+	if (isManual()) {
+		applyTheme(
+			root.dataset.theme === NIGHT || readStoredTheme() === NIGHT ? NIGHT : DAY,
+			{ persist: false },
+		);
+	} else {
+		applyTheme(solarNow.isNight ? NIGHT : DAY, { persist: true });
+		scheduleSolar();
+	}
+
+	/* Coming back to a tab after hours should already be the right time. */
+	on(document, 'visibilitychange', () => {
+		if (document.hidden || isManual()) return;
+		const solar = solarDay(new Date());
+		paintSunLabel(solar);
+		applyTheme(solar.isNight ? NIGHT : DAY, { persist: true });
+		scheduleSolar();
+	});
+
 	themeToggle?.addEventListener('click', switchTheme);
 
 	/* Other pages' controls (the 工作间 lamp) can flip the same switch. */

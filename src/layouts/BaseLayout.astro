@@ -33,19 +33,39 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 		<meta name="theme-color" content="#fff1d4" />
 
 		{/*
-			Before first paint: gate the reveal animation behind `.js`, and restore
-			the night theme so a reader who left it dark never sees a paper flash.
-			Inline and first in <head> because anything later is too late.
+			Before first paint: gate the reveal animation behind `.js`, and put the
+			right theme on <html> so nobody sees the wrong edition flash by.
+
+			The stored preference wins. With no preference at all the page is about
+			to follow the sun (site.ts does the exact calculation with suncalc);
+			here a rough 06:00–18:00 day is enough to pick the right side before
+			the script bundle arrives. Inline and first in <head> because anything
+			later is too late.
 		*/}
 		<script is:inline>
 			(() => {
 				const root = document.documentElement;
 				root.classList.add('js');
+
+				const goNight = () => {
+					root.dataset.theme = 'night';
+					const meta = document.querySelector('meta[name="theme-color"]');
+					if (meta) meta.setAttribute('content', '#171812');
+				};
+
 				try {
-					if (localStorage.getItem('erga-theme') === 'night') {
-						root.dataset.theme = 'night';
-						const meta = document.querySelector('meta[name="theme-color"]');
-						if (meta) meta.setAttribute('content', '#171812');
+					const stored = localStorage.getItem('erga-theme');
+					if (stored === 'night') {
+						goNight();
+					} else if (!stored) {
+						const hour = Number(
+							new Intl.DateTimeFormat('en-GB', {
+								timeZone: 'Asia/Shanghai',
+								hour: '2-digit',
+								hourCycle: 'h23',
+							}).format(new Date())
+						);
+						if (hour < 6 || hour >= 18) goNight();
 					}
 				} catch (error) {
 					/* private mode, storage disabled — keep the paper default */

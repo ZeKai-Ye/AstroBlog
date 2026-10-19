@@ -25,6 +25,7 @@ import {
 	asset,
 	categoryOf,
 	formatDateDot,
+	formatMonthDay,
 	isoDate,
 	readingMinutes,
 	withBase,
@@ -37,8 +38,17 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 
 const latest = posts[0];
 const writing = posts.slice(1, 6);
+const recent = posts.slice(0, 6);
 const authors = await getAuthorIndex();
 const year = new Date().getFullYear();
+
+const tagCounts = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
+const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
 
 /* The latest post's cover, when it has one. The two photographs configured in
    settings.json are the 工作 / 时日 banner prints on their own pages now, so
@@ -53,12 +63,23 @@ const firstYear = posts.length
 	? posts[posts.length - 1].data.pubDate.getFullYear()
 	: year;
 
-const contents = [
+/* The 时日 photograph from settings.json, used as the life edition's print. */
+const daysPhoto = asset(SITE.images.heroDays);
+
+/* The two contents rows mirror the two editions: 工作 by day, 生活 by night. */
+const workContents = [
 	{ href: '#desk', num: 'I', name: '工作间', count: '01' },
 	{ href: '#latest', num: 'II', name: '最近', count: latest ? '01' : '00' },
 	{ href: '#writing', num: 'III', name: '文章', count: String(posts.length).padStart(2, '0') },
 	{ href: '#work', num: 'IV', name: '工作', count: String(SITE.works.length).padStart(2, '0') },
 	{ href: '#about', num: 'V', name: '关于', count: String(authors.list.length).padStart(2, '0') },
+];
+
+const lifeContents = [
+	{ href: '#desk', num: 'I', name: '工作间', count: '01' },
+	{ href: '#days', num: 'II', name: '日子', count: String(posts.length).padStart(2, '0') },
+	{ href: '#now', num: 'III', name: '此刻', count: '01' },
+	{ href: '#about-life', num: 'IV', name: '关于', count: String(authors.list.length).padStart(2, '0') },
 ];
 ---
 
@@ -93,8 +114,14 @@ const contents = [
 
 			<aside class="hero__aside">
 				<p class="hero__aside-text">{SITE.description}</p>
-				<a class="text-link" href={latest ? '#latest' : '#writing'}>
+				<a
+					class="text-link hero__cta hero__cta--work"
+					href={latest ? '#latest' : '#writing'}
+				>
 					读最近一篇 <span class="text-link__arrow">↓</span>
+				</a>
+				<a class="text-link hero__cta hero__cta--life" href="#days">
+					翻翻最近的日子 <span class="text-link__arrow">↓</span>
 				</a>
 				<p class="hero__note">
 					<span data-mode-copy data-day="今天也慢慢来。" data-night="夜里，时间慢下来。"
@@ -104,9 +131,22 @@ const contents = [
 			</aside>
 		</div>
 
-		<nav class="hero__contents" aria-label="页内目录">
+		<nav class="hero__contents hero__contents--work" aria-label="页内目录（工作）">
 			{
-				contents.map((item) => (
+				workContents.map((item) => (
+					<a href={item.href}>
+						<span class="contents__num">{item.num}</span>
+						<span class="contents__name">{item.name}</span>
+						<span class="contents__leader" aria-hidden="true"></span>
+						<span class="contents__count">{item.count}</span>
+					</a>
+				))
+			}
+		</nav>
+
+		<nav class="hero__contents hero__contents--life" aria-label="页内目录（生活）">
+			{
+				lifeContents.map((item) => (
 					<a href={item.href}>
 						<span class="contents__num">{item.num}</span>
 						<span class="contents__name">{item.name}</span>
@@ -150,12 +190,15 @@ const contents = [
 				</div>
 				<figcaption class="desk__caption">
 					<span>工作间 / 概念演示</span>
-					<span>three.js · 与开关同步</span>
+					<span class="desk__sun" data-sun-times>日出 · 日落</span>
+					<span>three.js</span>
 				</figcaption>
 			</figure>
 		</div>
 	</section>
 
+	<!-- 工作版：白天（以及手动切到「工作」时）看到的是这一套。 -->
+	<div class="edition edition--work">
 	{
 		latest && (
 			<section class="section section--lined band" id="latest" aria-labelledby="latest-title">
@@ -366,6 +409,129 @@ const contents = [
 			</div>
 		</div>
 	</section>
+	</div>
+
+	<!-- 生活版：日落后换到这一套。 -->
+	<div class="edition edition--life">
+		<section class="section section--lined" id="days" aria-labelledby="days-title">
+			<div class="container">
+				<header class="section-head">
+					<div data-reveal>
+						<p class="section-kicker">02 — Days / 日子</p>
+						<h2 class="section-title" id="days-title">最近的日子。</h2>
+					</div>
+					<p class="section-note" data-reveal style="--reveal-delay:100ms">
+						不构成文章，只是当天留下的几行字。
+						<a href={withBase('/blog/')}>全部时日 ↗</a>
+					</p>
+				</header>
+
+				<div class="life-days">
+					<ol class="day-list" data-reveal>
+						{
+							recent.map((post) => (
+								<li class="day-item">
+									<time datetime={isoDate(post.data.pubDate)}>
+										{formatMonthDay(post.data.pubDate)}
+									</time>
+									<a class="day-item__title" href={withBase(`/blog/${post.id}/`)}>
+										{post.data.title}
+									</a>
+									{post.data.description && (
+										<p class="day-item__desc">{post.data.description}</p>
+									)}
+								</li>
+							))
+						}
+					</ol>
+
+					<aside class="life-print" data-reveal style="--reveal-delay:120ms">
+						{
+							daysPhoto && (
+								<figure class="print" style="--print-tilt: 1.6deg">
+									<Figure
+										src={daysPhoto}
+										alt="时日：一小片天空与树"
+										label="时日"
+										ratio="4 / 3"
+										sizes="(max-width: 62rem) 80vw, 20rem"
+									/>
+									<figcaption class="print__caption">
+										<span>时日 / Hēmerai</span><span>DAYS</span>
+									</figcaption>
+								</figure>
+							)
+						}
+						<p class="life-note">夜里读点什么，或者只是坐一会儿。</p>
+					</aside>
+				</div>
+			</div>
+		</section>
+
+		<section class="section section--lined band" id="now" aria-labelledby="now-title">
+			<div class="container now-grid">
+				<div data-reveal>
+					<p class="section-kicker">03 — Now / 此刻</p>
+					<h2 class="section-title" id="now-title">此刻。</h2>
+					<dl class="now-list">
+						<div><dt>日期</dt><dd data-now-date>—</dd></div>
+						<div><dt>时刻</dt><dd data-clock-time>00:00</dd></div>
+						<div><dt>一天已过</dt><dd data-now-progress>0%</dd></div>
+						<div><dt>篇目</dt><dd>{posts.length}</dd></div>
+						<div><dt>日出 · 日落</dt><dd data-sun-times>—</dd></div>
+					</dl>
+				</div>
+
+				<div class="now-side" data-reveal style="--reveal-delay:120ms">
+					<p class="now-side__label">Tags / 标签</p>
+					<ul class="life-tags">
+						{
+							tags.map(([tag, count]) => (
+								<li>
+									<a href={`${withBase('/search/')}?q=${encodeURIComponent(tag)}`}>
+										<span>{tag}</span><span>{count}</span>
+									</a>
+								</li>
+							))
+						}
+					</ul>
+					<a class="text-link" href={withBase('/search/')}>
+						搜索全部 <span class="text-link__arrow">↗</span>
+					</a>
+				</div>
+			</div>
+		</section>
+
+		<section class="section band" id="about-life" aria-labelledby="about-life-title">
+			<div class="container about-grid">
+				<p class="section-kicker" data-reveal>04 — About / 关于</p>
+
+				<div data-reveal style="--reveal-delay:80ms">
+					<h2 class="about__lead" id="about-life-title">
+						这里记录着过去，<br />以及即将成为过去的当下。
+					</h2>
+					<p class="about__copy">
+						白天的事留在工作版里，夜里的这些字留在这里。同一个站，两种过法。
+					</p>
+					<a class="text-link about__link" href={withBase('/about/')}>
+						更多关于 <span class="text-link__arrow">↗</span>
+					</a>
+				</div>
+
+				<div class="about__side" data-reveal style="--reveal-delay:160ms">
+					<dl class="about__meta">
+						<div><dt>文章</dt><dd>{posts.length} 篇</dd></div>
+						<div><dt>作者</dt><dd>{authors.list.length} 位</dd></div>
+						<div><dt>起始</dt><dd>{firstYear}</dd></div>
+						<div>
+							<dt>更新</dt>
+							<dd>{latest ? formatDateDot(latest.data.pubDate) : '—'}</dd>
+						</div>
+					</dl>
+				</div>
+			</div>
+		</section>
+	</div>
 </BaseLayout>
 
 <script>
@@ -1316,6 +1482,197 @@ const contents = [
 		font-size: 0.8125rem;
 		letter-spacing: 0.06em;
 		border-block-start: 1px solid var(--line);
+	}
+
+	/* ======================================================================
+	   Two editions — 工作 by day, 生活 by night
+	   ====================================================================== */
+
+	.edition--life {
+		display: none;
+	}
+
+	.hero__cta--life {
+		display: none;
+	}
+
+	.hero__contents--life {
+		display: none;
+	}
+
+	:global(html[data-theme='night']) .edition--work,
+	:global(html[data-theme='night']) .hero__cta--work,
+	:global(html[data-theme='night']) .hero__contents--work {
+		display: none;
+	}
+
+	:global(html[data-theme='night']) .edition--life {
+		display: block;
+	}
+
+	:global(html[data-theme='night']) .hero__cta--life {
+		display: inline-flex;
+	}
+
+	:global(html[data-theme='night']) .hero__contents--life {
+		display: grid;
+	}
+
+	@media (min-width: 48.01rem) {
+		:global(html[data-theme='night']) .hero__contents--life {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+
+	/* --- 生活版里的日子与此刻 --------------------------------------------- */
+
+	.life-days {
+		display: grid;
+		grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+		gap: clamp(36px, 6vw, 96px);
+		align-items: start;
+	}
+
+	.day-list {
+		border-block-start: 1px solid var(--line-strong);
+	}
+
+	.day-item {
+		display: grid;
+		grid-template-columns: 4rem minmax(0, 1fr);
+		gap: 4px 18px;
+		padding-block: 18px;
+		border-block-end: 1px solid var(--line);
+	}
+
+	.day-item time {
+		color: var(--accent);
+		font-family: var(--font-serif);
+		font-size: 0.9375rem;
+		letter-spacing: 0.02em;
+	}
+
+	.day-item__title {
+		font-family: var(--font-serif);
+		font-size: clamp(1.15rem, 1.6vw, 1.35rem);
+		line-height: 1.45;
+		letter-spacing: -0.02em;
+		transition: color 0.25s ease;
+	}
+
+	.day-item__title:hover {
+		color: var(--accent);
+	}
+
+	.day-item__desc {
+		grid-column: 2;
+		color: var(--muted);
+		font-size: 0.84375rem;
+		line-height: 1.85;
+	}
+
+	.life-print {
+		position: sticky;
+		inset-block-start: 112px;
+		max-width: 20rem;
+		justify-self: end;
+	}
+
+	.life-note {
+		margin-block-start: 18px;
+		color: var(--muted);
+		font-size: 0.875rem;
+		line-height: 1.9;
+	}
+
+	.now-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+		gap: clamp(36px, 6vw, 96px);
+		align-items: start;
+	}
+
+	.now-list {
+		margin-block-start: 28px;
+		padding-block-start: 4px;
+		border-block-start: 1px solid var(--line-strong);
+	}
+
+	.now-list div {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 18px;
+		padding-block: 13px;
+		border-block-end: 1px solid var(--line);
+	}
+
+	.now-list dt {
+		color: var(--muted);
+		font-size: 0.8125rem;
+		letter-spacing: 0.06em;
+	}
+
+	.now-list dd {
+		font-family: var(--font-serif);
+		font-size: 1rem;
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.now-side {
+		padding-block-start: 4px;
+	}
+
+	.now-side__label {
+		color: var(--accent);
+		font-size: 0.8125rem;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.life-tags {
+		margin-block: 16px 26px;
+		border-block-start: 1px solid var(--line-strong);
+	}
+
+	.life-tags a {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 14px;
+		padding-block: 9px;
+		color: var(--muted);
+		font-size: 0.875rem;
+		border-block-end: 1px solid var(--line);
+		transition: color 0.2s ease;
+	}
+
+	.life-tags a:hover {
+		color: var(--ink);
+	}
+
+	.life-tags a span:last-child {
+		color: var(--muted-soft);
+		font-size: 0.8125rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.desk__sun {
+		color: var(--muted-soft);
+	}
+
+	@media (max-width: 62rem) {
+		.life-days,
+		.now-grid {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.life-print {
+			position: static;
+			justify-self: start;
+			max-width: 22rem;
+		}
 	}
 
 	/* ======================================================================
