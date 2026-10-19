@@ -1,90 +1,79 @@
 ---
 /**
- * Footer — the 306px #F0D9C7 bar at the bottom of both frames in the mockup.
- * The design only reserves the space ("底边栏"), so this fills it with the
- * wordmark, the same navigation as the masthead, and a colophon.
+ * Footer — the demo's thin colophon strip: a copyright line, the short nav and
+ * a note about how the page is made, all on one hairline rule.
  *
- * The navigation repeats the Chinese labels only. The mockup stacks a Greek
- * gloss under each one in the masthead; repeating it here just made the footer
- * noisy.
+ * The 搜索 page has no nav entry of its own (the masthead stays at four items),
+ * so the footer is where it lives.
  */
 import { SITE, withBase } from '../config';
-import SiteMark from './SiteMark.astro';
 
 const year = new Date().getFullYear();
 ---
 
-<footer class="footer">
-	<div class="container footer__inner">
-		<SiteMark size="footer" />
-		<p class="footer__tagline">{SITE.description}</p>
+<footer class="site-footer">
+	<div class="container site-footer__inner">
+		<p class="site-footer__copy">© <span data-year>{year}</span> {SITE.title}</p>
 
-		<nav aria-label="页脚导航">
-			<ul class="footer__list">
-				{
-					SITE.nav.map((item) => (
-						<li>
-							<a class="footer__link" href={withBase(item.href)}>
-								{item.zh}
-							</a>
-						</li>
-					))
-				}
-			</ul>
+		<nav class="site-footer__nav" aria-label="页脚导航">
+			{
+				SITE.nav.map((item) => (
+					<a href={withBase(item.href)}>{item.zh}</a>
+				))
+			}
+			<a href={withBase('/search/')}>搜索</a>
 		</nav>
 
-		<p class="footer__note">
-			<span class="sr-only">{SITE.footerNote} — </span>© {year} {SITE.title}
+		<p class="site-footer__colophon">
+			Colophon — {SITE.footerNote} · 纸、墨与一点 JavaScript · 随日升日落切换（东八区 · 北纬 23°）
 		</p>
 	</div>
 </footer>
 
 <style>
-	.footer {
-		background: var(--c-tan);
-		/* 306px at 1920. */
-		min-height: clamp(11rem, 6rem + 8vw, 19.125rem);
-		display: grid;
-		align-content: center;
-		padding-block: clamp(2.5rem, 1rem + 4vw, 5rem);
+	.site-footer {
+		flex: none;
+		padding-block: 22px 32px;
+		border-block-start: 1px solid var(--line);
 	}
 
-	.footer__inner {
-		display: grid;
-		justify-items: center;
-		gap: 0.9rem;
-		text-align: center;
+	.site-footer__inner {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 20px 34px;
+		color: var(--muted);
+		font-size: 0.71875rem;
+		line-height: 1.9;
+		letter-spacing: 0.06em;
 	}
 
-	.footer__tagline {
-		font-size: var(--fs-meta);
-		color: var(--c-ink-muted);
-		letter-spacing: 0.04em;
-	}
-
-	.footer__list {
+	.site-footer__nav {
 		display: flex;
 		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0.35rem 1.4rem;
-		margin: 0.6rem 0 0;
-		padding: 0;
-		list-style: none;
+		gap: 6px 18px;
 	}
 
-	.footer__link {
-		font-size: var(--fs-meta);
-		color: var(--c-ink-muted);
-		transition: color 0.2s var(--ease);
+	.site-footer__nav a {
+		transition: color 0.25s ease;
 	}
 
-	.footer__link:hover {
-		color: var(--c-ink);
+	.site-footer__nav a:hover {
+		color: var(--ink);
 	}
 
-	.footer__note {
-		margin-block-start: 0.6rem;
-		font-size: var(--fs-meta);
-		color: var(--c-ink-muted);
+	.site-footer__colophon {
+		text-align: right;
+	}
+
+	@media (max-width: 48rem) {
+		.site-footer__inner {
+			flex-direction: column;
+			gap: 10px;
+		}
+
+		.site-footer__colophon {
+			text-align: left;
+		}
 	}
 </style>

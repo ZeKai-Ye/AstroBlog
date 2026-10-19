@@ -1,20 +1,22 @@
 ---
 /**
- * Masthead — the top 301px of both frames in `ui设计.free`.
+ * Masthead.
  *
- * The mockup stacks two things on the tan background:
- *   y 0–181    a centred 960px-wide block holding the wordmark
- *              (drawn as a grey placeholder box: "待添加的标题主图标位置")
- *   y 211–301  four 320px nav columns, each two lines — Chinese over Greek
+ * The original design's masthead is the painted 960x181 wordmark on a cream
+ * plate. That picture comes back here — but small, at its own scale, never
+ * blown up — with the type wordmark as the fallback when no image is set.
  *
- * That grey block was a placeholder for the title mark, so the mark is drawn
- * there by <SiteMark>, which is also what the footer uses.
+ * The centre nav keeps the site's bilingual labels (Chinese over the Greek
+ * gloss), and the right side holds the live clock and the switch: 亮灯 is
+ * 工作, 熄灯 is 生活.
  */
-import { SITE, withBase } from '../config';
-import SiteMark from './SiteMark.astro';
+import { Image } from 'astro:assets';
+import { SITE, UI, asset, withBase } from '../config';
 
 const path = Astro.url.pathname;
 const home = withBase('/');
+const logo = asset(SITE.images.logo);
+
 /* `Astro.url.pathname` already carries the base, so compare against prefixed
    hrefs. The home link needs an exact match or it would light up everywhere. */
 const isActive = (href: string) => {
@@ -23,108 +25,345 @@ const isActive = (href: string) => {
 };
 ---
 
-<header class="masthead">
-	<div class="masthead__logo">
-		<a class="masthead__wordmark" href={home}>
-			<SiteMark size="masthead" />
-		</a>
-	</div>
+<header class="site-header" data-site-header>
+	<a class="brand" href={home} aria-label={`${SITE.title}，回到首页`}>
+		{
+			logo ? (
+				<Image
+					class="brand__logo"
+					src={logo}
+					alt={SITE.title}
+					/* The picture is 960px wide; these widths keep it at or below
+					   its own size instead of upscaling it in the masthead. */
+					widths={[180, 240]}
+					sizes="180px"
+					loading="eager"
+					fetchpriority="high"
+				/>
+			) : (
+				<>
+					<span class="brand__name">{SITE.title}</span>
+					<span class="brand__sub">{UI.brandSub}</span>
+				</>
+			)
+		}
+	</a>
 
-	<nav class="masthead__nav" aria-label="主导航">
-		<ul class="masthead__list">
-			{
-				SITE.nav.map((item) => (
-					<li>
-						<a
-							class:list={['masthead__link', { 'is-active': isActive(item.href) }]}
-							href={withBase(item.href)}
-							aria-current={isActive(item.href) ? 'page' : undefined}
-						>
-							<span>{item.zh}</span>
-							<span class="masthead__greek">{item.greek}</span>
-						</a>
-					</li>
-				))
-			}
-		</ul>
+	<nav class="site-nav" aria-label="主导航">
+		{
+			SITE.nav.map((item) => (
+				<a
+					class:list={['site-nav__link', { 'is-active': isActive(item.href) }]}
+					href={withBase(item.href)}
+					aria-current={isActive(item.href) ? 'page' : undefined}
+				>
+					<span class="site-nav__zh">{item.zh}</span>
+					<span class="site-nav__el">{item.greek}</span>
+				</a>
+			))
+		}
 	</nav>
+
+	<div class="header-tools">
+		<span class="header-clock" data-clock>{UI.timeLabel} 00:00</span>
+
+		<button
+			class="theme-toggle"
+			type="button"
+			data-theme-toggle
+			aria-pressed="false"
+			aria-label="切换到生活模式（关灯）"
+			title="亮灯是工作，熄灯是生活"
+		>
+			<span class="mode-label mode-label--work">工作</span>
+			<span class="theme-orb" aria-hidden="true">
+				<svg class="orb-sun" viewBox="0 0 24 24">
+					<circle cx="12" cy="12" r="3.7"></circle>
+					<path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"
+					></path>
+				</svg>
+				<svg class="orb-moon" viewBox="0 0 24 24">
+					<path d="M15.2 3.8a8.3 8.3 0 1 0 5 13.3 7 7 0 0 1-5-13.3Z"></path>
+				</svg>
+			</span>
+			<span class="mode-label mode-label--days">生活</span>
+		</button>
+	</div>
 </header>
 
 <style>
-	.masthead {
-		/*
-			The mockup paints this plate in the *cream* band colour and gives it a
-			0/6/4 25%-black shadow (Lunacy: `fill:"FFF1D4"`, `shadows:[{radius:4,
-			offset:[0,6],color:"40000000"}]`) — it is a raised plate sitting over the
-			tan frame, not a strip of the tan itself. Post pages swap in the
-			translucent variant (`CCFFF1D4`) over their own cream fill.
-		*/
-		background: var(--masthead-bg, var(--c-cream));
-		box-shadow: 0 6px 4px rgb(0 0 0 / 0.25);
-	}
-
-	/*
-		Scaled down from the mockup's 301px/181px masthead, which ate a quarter
-		of the first screen. At 1920 this lands at roughly 178px: a 100px
-		wordmark block, an 18px gap, then a 60px nav row at the 24px nav size.
-	*/
-	.masthead__logo {
+	.site-header {
+		position: sticky;
+		inset-block-start: 0;
+		z-index: 50;
 		display: grid;
-		place-items: center;
-		min-height: clamp(3rem, 0.75rem + 4.6vw, 6.25rem);
-		padding-inline: var(--gutter);
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+		min-height: 88px;
+		padding-inline: var(--pad);
+		background: var(--header-bg);
+		border-block-end: 1px solid var(--line);
+		transition:
+			min-height 0.45s var(--ease),
+			background 0.4s ease;
 	}
 
-	/*
-		Only the link chrome lives here now — the mark itself (picture or type,
-		and the feathered edge) belongs to <SiteMark>, which the footer shares.
-	*/
-	.masthead__wordmark {
-		display: block;
-		transition: opacity 0.2s var(--ease);
+	.site-header.is-compact {
+		min-height: 68px;
+		background: var(--header-bg-solid);
 	}
 
-	.masthead__wordmark:hover {
-		opacity: 0.72;
+	/* --- Wordmark --------------------------------------------------------- */
+
+	.brand {
+		display: inline-flex;
+		flex-direction: column;
+		gap: 3px;
+		justify-self: start;
+		transition: opacity 0.25s ease;
 	}
 
-	.masthead__nav {
-		padding-block: clamp(0.5rem, 0.95vw, 1.1rem) 0;
+	.brand:hover {
+		opacity: 0.78;
 	}
 
-	.masthead__list {
-		width: min(100% - var(--gutter) * 2, var(--content));
-		margin-inline: auto;
-		padding: 0;
-		list-style: none;
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
+	.brand__logo {
+		width: auto;
+		height: clamp(30px, 3vw, 40px);
+		max-width: 14rem;
+		object-fit: contain;
+		transition: filter 0.4s ease;
 	}
 
-	.masthead__link {
+	:global(html[data-theme='night']) .brand__logo {
+		filter: brightness(0.98) saturate(0.95);
+	}
+
+	.brand__name {
+		font-family: var(--font-serif);
+		font-size: 1.1875rem;
+		line-height: 1.2;
+		letter-spacing: 0.005em;
+	}
+
+	.brand__sub {
+		color: var(--muted);
+		font-size: 0.6875rem;
+		letter-spacing: 0.16em;
+		line-height: 1.2;
+		text-transform: uppercase;
+	}
+
+	/* --- Nav -------------------------------------------------------------- */
+
+	.site-nav {
+		display: flex;
+		gap: clamp(18px, 2.6vw, 40px);
+		justify-self: center;
+	}
+
+	.site-nav__link {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		font-size: var(--fs-nav);
-		line-height: 1.25;
-		text-align: center;
-		color: var(--c-ink-muted);
-		transition: color 0.2s var(--ease);
+		gap: 2px;
+		padding-block: 7px;
+		color: var(--muted);
+		transition: color 0.25s ease;
 	}
 
-	.masthead__greek {
-		letter-spacing: 0.04em;
+	.site-nav__zh {
+		font-size: 0.9375rem;
+		letter-spacing: 0.08em;
+		line-height: 1.3;
+		white-space: nowrap;
 	}
 
-	.masthead__link:hover,
-	.masthead__link.is-active {
-		color: var(--c-ink);
+	.site-nav__el {
+		font-family: var(--font-serif);
+		font-size: 0.6875rem;
+		letter-spacing: 0.06em;
+		line-height: 1.2;
+		opacity: 0.85;
+		white-space: nowrap;
 	}
 
-	@media (max-width: 30rem) {
-		.masthead__list {
-			grid-template-columns: repeat(2, 1fr);
-			row-gap: 1.25rem;
+	.site-nav__link::after {
+		position: absolute;
+		inset-inline: 0;
+		inset-block-end: 0;
+		height: 1px;
+		content: '';
+		background: var(--ink);
+		transform: scaleX(0);
+		transform-origin: right;
+		transition: transform 0.4s var(--ease);
+	}
+
+	.site-nav__link:hover,
+	.site-nav__link.is-active {
+		color: var(--ink);
+	}
+
+	.site-nav__link:hover::after,
+	.site-nav__link.is-active::after {
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+
+	/* --- Tools: clock + 工作 / 生活 ---------------------------------------- */
+
+	.header-tools {
+		display: flex;
+		align-items: center;
+		gap: 20px;
+		justify-self: end;
+	}
+
+	.header-clock {
+		color: var(--muted);
+		font-size: 0.8125rem;
+		letter-spacing: 0.06em;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+
+	.theme-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 7px 12px;
+		color: var(--muted);
+		font-size: 0.75rem;
+		letter-spacing: 0.08em;
+		white-space: nowrap;
+		border: 1px solid var(--line-strong);
+		border-radius: 999px;
+		transition:
+			color 0.25s ease,
+			background 0.25s ease,
+			border-color 0.25s ease;
+	}
+
+	.theme-toggle:hover {
+		color: var(--ink);
+		background: color-mix(in srgb, var(--paper-soft) 70%, transparent);
+		border-color: var(--ink);
+	}
+
+	.mode-label {
+		opacity: 0.5;
+		transition:
+			color 0.35s ease,
+			opacity 0.35s ease;
+	}
+
+	.mode-label--work {
+		color: var(--ink);
+		opacity: 1;
+	}
+
+	:global(html[data-theme='night']) .mode-label--work {
+		color: var(--muted);
+		opacity: 0.5;
+	}
+
+	:global(html[data-theme='night']) .mode-label--days {
+		color: var(--ink);
+		opacity: 1;
+	}
+
+	.theme-orb {
+		position: relative;
+		display: block;
+		width: 18px;
+		height: 18px;
+		flex: none;
+	}
+
+	.theme-orb svg {
+		position: absolute;
+		inset: 0;
+		width: 18px;
+		height: 18px;
+		fill: none;
+		stroke: var(--accent);
+		stroke-width: 1.3;
+		stroke-linecap: round;
+		transition:
+			opacity 0.45s ease,
+			transform 0.7s var(--ease);
+	}
+
+	.orb-sun {
+		opacity: 1;
+		transform: rotate(0deg) scale(1);
+	}
+
+	.orb-moon {
+		opacity: 0;
+		transform: rotate(-35deg) scale(0.6);
+	}
+
+	:global(html[data-theme='night']) .orb-sun {
+		opacity: 0;
+		transform: rotate(55deg) scale(0.5);
+	}
+
+	:global(html[data-theme='night']) .orb-moon {
+		opacity: 1;
+		transform: rotate(0deg) scale(1);
+	}
+
+	/* --- Narrow screens --------------------------------------------------- */
+
+	@media (max-width: 64rem) {
+		.header-clock {
+			display: none;
+		}
+	}
+
+	@media (max-width: 48rem) {
+		.site-header {
+			grid-template-areas:
+				'brand tools'
+				'nav nav';
+			grid-template-columns: 1fr auto;
+			min-height: 0;
+			padding-block: 12px 0;
+		}
+
+		.brand {
+			grid-area: brand;
+		}
+
+		.header-tools {
+			grid-area: tools;
+		}
+
+		.site-nav {
+			grid-area: nav;
+			justify-content: space-between;
+			gap: 8px;
+			width: 100%;
+			margin-block-start: 10px;
+			padding-block: 10px;
+			border-block-start: 1px solid var(--line);
+		}
+
+		.site-nav__link {
+			flex: 1 1 0;
+		}
+	}
+
+	@media (max-width: 26rem) {
+		.brand__sub {
+			display: none;
+		}
+
+		.site-nav__el {
+			display: none;
 		}
 	}
 </style>

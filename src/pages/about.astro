@@ -1,41 +1,70 @@
 ---
 /**
- * 关于 / περί.
+ * 关于 — who is writing, and what this place is.
  *
- * The mockup only reserves this band and drops the 关于 label into its right
- * half, so the copy below is a placeholder to replace. The 作者一览 grid below
- * it is this site's own addition — one entry per file in src/content/authors,
- * each linking to that author's page and their posts.
+ * The masthead picture (`images.logo` in settings.json) opens the page as a
+ * wide plate; the numbers on the right are real — posts, authors, first year,
+ * last update — rather than invented "based in / practice" lines. The 作者一览
+ * grid at the bottom is this site's own addition and stays.
  */
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import WaveBand from '../components/WaveBand.astro';
 import AuthorCard from '../components/AuthorCard.astro';
-import SiteMark from '../components/SiteMark.astro';
-import { SITE, withBase } from '../config';
+import Figure from '../components/Figure.astro';
+import { SITE, asset, formatDateDot, withBase } from '../config';
 import { getAuthorIndex, postCounts } from '../authors';
 
 const index = await getAuthorIndex();
-const posts = await getCollection('blog', ({ data }) => !data.draft);
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
 const counts = postCounts(posts, index);
+
+const logo = asset(SITE.images.logo);
+const latest = posts[0];
+const firstYear = posts.length
+	? posts[posts.length - 1].data.pubDate.getFullYear()
+	: new Date().getFullYear();
 ---
 
-<BaseLayout title="关于" surface="tan">
-	<div class="container intro">
-		<h1 class="section-label section-label--peach intro__label">关于</h1>
+<BaseLayout title="关于" description={SITE.description}>
+	<div class="container page-head">
+		<p class="section-kicker">04 — About / 关于</p>
+		<h1 class="page-head__title">关于。</h1>
+		<p class="page-head__lede">{SITE.description}</p>
 	</div>
 
-	<WaveBand class="band">
-		<div class="container band-inner about">
-			<div class="prose about__body">
+	<div class="container about">
+		{
+			logo && (
+				<figure class="about__banner" data-reveal>
+					<Figure
+						src={logo}
+						alt={`${SITE.title} 的题图`}
+						label="题图"
+						ratio="960 / 181"
+						sizes="(max-width: 60rem) 100vw, 960px"
+					/>
+					<figcaption class="about__banner-caption">
+						站点题图 / 960 × 181 原尺寸，不作放大
+					</figcaption>
+				</figure>
+			)
+		}
+
+		<div class="about__grid">
+			<div class="prose about__body" data-reveal>
 				<p>
 					{SITE.title} 上面主要是正在做的工作的留档以及一些随手留下的记录，详细内容请见
-					<a href={withBase('/works/')}>工作</a>与<a href={withBase('/blog/')}>时日</a>分区。
+					<a href={withBase('/works/')}>工作</a>与<a href={withBase('/blog/')}>时日</a
+					>分区。
 				</p>
 				<p>
-					工作是永无止境的，时间本身也不是什么值得纪念的东西。如果不留下些过去的坐标的话，其实也不知道自己走到了哪里。
-					就像将落下的树叶做成书签长久的保存一样，这里记录着过去以及即将成为过去的当下。
+					工作是永无止境的，时间本身也不是什么值得纪念的东西。如果不留下些过去的坐标的话，
+					其实也不知道自己走到了哪里。就像将落下的树叶做成书签长久的保存一样，
+					这里记录着过去以及即将成为过去的当下。
 				</p>
+
 				<h2>联系</h2>
 				<ul>
 					<li>邮箱：<a href="mailto:hello@example.com">hello@example.com</a></li>
@@ -44,20 +73,34 @@ const counts = postCounts(posts, index);
 				<p class="about__note">以上信息均为占位内容，请替换为你自己的。</p>
 			</div>
 
-			<aside class="about__aside">
-				<SiteMark size="about" />
-				<p class="about__bio">{SITE.description}</p>
-			</aside>
+			<dl class="about__meta" data-reveal style="--reveal-delay:120ms">
+				<div><dt>文章</dt><dd>{posts.length} 篇</dd></div>
+				<div><dt>作者</dt><dd>{index.list.length} 位</dd></div>
+				<div><dt>起始</dt><dd>{firstYear}</dd></div>
+				<div>
+					<dt>最近更新</dt>
+					<dd>{latest ? formatDateDot(latest.data.pubDate) : '—'}</dd>
+				</div>
+				<div><dt>底边栏小字</dt><dd>{SITE.footerNote}</dd></div>
+			</dl>
 		</div>
-	</WaveBand>
+	</div>
 
 	<section class="container authors" aria-labelledby="authors-heading">
-		<h2 id="authors-heading" class="section-label section-label--rose authors__label">作者一览</h2>
+		<header class="section-head">
+			<div data-reveal>
+				<p class="section-kicker">05 — Authors / 作者</p>
+				<h2 class="section-title" id="authors-heading">写这里的人。</h2>
+			</div>
+			<p class="section-note" data-reveal style="--reveal-delay:80ms">
+				一人一份档案。点进去是 TA 的全部文章。
+			</p>
+		</header>
 
-		<ul class="authors__grid">
+		<ul class="authors-grid">
 			{
 				index.list.map((author) => (
-					<li>
+					<li data-reveal>
 						<AuthorCard
 							author={author}
 							href={withBase(`/authors/${author.id}/`)}
@@ -68,69 +111,108 @@ const counts = postCounts(posts, index);
 			}
 		</ul>
 	</section>
+
+	<p class="container colophon">
+		Colophon — 纸、墨与一点 JavaScript。排版用 Noto Serif SC 与系统宋体，
+		图形由 CSS 绘制，不依赖外部图片。日晷读的是 Asia/Shanghai 的时间。
+	</p>
 </BaseLayout>
 
 <style>
-	.intro {
-		padding-block: var(--section-pad);
-	}
-
-	.intro__label {
-		text-align: center;
-	}
-
 	.about {
+		padding-block-end: var(--section-pad);
+	}
+
+	/* --- Masthead plate --------------------------------------------------- */
+
+	.about__banner {
+		/* The painting is 960px wide. It is allowed to sit at that size and not
+		   a pixel more — an upscaled wordmark is just a blurry wordmark. */
+		max-width: 60rem;
+		margin-block-end: clamp(40px, 5vw, 68px);
+	}
+
+	.about__banner-caption {
+		margin-block-start: 10px;
+		color: var(--muted-soft);
+		font-size: 0.6875rem;
+		letter-spacing: 0.16em;
+		text-align: right;
+	}
+
+	/* --- Copy + numbers --------------------------------------------------- */
+
+	.about__grid {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) 16rem;
-		gap: clamp(2rem, 5vw, 4rem);
+		grid-template-columns: minmax(0, 1fr) minmax(14rem, 19rem);
+		gap: clamp(40px, 7vw, 100px);
 		align-items: start;
 	}
 
 	.about__body {
-		max-width: 42ch;
+		max-width: 40rem;
 	}
 
 	.about__note {
-		font-size: var(--fs-meta);
-		color: var(--c-ink-muted);
+		color: var(--muted);
+		font-family: var(--font-sans);
+		font-size: 0.8125rem;
 	}
 
-	.about__aside {
-		display: grid;
-		gap: 0.4rem;
-		text-align: end;
+	.about__meta {
+		padding-block-start: 3px;
+		border-block-start: 1px solid var(--line-strong);
 	}
 
-	.about__bio {
-		font-size: var(--fs-meta);
-		color: var(--c-ink-muted);
+	.about__meta div {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 14px;
+		padding-block: 13px;
+		border-block-end: 1px solid var(--line);
 	}
 
-	/* --- 作者一览 ---------------------------------------------------------- */
+	.about__meta dt {
+		color: var(--muted);
+		font-size: 0.6875rem;
+		letter-spacing: 0.11em;
+	}
+
+	.about__meta dd {
+		font-family: var(--font-serif);
+		font-size: 0.9375rem;
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* --- Authors ---------------------------------------------------------- */
+
 	.authors {
 		padding-block: var(--section-pad);
+		border-block-start: 1px solid var(--line);
 	}
 
-	.authors__label {
-		margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
-	}
-
-	.authors__grid {
+	.authors-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-		gap: clamp(1.25rem, 3vw, 2rem);
-		margin: 0;
-		padding: 0;
-		list-style: none;
+		grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+		gap: clamp(16px, 2.4vw, 26px);
 	}
 
-	@media (max-width: 48rem) {
-		.about {
-			grid-template-columns: minmax(0, 1fr);
-		}
+	/* --- Colophon --------------------------------------------------------- */
 
-		.about__aside {
-			text-align: start;
+	.colophon {
+		padding-block: 26px clamp(40px, 5vw, 64px);
+		color: var(--muted-soft);
+		font-size: 0.71875rem;
+		line-height: 2;
+		letter-spacing: 0.04em;
+	}
+
+	@media (max-width: 62rem) {
+		.about__grid {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 34px;
 		}
 	}
 </style>

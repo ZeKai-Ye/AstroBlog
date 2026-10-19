@@ -2,19 +2,20 @@
 /**
  * An image slot.
  *
- * Every picture in `ui设计.free` is a flat #ABA4A4 rectangle. That grey means
- * "an image goes here" — it is not a colour from the design's palette — so when
- * no source is supplied this paints a soft warm tint and keeps the design's
- * 图片 caption instead of a grey block.
+ * With a source it is just a photograph inside a hairline frame — square
+ * corners, no rounding, because the paper design has none. Without one it draws
+ * the frame's own furniture: the two hairlines that cross at the centre, the
+ * slot's name in serif, and a tiny IMAGE marker in the corner. That is a nicer
+ * empty state than a grey block, and it still says "a picture goes here".
  */
 import { Image } from 'astro:assets';
 
 interface Props {
 	src?: ImageMetadata;
 	alt: string;
-	/** Caption for the empty state. The mockup writes 图片 / 头像. */
+	/** Caption for the empty state. The mockup wrote 图片 / 头像. */
 	label?: string;
-	/** CSS `aspect-ratio` value. The design's hero shot is 640x755. */
+	/** CSS `aspect-ratio` value. */
 	ratio?: string;
 	/** `sizes` hint so the browser picks a sensibly sized srcset entry. */
 	sizes?: string;
@@ -25,7 +26,7 @@ const {
 	src,
 	alt,
 	label = '图片',
-	ratio = '640 / 755',
+	ratio = '4 / 3',
 	sizes = '(max-width: 48rem) 100vw, 50vw',
 	class: className = '',
 } = Astro.props;
@@ -37,18 +38,22 @@ const {
 			<Image src={src} alt={alt} widths={[480, 800, 1200]} sizes={sizes} />
 		) : (
 			<span class="slot__empty" role="img" aria-label={alt}>
+				<span class="slot__cross" aria-hidden="true"></span>
 				<span class="slot__label">{label}</span>
+				<span class="slot__marker" aria-hidden="true">IMAGE</span>
 			</span>
 		)
 	}
 </figure>
 
 <style>
-	/* The figure owns the ratio; the image or the empty state fills it. */
 	.slot {
+		position: relative;
 		margin: 0;
 		aspect-ratio: var(--slot-ratio);
 		overflow: hidden;
+		background: var(--paper-deep);
+		border: 1px solid var(--line);
 	}
 
 	.slot :global(img) {
@@ -58,18 +63,37 @@ const {
 	}
 
 	.slot__empty {
+		position: relative;
 		display: grid;
-		place-items: center;
-		width: 100%;
 		height: 100%;
-		background: var(--c-image-slot);
-		color: var(--c-ink);
+		place-items: center;
 	}
 
-	/* The mockup sets these captions at 64px. */
+	/* Two hairlines through the middle, like a crop guide. */
+	.slot__cross {
+		position: absolute;
+		inset: 0;
+		background:
+			linear-gradient(90deg, transparent 49.9%, var(--line) 50%, transparent 50.1%),
+			linear-gradient(0deg, transparent 49.9%, var(--line) 50%, transparent 50.1%);
+		opacity: 0.7;
+	}
+
 	.slot__label {
-		font-size: var(--fs-label);
-		line-height: 1.2;
-		letter-spacing: 0.04em;
+		position: relative;
+		color: var(--muted);
+		font-family: var(--font-serif);
+		font-size: clamp(1.1rem, 2vw, 1.75rem);
+		letter-spacing: 0.22em;
+		text-indent: 0.22em;
+	}
+
+	.slot__marker {
+		position: absolute;
+		inset-block-start: 12px;
+		inset-inline-start: 14px;
+		color: var(--muted-soft);
+		font-size: 0.6875rem;
+		letter-spacing: 0.18em;
 	}
 </style>

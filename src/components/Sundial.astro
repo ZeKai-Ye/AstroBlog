@@ -1,0 +1,123 @@
+---
+/**
+ * The 日晷 — a live clock drawn as one turn of a day.
+ *
+ * The ring's arc and dot are driven by `--day-progress` / `--day-angle`, which
+ * src/scripts/site.ts sets from the same time it writes into the label. So the
+ * dial is a reading of the clock, not an animation that merely looks like one.
+ *
+ * The parent owns position and size; this only owns the circle.
+ */
+import { UI } from '../config';
+
+interface Props {
+	class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<div class:list={['dial', className]} aria-hidden="true">
+	<span class="dial__inner"></span>
+	<span class="dial__arc"></span>
+	<span class="dial__dot"></span>
+	<span class="dial__time" data-clock-time>00:00</span>
+	<span class="dial__label">{UI.timeLabel} / LOCAL</span>
+</div>
+
+<style>
+	.dial {
+		position: relative;
+		width: 100%;
+		aspect-ratio: 1;
+		border: 1px solid var(--line);
+		border-radius: 50%;
+		opacity: 0.9;
+	}
+
+	/* The fainter second ring, 11% in. */
+	.dial__inner {
+		position: absolute;
+		inset: 11%;
+		border: 1px solid var(--line);
+		border-radius: 50%;
+		opacity: 0.55;
+	}
+
+	/* Noon mark at the top of the circle. */
+	.dial::after {
+		position: absolute;
+		inset-block-start: -3px;
+		inset-inline-start: 50%;
+		width: 5px;
+		height: 5px;
+		content: '';
+		background: var(--ink);
+		border-radius: 50%;
+		opacity: 0.4;
+		transform: translateX(-50%);
+	}
+
+	/* The covered part of the day, as a 3px crescent. */
+	.dial__arc {
+		position: absolute;
+		inset: -1px;
+		background: conic-gradient(
+			from -90deg,
+			var(--accent) 0deg var(--day-progress, 0deg),
+			transparent var(--day-progress, 0deg) 360deg
+		);
+		border-radius: 50%;
+		opacity: 0.9;
+		-webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+		mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+	}
+
+	.dial__dot {
+		position: absolute;
+		inset: 0;
+		transform: rotate(var(--day-angle, 0deg));
+	}
+
+	.dial__dot::before {
+		position: absolute;
+		inset-block-start: 0;
+		inset-inline-start: 50%;
+		width: 7px;
+		height: 7px;
+		content: '';
+		background: var(--accent);
+		border-radius: 50%;
+		box-shadow: 0 0 0 7px var(--accent-soft);
+		transform: translate(-50%, -50%);
+	}
+
+	.dial__time {
+		position: absolute;
+		inset-block-start: 50%;
+		inset-inline-start: 50%;
+		color: var(--ink);
+		font-family: var(--font-serif);
+		font-size: clamp(1.4rem, 2.4vw, 2.1rem);
+		letter-spacing: 0.02em;
+		font-variant-numeric: tabular-nums;
+		transform: translate(-50%, -50%) translateY(-9px);
+	}
+
+	.dial__label {
+		position: absolute;
+		inset-block-start: 50%;
+		inset-inline-start: 50%;
+		color: var(--muted);
+		font-size: 0.6875rem;
+		letter-spacing: 0.16em;
+		white-space: nowrap;
+		transform: translate(-50%, -50%) translateY(22px);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.dial__dot {
+			transition: none;
+		}
+	}
+</style>
