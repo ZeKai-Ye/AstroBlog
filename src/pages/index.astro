@@ -54,10 +54,11 @@ const firstYear = posts.length
 	: year;
 
 const contents = [
-	{ href: '#latest', num: 'I', name: '最近', count: latest ? '01' : '00' },
-	{ href: '#writing', num: 'II', name: '文章', count: String(posts.length).padStart(2, '0') },
-	{ href: '#work', num: 'III', name: '工作', count: String(SITE.works.length).padStart(2, '0') },
-	{ href: '#about', num: 'IV', name: '关于', count: String(authors.list.length).padStart(2, '0') },
+	{ href: '#desk', num: 'I', name: '工作间', count: '01' },
+	{ href: '#latest', num: 'II', name: '最近', count: latest ? '01' : '00' },
+	{ href: '#writing', num: 'III', name: '文章', count: String(posts.length).padStart(2, '0') },
+	{ href: '#work', num: 'IV', name: '工作', count: String(SITE.works.length).padStart(2, '0') },
+	{ href: '#about', num: 'V', name: '关于', count: String(authors.list.length).padStart(2, '0') },
 ];
 ---
 
@@ -128,12 +129,39 @@ const contents = [
 		</div>
 	</section>
 
+	<!-- 概念演示：一张桌子，白天是工作，夜里是生活。 -->
+	<section class="section section--lined" id="desk" aria-labelledby="desk-title">
+		<div class="container">
+			<header class="section-head">
+				<div data-reveal>
+					<p class="section-kicker">01 — Concept / 概念演示</p>
+					<h2 class="section-title" id="desk-title">一张桌子，两种时刻。</h2>
+				</div>
+				<p class="section-note" data-reveal style="--reveal-delay:100ms">
+					白天，窗户亮着，台灯熄着，桌上是一台电脑；夜里，窗外暗下去，台灯亮起，
+					电脑变回一本摊开的书。右上角的开关同时换掉这盏灯。
+				</p>
+			</header>
+
+			<figure class="desk" data-reveal style="--reveal-delay:120ms">
+				<div class="desk__stage">
+					<div class="desk__canvas" data-desk-scene></div>
+					<span class="desk__state" data-desk-state>工作 / 白天</span>
+				</div>
+				<figcaption class="desk__caption">
+					<span>工作间 / 概念演示</span>
+					<span>three.js · 与开关同步</span>
+				</figcaption>
+			</figure>
+		</div>
+	</section>
+
 	{
 		latest && (
 			<section class="section section--lined" id="latest" aria-labelledby="latest-title">
 				<div class="container feature">
 					<div class="feature__copy" data-reveal>
-						<p class="section-kicker">01 — Latest / 最近一篇</p>
+						<p class="section-kicker">02 — Latest / 最近一篇</p>
 
 						<h2 id="latest-title">
 							<a class="feature__title" href={withBase(`/blog/${latest.id}/`)}>
@@ -199,7 +227,7 @@ const contents = [
 		<div class="container">
 			<header class="section-head">
 				<div data-reveal>
-					<p class="section-kicker">02 — Writing / 文章</p>
+					<p class="section-kicker">03 — Writing / 文章</p>
 					<h2 class="section-title" id="writing-title">写下来的事。</h2>
 				</div>
 				<p class="section-note" data-reveal style="--reveal-delay:100ms">
@@ -246,7 +274,7 @@ const contents = [
 		<div class="container">
 			<header class="section-head">
 				<div data-reveal>
-					<p class="section-kicker">03 — Work / 工作</p>
+					<p class="section-kicker">04 — Work / 工作</p>
 					<h2 class="section-title" id="work-title">做过的一些事。</h2>
 				</div>
 				<p class="section-note" data-reveal style="--reveal-delay:100ms">
@@ -310,7 +338,7 @@ const contents = [
 
 	<section class="section band" id="about" aria-labelledby="about-title">
 		<div class="container about-grid">
-			<p class="section-kicker" data-reveal>04 — About / 关于</p>
+			<p class="section-kicker" data-reveal>05 — About / 关于</p>
 
 			<div data-reveal style="--reveal-delay:80ms">
 				<h2 class="about__lead" id="about-title">
@@ -339,6 +367,84 @@ const contents = [
 		</div>
 	</section>
 </BaseLayout>
+
+<script>
+	/**
+	 * The desk scene, loaded only when the demo comes near the viewport: three.js
+	 * is a large dependency and the hero should not wait for it. Once mounted the
+	 * scene renders on demand (theme changes and resizes), so an idle desk costs
+	 * nothing — see src/scenes/desk.ts.
+	 */
+	let scene: { destroy: () => void; setNight: (night: boolean, immediate?: boolean) => void } | null =
+		null;
+	let host: HTMLElement | null = null;
+	let themeObserver: MutationObserver | null = null;
+	let generation = 0;
+
+	const isNight = () => document.documentElement.dataset.theme === 'night';
+
+	const mount = async (target: HTMLElement) => {
+		const token = ++generation;
+
+		const { createDeskScene } = await import('../scenes/desk');
+		if (token !== generation || !target.isConnected) return;
+
+		try {
+			scene = createDeskScene(target);
+		} catch (error) {
+			console.warn('[desk] the scene could not start', error);
+			target.classList.add('desk__canvas--failed');
+			target.textContent = '这个浏览器没有可用的 WebGL，桌面暂时看不到。';
+			return;
+		}
+
+		themeObserver = new MutationObserver(() => scene?.setNight(isNight()));
+		themeObserver.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-theme'],
+		});
+	};
+
+	let observer: IntersectionObserver | null = null;
+
+	const stop = () => {
+		generation++;
+		scene?.destroy();
+		scene = null;
+		themeObserver?.disconnect();
+		themeObserver = null;
+		host = null;
+		observer?.disconnect();
+		observer = null;
+	};
+
+	const start = () => {
+		if (host) return;
+
+		host = document.querySelector<HTMLElement>('[data-desk-scene]');
+		if (!host) return;
+
+		if (!('IntersectionObserver' in window)) {
+			void mount(host);
+			return;
+		}
+
+		observer = new IntersectionObserver(
+			(entries) => {
+				if (!entries.some((entry) => entry.isIntersecting)) return;
+				observer?.disconnect();
+				observer = null;
+				if (host) void mount(host);
+			},
+			{ rootMargin: '320px 0px' },
+		);
+		observer.observe(host);
+	};
+
+	document.addEventListener('astro:page-load', start);
+	document.addEventListener('astro:before-swap', stop);
+	start();
+</script>
 
 <style>
 	/* ======================================================================
@@ -495,8 +601,8 @@ const contents = [
 		position: relative;
 		z-index: 1;
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-		gap: clamp(16px, 3vw, 44px);
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+		gap: clamp(16px, 2.6vw, 38px);
 		padding-block: 15px;
 		border-block-start: 1px solid var(--line);
 	}
@@ -1152,6 +1258,67 @@ const contents = [
 	}
 
 	/* ======================================================================
+	   Concept demo — the three.js desk
+	   ====================================================================== */
+
+	.desk {
+		margin: 0;
+		background: var(--paper-soft);
+		border: 1px solid var(--line);
+	}
+
+	.desk__stage {
+		position: relative;
+		aspect-ratio: 16 / 8.2;
+		min-height: 280px;
+		overflow: hidden;
+	}
+
+	.desk__canvas {
+		position: absolute;
+		inset: 0;
+	}
+
+	.desk__canvas canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.desk__canvas--failed {
+		display: grid;
+		place-items: center;
+		padding: 2rem;
+		color: var(--muted);
+		font-size: 1rem;
+		text-align: center;
+	}
+
+	.desk__state {
+		position: absolute;
+		inset-block-start: 16px;
+		inset-inline-start: 18px;
+		padding: 7px 12px;
+		color: var(--accent-ink);
+		font-size: 0.8125rem;
+		letter-spacing: 0.1em;
+		background: var(--ink);
+		pointer-events: none;
+	}
+
+	.desk__caption {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 12px 16px;
+		color: var(--muted);
+		font-size: 0.8125rem;
+		letter-spacing: 0.06em;
+		border-block-start: 1px solid var(--line);
+	}
+
+	/* ======================================================================
 	   Responsive
 	   ====================================================================== */
 
@@ -1264,6 +1431,15 @@ const contents = [
 	}
 
 	@media (max-width: 48rem) {
+		.desk__stage {
+			aspect-ratio: 4 / 3.4;
+			min-height: 0;
+		}
+
+		.desk__caption span:last-child {
+			display: none;
+		}
+
 		.hero {
 			padding-block-start: 26px;
 		}
@@ -1293,6 +1469,10 @@ const contents = [
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 7px 22px;
 			padding-block: 13px;
+		}
+
+		.hero__contents a:last-child {
+			grid-column: span 2;
 		}
 
 		.hero__contents a {

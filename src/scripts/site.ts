@@ -118,6 +118,11 @@ const init = () => {
 
 		const markEn = pick('[data-mode-mark-en]');
 		if (markEn) markEn.textContent = isNight ? 'L' : 'W';
+
+		/* The home page's concept demo carries its own little state line. */
+		pickAll('[data-desk-state]').forEach((node) => {
+			node.textContent = isNight ? '生活 / 夜里' : '工作 / 白天';
+		});
 	};
 
 	const applyTheme = (theme: 'day' | 'night', { persist = true } = {}) => {
