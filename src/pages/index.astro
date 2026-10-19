@@ -177,10 +177,6 @@ const lifeContents = [
 					<p class="section-kicker">01 — Concept / 概念演示</p>
 					<h2 class="section-title" id="desk-title">一张桌子，两种时刻。</h2>
 				</div>
-				<p class="section-note" data-reveal style="--reveal-delay:100ms">
-					白天，窗户亮着，台灯熄着，桌上是一台电脑；夜里，窗外暗下去，台灯亮起，
-					电脑变回一本摊开的书。右上角的开关同时换掉这盏灯。
-				</p>
 			</header>
 
 			<figure class="desk" data-reveal style="--reveal-delay:120ms">
@@ -421,7 +417,6 @@ const lifeContents = [
 						<h2 class="section-title" id="days-title">最近的日子。</h2>
 					</div>
 					<p class="section-note" data-reveal style="--reveal-delay:100ms">
-						不构成文章，只是当天留下的几行字。
 						<a href={withBase('/blog/')}>全部时日 ↗</a>
 					</p>
 				</header>
@@ -508,8 +503,9 @@ const lifeContents = [
 
 				<div data-reveal style="--reveal-delay:80ms">
 					<h2 class="about__lead" id="about-life-title">
-						这里记录着过去，<br />以及即将成为过去的当下。
+						ようこそ、<br />erga kai hemerai の世界へ。
 					</h2>
+					<p class="about__translation">欢迎来到 erga kai hemerai 的世界。</p>
 					<p class="about__copy">
 						白天的事留在工作版里，夜里的这些字留在这里。同一个站，两种过法。
 					</p>
@@ -1384,9 +1380,22 @@ const lifeContents = [
 		letter-spacing: -0.045em;
 	}
 
+	.about__translation {
+		margin-block-start: 18px;
+		color: var(--ink-soft);
+		font-family: var(--font-serif);
+		font-size: clamp(1rem, 1.2vw, 1.15rem);
+		letter-spacing: 0.02em;
+	}
+
+	/* The kicker's column is narrow; keep "04 — About / 关于" on one line. */
+	.about-grid > .section-kicker {
+		white-space: nowrap;
+	}
+
 	.about__copy {
 		max-width: 35rem;
-		margin-block-start: 28px;
+		margin-block-start: 22px;
 		color: var(--muted);
 		font-size: 0.9375rem;
 		line-height: 2;
