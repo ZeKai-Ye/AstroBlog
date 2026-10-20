@@ -7,7 +7,7 @@
 
 | 位置 | 写在哪 | 字段 |
 | :-- | :-- | :-- |
-| 顶部站标 | `src/settings.json` | `images.logo` |
+| 「关于」页题图 | `src/settings.json` | `images.logo` |
 | 首页左边（工作） | `src/settings.json` | `images.heroWork` |
 | 首页右边（时日） | `src/settings.json` | `images.heroDays` |
 | 兜底头像 | `src/settings.json` | `images.avatar` |
@@ -18,7 +18,7 @@
 支持 `jpg` / `jpeg` / `png` / `webp` / `avif` / `gif`，**扩展名不区分大小写**，**子目录也认**
 （文件在 `photos/hero.jpg`，就写 `photos/hero.jpg`）。
 
-留空（`''`）就显示设计稿的占位块；`images.logo` 留空则退回站名文字。
+留空（`''`）就显示设计稿的占位块；`images.logo` 留空则「关于」页不显示题图（报头是文字字标，不依赖图片）。
 
 **文件名写错不会静默失败** —— 构建会直接报错，并列出这个文件夹里现有的文件。`.heic`
 （iPhone 默认）和 `.bmp` 不认，先转成 jpg。

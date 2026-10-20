@@ -26,13 +26,15 @@ for (const post of posts) {
 		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
 	}
 }
-const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
+const tags = [...tagCounts.entries()]
+	.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh-CN'))
+	.slice(0, 10);
 ---
 
 <BaseLayout title="时日" description={`${SITE.title} 的全部文章，共 ${posts.length} 篇。`}>
 	<header class="container page-head page-head--lined page-head--split">
 		<div class="page-head__text">
-			<p class="section-kicker">02 — Days / 时日</p>
+			<p class="section-kicker">Days / 时日</p>
 			<h1 class="page-head__title">一些很小的日子。</h1>
 			<p class="page-head__lede">
 				共 {posts.length} 篇，从最近的开始。想找某个主题，可以直接
@@ -147,8 +149,8 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 	}
 
 	.now__label {
-		color: var(--accent);
-		font-size: 0.6875rem;
+		color: var(--accent-text);
+		font-size: 0.75rem;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
 	}
@@ -168,7 +170,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 
 	.now__list dt {
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		letter-spacing: 0.08em;
 	}
 
@@ -204,8 +206,8 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 	}
 
 	.tag-list__count {
-		color: var(--muted-soft);
-		font-size: 0.6875rem;
+		color: var(--muted);
+		font-size: 0.75rem;
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -273,7 +275,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 	}
 
 	.day__date {
-		color: var(--accent);
+		color: var(--accent-text);
 		font-family: var(--font-serif);
 		font-size: 0.84375rem;
 		letter-spacing: 0.02em;
@@ -288,7 +290,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 	}
 
 	.day__title:hover {
-		color: var(--accent);
+		color: var(--accent-text);
 	}
 
 	.day__desc {
@@ -301,7 +303,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 
 	.day__tag {
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		letter-spacing: 0.08em;
 	}
 
@@ -379,7 +381,7 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 		.day__tag {
 			grid-column: 2;
 			margin-block-start: -2px;
-			font-size: 0.6875rem;
+			font-size: 0.75rem;
 		}
 	}
 </style>

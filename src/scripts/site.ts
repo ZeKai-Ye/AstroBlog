@@ -126,8 +126,8 @@ const readStoredTheme = () => {
 /**
  * ClientRouter builds the incoming page from HTML that was rendered without the
  * theme (the boot script only runs in a real document load), so the `data-theme`
- * attribute would be dropped on every navigation. Write the current theme onto
- * the incoming document before the swap and night readers stay in the dark.
+ * and `data-edition` attributes would be dropped on every navigation. Write the
+ * current pair onto the incoming document before the swap.
  */
 const carryThemeAcrossSwap = (event: Event) => {
 	const incoming = (event as Event & { newDocument?: Document }).newDocument;
@@ -135,6 +135,8 @@ const carryThemeAcrossSwap = (event: Event) => {
 
 	if (root.dataset.theme === NIGHT) incoming.documentElement.dataset.theme = NIGHT;
 	else incoming.documentElement.removeAttribute('data-theme');
+
+	incoming.documentElement.dataset.edition = root.dataset.edition === 'life' ? 'life' : 'work';
 
 	const meta = incoming.querySelector('meta[name="theme-color"]');
 	if (meta) meta.setAttribute('content', root.dataset.theme === NIGHT ? '#171812' : '#fff1d4');
@@ -177,22 +179,21 @@ const init = () => {
 	let switchTimer = 0;
 	let washTimer = 0;
 
-	const applyModeCopy = (isNight: boolean) => {
+	const applyEdition = (isLife: boolean) => {
 		pickAll('[data-mode-copy]').forEach((node) => {
-			const text = node.dataset[isNight ? 'night' : 'day'];
+			const text = node.dataset[isLife ? 'night' : 'day'];
 			if (text) node.textContent = text;
 		});
 
 		const mark = pick('[data-mode-mark]');
-		if (mark) mark.textContent = isNight ? '生活' : '工作';
+		if (mark) mark.textContent = isLife ? '生活' : '工作';
 
 		const markEn = pick('[data-mode-mark-en]');
-		if (markEn) markEn.textContent = isNight ? 'L' : 'W';
+		if (markEn) markEn.textContent = isLife ? 'L' : 'W';
 
-		/* The home page's concept demo carries its own little state line. */
-		pickAll('[data-desk-state]').forEach((node) => {
-			node.textContent = isNight ? '生活 / 夜里' : '工作 / 白天';
-		});
+		root.dataset.edition = isLife ? 'life' : 'work';
+
+		if (themeToggle) themeToggle.setAttribute('aria-pressed', String(isLife));
 	};
 
 	const applyTheme = (theme: 'day' | 'night', { persist = true } = {}) => {
@@ -201,15 +202,11 @@ const init = () => {
 		if (isNight) root.dataset.theme = NIGHT;
 		else delete root.dataset.theme;
 
-		applyModeCopy(isNight);
+		/* The desk scene's state line describes the light, not the edition. */
+		pickAll('[data-desk-state]').forEach((node) => {
+			node.textContent = isNight ? '生活 / 夜里' : '工作 / 白天';
+		});
 
-		if (themeToggle) {
-			themeToggle.setAttribute('aria-pressed', String(isNight));
-			themeToggle.setAttribute(
-				'aria-label',
-				isNight ? '切换到工作模式（开灯）' : '切换到生活模式（关灯）',
-			);
-		}
 		if (themeMeta) themeMeta.setAttribute('content', THEME_COLOR[theme]);
 
 		if (persist) {
@@ -221,13 +218,30 @@ const init = () => {
 		}
 	};
 
+	/* The switch flips the lights and the edition together — that is the
+	   site's gesture — but `data-edition` is its own attribute, so a colour
+	   change can never silently swap the page under the reader. */
+	const applyBoth = (theme: 'day' | 'night', options?: { persist?: boolean }) => {
+		applyTheme(theme, options);
+		applyEdition(theme === NIGHT);
+	};
+
 	const currentTheme = () => (root.dataset.theme === NIGHT ? NIGHT : DAY);
+
+	/* On the home page the editions are different issues. A reader halfway
+	   down one should land on the cover of the other, not in the middle of an
+	   unrelated section. */
+	const goToCover = () => {
+		if (!document.querySelector('.edition--work')) return;
+		if (window.scrollY > 240) window.scrollTo({ top: 0, behavior: 'auto' });
+	};
 
 	const transitionTo = (next: 'day' | 'night') => {
 		if (switching || currentTheme() === next) return;
 
 		if (reducedMotion.matches || !skyWash) {
-			applyTheme(next);
+			applyBoth(next);
+			goToCover();
 			return;
 		}
 
@@ -254,8 +268,12 @@ const init = () => {
 		void skyWash.offsetWidth; /* restart the animation */
 		skyWash.classList.add('is-running');
 
-		/* Swap the theme under the opaque middle of the bloom. */
-		switchTimer = window.setTimeout(() => applyTheme(next), 380);
+		/* Swap the theme and the edition under the opaque middle of the bloom;
+		   the same moment is when a deep reader is returned to the cover. */
+		switchTimer = window.setTimeout(() => {
+			applyBoth(next);
+			goToCover();
+		}, 380);
 		washTimer = window.setTimeout(() => {
 			skyWash.classList.remove('is-running');
 			root.classList.remove('is-theme-switching');
@@ -264,8 +282,6 @@ const init = () => {
 	};
 
 	/* --- Following the sun ------------------------------------------------ */
-
-	let solarTimer = 0;
 
 	const isManual = () => {
 		try {
@@ -281,8 +297,6 @@ const init = () => {
 		} catch {
 			/* storage can be unavailable; the choice still holds for this view */
 		}
-		window.clearTimeout(solarTimer);
-		solarTimer = 0;
 	};
 
 	/** Write "日出 06:12 · 日落 18:41" wherever the page asks for it. */
@@ -293,33 +307,11 @@ const init = () => {
 			node.textContent = text;
 		});
 		if (themeToggle) {
-			themeToggle.title = `${SUN.label} · ${text} · 亮灯是工作，熄灯是生活`;
+			themeToggle.title = `${SUN.label} · ${text} · 亮灯是工作版，熄灯是生活版`;
 		}
 	};
 
-	/** Ask for a theme change at the next sunrise or sunset. */
-	const scheduleSolar = () => {
-		window.clearTimeout(solarTimer);
-		if (isManual()) return;
-
-		const solar = solarDay(new Date());
-		if (!solar.next) return;
-
-		const wait = Math.max(15_000, solar.next.getTime() - Date.now() + 2_000);
-		if (wait > 24 * 60 * 60 * 1000) return;
-
-		solarTimer = window.setTimeout(() => {
-			if (isManual()) return;
-			const now = solarDay(new Date());
-			paintSunLabel(now);
-			transitionTo(now.isNight ? NIGHT : DAY);
-			scheduleSolar();
-		}, wait);
-
-		cleanups.push(() => window.clearTimeout(solarTimer));
-	};
-
-	const switchTheme = () => {
+	const switchEdition = () => {
 		/* A hand on the switch means the reader outranks the sun for now. */
 		markManual();
 		transitionTo(currentTheme() === NIGHT ? DAY : NIGHT);
@@ -328,32 +320,60 @@ const init = () => {
 	const solarNow = solarDay(new Date());
 	paintSunLabel(solarNow);
 
+	/* The sun decides which edition opens; after that only the reader flips
+	   it. Nothing changes the page while someone is reading it. */
 	if (isManual()) {
-		applyTheme(
+		applyBoth(
 			root.dataset.theme === NIGHT || readStoredTheme() === NIGHT ? NIGHT : DAY,
 			{ persist: false },
 		);
 	} else {
-		applyTheme(solarNow.isNight ? NIGHT : DAY, { persist: true });
-		scheduleSolar();
+		applyBoth(solarNow.isNight ? NIGHT : DAY, { persist: true });
 	}
 
-	/* Coming back to a tab after hours should already be the right time. */
+	/* Coming back to a tab refreshes the sun reading, not the edition. */
 	on(document, 'visibilitychange', () => {
-		if (document.hidden || isManual()) return;
-		const solar = solarDay(new Date());
-		paintSunLabel(solar);
-		applyTheme(solar.isNight ? NIGHT : DAY, { persist: true });
-		scheduleSolar();
+		if (document.hidden) return;
+		paintSunLabel(solarDay(new Date()));
 	});
 
-	themeToggle?.addEventListener('click', switchTheme);
+	themeToggle?.addEventListener('click', switchEdition);
+
+	/* ======================================================================
+	   The phone masthead — the four links open as a panel under the header.
+	   ====================================================================== */
+
+	const navToggle = pick<HTMLButtonElement>('[data-nav-toggle]');
+	const siteNav = pick<HTMLElement>('#site-nav');
+	const navOpen = () => siteNav?.classList.contains('is-open') ?? false;
+
+	const setNav = (open: boolean) => {
+		if (!navToggle || !siteNav) return;
+		siteNav.classList.toggle('is-open', open);
+		navToggle.setAttribute('aria-expanded', String(open));
+	};
+
+	navToggle?.addEventListener('click', () => setNav(!navOpen()));
+	siteNav?.addEventListener('click', (event) => {
+		if ((event.target as Element).closest('a')) setNav(false);
+	});
+	on(document, 'pointerdown', (event) => {
+		if (!navOpen()) return;
+		const target = event.target as Node;
+		if (siteNav?.contains(target) || navToggle?.contains(target)) return;
+		setNav(false);
+	});
+	on(document, 'keydown', (event) => {
+		if (event.key !== 'Escape' || !navOpen()) return;
+		setNav(false);
+		navToggle?.focus();
+	});
 
 	/* Other pages' controls (the 工作间 lamp) can flip the same switch. */
-	const onToggleRequest = () => switchTheme();
+	const onToggleRequest = () => switchEdition();
 	window.addEventListener('erga:toggle-theme', onToggleRequest);
 	cleanups.push(() => window.removeEventListener('erga:toggle-theme', onToggleRequest));
-	themeMeta?.setAttribute('content', THEME_COLOR[root.dataset.theme === NIGHT ? NIGHT : DAY]);
+	themeMeta?.setAttribute('content', THEME_COLOR[currentTheme()]);
 
 	/* ======================================================================
 	   The clock — header line, dial hands, "一天已过 xx%" all from one source
@@ -409,7 +429,10 @@ const init = () => {
 			node.textContent = time;
 		});
 
-		if (dateNode) dateNode.textContent = dateLabel;
+		if (dateNode) {
+			dateNode.textContent = dateLabel;
+			dateNode.setAttribute('datetime', `${year}-${month}-${day}`);
+		}
 		if (dayStatusNode) dayStatusNode.textContent = `一天已过 ${percent}%`;
 		if (nowProgressNode) nowProgressNode.textContent = `${percent}%`;
 		if (nowDateNode) nowDateNode.textContent = `${month}.${day}`;
@@ -459,20 +482,66 @@ const init = () => {
 	   Reading progress + the header tightening up + back to top
 	   ====================================================================== */
 
-	const progressBar = pick('[data-scroll-progress]');
+	const progressBar = pick<HTMLElement>('[data-scroll-progress]');
 	const header = pick('[data-site-header]');
 	const toTop = pick<HTMLButtonElement>('[data-to-top]');
+	const progressSelector = progressBar?.dataset.progressTarget ?? '';
+	const progressTarget = progressSelector
+		? document.querySelector<HTMLElement>(progressSelector)
+		: null;
 	let scrollFrame = 0;
+
+	/* The article page's table of contents. The headings are already in the
+	   document with their ids; this only marks the one being read. */
+	const toc = pick<HTMLElement>('[data-toc]');
+	const tocLinks = toc ? pickAll<HTMLAnchorElement>('a', toc) : [];
+	const tocTargets = tocLinks
+		.map((link) => {
+			const id = link.getAttribute('href')?.slice(1);
+			return id ? document.getElementById(id) : null;
+		})
+		.filter((node): node is HTMLElement => Boolean(node));
+
+	const updateToc = () => {
+		if (!tocTargets.length) return;
+
+		let current = tocTargets[0];
+		for (const heading of tocTargets) {
+			if (heading.getBoundingClientRect().top <= 150) current = heading;
+		}
+
+		tocLinks.forEach((link) => {
+			const active = link.getAttribute('href') === `#${current.id}`;
+			link.classList.toggle('is-active', active);
+			if (active) link.setAttribute('aria-current', 'location');
+			else link.removeAttribute('aria-current');
+		});
+	};
 
 	const updateScroll = () => {
 		scrollFrame = 0;
 
 		const max = document.documentElement.scrollHeight - window.innerHeight;
-		const progress = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+		let progress = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+
+		/* On a post the bar follows the article body instead of the whole
+		   document, so it reaches the end where the prose does. */
+		if (progressTarget) {
+			const top = progressTarget.getBoundingClientRect().top + window.scrollY;
+			const start = top - 120;
+			const end = top + progressTarget.offsetHeight - window.innerHeight + 120;
+			progress =
+				end > start
+					? Math.min(Math.max((window.scrollY - start) / (end - start), 0), 1)
+					: window.scrollY >= start
+						? 1
+						: 0;
+		}
 
 		if (progressBar) progressBar.style.transform = `scaleX(${progress})`;
 		if (header) header.classList.toggle('is-compact', window.scrollY > 72);
 		if (toTop) toTop.classList.toggle('is-visible', window.scrollY > 600);
+		updateToc();
 	};
 
 	const requestScrollUpdate = () => {
@@ -485,6 +554,62 @@ const init = () => {
 
 	toTop?.addEventListener('click', () => {
 		window.scrollTo({ top: 0, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+	});
+
+	/* ======================================================================
+	   Code blocks — a language label and a copy button around the Shiki
+	   output that is already in the page.
+	   ====================================================================== */
+
+	pickAll<HTMLPreElement>('.prose pre.astro-code').forEach((pre) => {
+		if (pre.parentElement?.classList.contains('code-block')) return;
+
+		const wrapper = document.createElement('div');
+		wrapper.className = 'code-block';
+		pre.parentNode?.insertBefore(wrapper, pre);
+		wrapper.appendChild(pre);
+
+		const bar = document.createElement('div');
+		bar.className = 'code-block__bar';
+
+		const label = document.createElement('span');
+		label.className = 'code-block__lang';
+		label.textContent = pre.dataset.language ?? 'code';
+
+		const copy = document.createElement('button');
+		copy.type = 'button';
+		copy.className = 'code-block__copy';
+		copy.textContent = '复制';
+		copy.addEventListener('click', async () => {
+			const text = pre.querySelector('code')?.textContent ?? pre.textContent ?? '';
+			try {
+				await navigator.clipboard.writeText(text);
+				copy.textContent = '已复制';
+			} catch {
+				copy.textContent = '复制失败';
+			}
+			window.setTimeout(() => {
+				copy.textContent = '复制';
+			}, 1600);
+		});
+
+		bar.append(label, copy);
+		wrapper.insertBefore(bar, pre);
+	});
+
+	/* `/` focuses the search field wherever one is on the page. */
+	on(document, 'keydown', (event) => {
+		if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+		const field = pick<HTMLInputElement>('#site-search');
+		if (!field) return;
+		event.preventDefault();
+		field.focus();
+		field.scrollIntoView({
+			block: 'center',
+			behavior: reducedMotion.matches ? 'auto' : 'smooth',
+		});
 	});
 
 	/* ======================================================================

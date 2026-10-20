@@ -36,6 +36,9 @@
 	--line: rgb(58 42 26 / 0.17);
 	--line-strong: rgb(58 42 26 / 0.34);
 	--accent: #a65a3c;
+	/* Same terracotta, dark enough to carry small text on the canvas (4.85:1).
+	   The lighter `--accent` stays for display numerals, dots and rules. */
+	--accent-text: #8f4a2e;
 	--accent-soft: rgb(166 90 60 / 0.12);
 	--rose: #f29191;
 	--rose-soft: #f49d99;
@@ -61,7 +64,7 @@
 		'Microsoft YaHei', system-ui, sans-serif;
 	--font-hand: 'KaiTi', 'STKaiti', 'SimKai', 'Noto Serif SC', serif;
 	--font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-	--fs-micro: 0.6875rem; /* 11px — the floor */
+	--fs-micro: 0.75rem; /* 12px — the floor */
 	--fs-label: 0.8125rem; /* 13px — kickers, tags, indices */
 	--fs-meta: 0.84375rem; /* 13.5px — dates, captions */
 	--fs-copy: 1.0625rem; /* 17px — body copy */
@@ -100,6 +103,7 @@ html[data-theme='night'] {
 	--line: rgb(216 210 197 / 0.17);
 	--line-strong: rgb(216 210 197 / 0.33);
 	--accent: #c49172;
+	--accent-text: #c49172;
 	--accent-soft: rgb(196 145 114 / 0.13);
 	--rose: #e0a3a0;
 	--rose-soft: #e3ab9f;
@@ -439,6 +443,7 @@ html.is-theme-switching .site-header {
 	font-weight: 400;
 	line-height: 1.08;
 	letter-spacing: -0.05em;
+	text-wrap: balance;
 }
 
 .section-head {
@@ -469,10 +474,16 @@ html.is-theme-switching .site-header {
 		text-decoration-color 0.25s ease;
 }
 
+/* A short link with an arrow ("全部时日 ↗") should not break between the
+   character and the arrow, or it reads as two fragments. */
+.section-note a {
+	white-space: nowrap;
+}
+
 .section-note a:hover,
 .footnote a:hover {
-	color: var(--accent);
-	text-decoration-color: var(--accent);
+	color: var(--accent-text);
+	text-decoration-color: var(--accent-text);
 }
 
 .meta-line {
@@ -523,8 +534,8 @@ html.is-theme-switching .site-header {
 }
 
 .text-link:hover {
-	color: var(--accent);
-	border-color: var(--accent);
+	color: var(--accent-text);
+	border-color: var(--accent-text);
 }
 
 .text-link:hover .text-link__arrow {
@@ -586,10 +597,36 @@ html.is-theme-switching .site-header {
 
 .print__caption span:last-child {
 	font-family: var(--font-sans);
-	font-size: 0.6875rem;
+	font-size: 0.75rem;
 	letter-spacing: 0.16em;
 	text-transform: uppercase;
-	color: var(--muted-soft);
+	color: var(--muted);
+}
+
+/* --- Image uniformity ---------------------------------------------------
+   Photographs arrive from different places: a blue-sky snapshot, a painting
+   in blue ink, a cartoon panel. A thin warm wash and a slight desaturation
+   bring them into the paper's temperature; at night they are dimmed so a
+   photo does not glow like a lightbox. */
+.print img,
+.about__banner img,
+.post__cover img,
+.prose img,
+.work-card__art img,
+.work__art img,
+.author__avatar img {
+	filter: saturate(0.93) sepia(0.06);
+	transition: filter 0.4s ease;
+}
+
+html[data-theme='night'] .print img,
+html[data-theme='night'] .about__banner img,
+html[data-theme='night'] .post__cover img,
+html[data-theme='night'] .prose img,
+html[data-theme='night'] .work-card__art img,
+html[data-theme='night'] .work__art img,
+html[data-theme='night'] .author__avatar img {
+	filter: brightness(0.84) saturate(0.88);
 }
 
 .sr-only {
@@ -619,6 +656,7 @@ html.is-theme-switching .site-header {
 	font-weight: 400;
 	line-height: 1.06;
 	letter-spacing: -0.055em;
+	text-wrap: balance;
 }
 
 .page-head__lede {
@@ -637,8 +675,8 @@ html.is-theme-switching .site-header {
 }
 
 .page-head__lede a:hover {
-	color: var(--accent);
-	text-decoration-color: var(--accent);
+	color: var(--accent-text);
+	text-decoration-color: var(--accent-text);
 }
 
 /* A hairline ledger: the parent of a list of PostRow. */
@@ -733,8 +771,8 @@ html.is-theme-switching .site-header {
 }
 
 .prose a:hover {
-	color: var(--accent);
-	text-decoration-color: var(--accent);
+	color: var(--accent-text);
+	text-decoration-color: var(--accent-text);
 }
 
 .prose ul,
@@ -761,7 +799,7 @@ html.is-theme-switching .site-header {
 .prose blockquote {
 	margin-inline: 0;
 	padding: 2px 0 2px 24px;
-	color: var(--accent);
+	color: var(--accent-text);
 	font-size: 1.14em;
 	line-height: 1.78;
 	letter-spacing: -0.02em;
@@ -806,6 +844,61 @@ html[data-theme='night'] .prose pre.astro-code span {
 	padding: 0;
 	border: 0;
 	font-size: 1em;
+}
+
+/* A code block gets a hairline header of its own: language on the left,
+   copy on the right. site.ts builds this wrapper at runtime, so a page
+   without JavaScript keeps the plain block it has today. */
+.code-block {
+	border: 1px solid var(--line);
+	background: color-mix(in srgb, var(--paper-soft) 90%, transparent);
+}
+
+.code-block__bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 7px 12px;
+	color: var(--muted);
+	font-family: var(--font-sans);
+	font-size: 0.75rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	border-block-end: 1px solid var(--line);
+}
+
+.code-block__lang {
+	color: var(--muted);
+}
+
+.code-block__copy {
+	padding-block-end: 1px;
+	color: var(--muted);
+	font-size: 0.75rem;
+	letter-spacing: 0.12em;
+	border-block-end: 1px solid var(--line-strong);
+	transition:
+		color 0.2s ease,
+		border-color 0.2s ease;
+}
+
+.code-block__copy:hover {
+	color: var(--ink);
+	border-color: var(--ink);
+}
+
+.code-block .astro-code,
+.code-block pre {
+	margin: 0;
+	border: 0;
+	background: transparent;
+}
+
+/* A code block inside a blockquote is not a direct child of .prose, so it
+   loses the paragraph spacing the wrapper otherwise gets from `.prose > *`. */
+.prose blockquote .code-block {
+	margin-block: 1em;
 }
 
 .prose img {

@@ -20,7 +20,7 @@ const banner = asset(SITE.images.heroWork);
 <BaseLayout title="工作" description={`${SITE.title} 的工作档案：${works.length} 则。`}>
 	<header class="container page-head page-head--lined page-head--split">
 		<div class="page-head__text">
-			<p class="section-kicker">03 — Work / Erga</p>
+			<p class="section-kicker">Work / Erga</p>
 			<h1 class="page-head__title">做过的一些事。</h1>
 			<p class="page-head__lede">
 				不是完整的作品集，只是一些工作档案。条目、年份与图片都在
@@ -77,7 +77,7 @@ const banner = asset(SITE.images.heroWork);
 						</div>
 
 						<h2 class="work__title">{item.title}</h2>
-						<p class="work__type">{item.meta}</p>
+						{item.description && <p class="work__desc">{item.description}</p>}
 					</li>
 				))
 			}
@@ -122,12 +122,12 @@ const banner = asset(SITE.images.heroWork);
 		justify-content: space-between;
 		gap: 14px;
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		letter-spacing: 0.1em;
 	}
 
 	.work__index {
-		color: var(--accent);
+		color: var(--accent-text);
 		font-family: var(--font-serif);
 		font-size: 0.8125rem;
 	}
@@ -156,7 +156,7 @@ const banner = asset(SITE.images.heroWork);
 		inset-inline-start: 16%;
 		width: 50%;
 		height: 58%;
-		background: var(--sheet);
+		background: var(--paper-soft);
 		border: 1px solid var(--line);
 		box-shadow: 0 14px 28px rgb(58 49 35 / 0.09);
 	}
@@ -194,7 +194,7 @@ const banner = asset(SITE.images.heroWork);
 		inset-inline-start: 15%;
 		width: 52%;
 		height: 46%;
-		background: var(--sheet);
+		background: var(--paper-soft);
 		border: 1px solid var(--line);
 		transform: rotate(-7deg);
 	}
@@ -228,11 +228,12 @@ const banner = asset(SITE.images.heroWork);
 		letter-spacing: -0.035em;
 	}
 
-	.work__type {
+	.work__desc {
 		margin-block-start: 8px;
 		color: var(--muted);
 		font-size: 0.8125rem;
-		letter-spacing: 0.04em;
+		line-height: 1.85;
+		letter-spacing: 0.02em;
 	}
 
 	.footnote {
@@ -273,7 +274,7 @@ const banner = asset(SITE.images.heroWork);
 		}
 
 		.work__title,
-		.work__type {
+		.work__desc {
 			grid-column: 2;
 		}
 

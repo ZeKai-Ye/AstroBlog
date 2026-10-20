@@ -2,8 +2,8 @@
 /**
  * 关于 — who is writing, and what this place is.
  *
- * The masthead picture (`images.logo` in settings.json) opens the page as a
- * wide plate; the numbers on the right are real — posts, authors, first year,
+ * The painted plate (`images.logo` in settings.json) opens the page as a wide
+ * image; the numbers on the right are real — posts, authors, first year,
  * last update — rather than invented "based in / practice" lines. The 作者一览
  * grid at the bottom is this site's own addition and stays.
  */
@@ -29,7 +29,7 @@ const firstYear = posts.length
 
 <BaseLayout title="关于" description={SITE.description}>
 	<div class="container page-head">
-		<p class="section-kicker">04 — About / 关于</p>
+		<p class="section-kicker">About / 关于</p>
 		<h1 class="page-head__title">关于。</h1>
 		<p class="page-head__lede">{SITE.description}</p>
 	</div>
@@ -89,7 +89,7 @@ const firstYear = posts.length
 	<section class="container authors" aria-labelledby="authors-heading">
 		<header class="section-head">
 			<div data-reveal>
-				<p class="section-kicker">05 — Authors / 作者</p>
+				<p class="section-kicker">Authors / 作者</p>
 				<h2 class="section-title" id="authors-heading">写这里的人。</h2>
 			</div>
 			<p class="section-note" data-reveal style="--reveal-delay:80ms">
@@ -134,8 +134,8 @@ const firstYear = posts.length
 
 	.about__banner-caption {
 		margin-block-start: 10px;
-		color: var(--muted-soft);
-		font-size: 0.6875rem;
+		color: var(--muted);
+		font-size: 0.75rem;
 		letter-spacing: 0.16em;
 		text-align: right;
 	}
@@ -175,7 +175,7 @@ const firstYear = posts.length
 
 	.about__meta dt {
 		color: var(--muted);
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
 		letter-spacing: 0.11em;
 	}
 
@@ -203,8 +203,8 @@ const firstYear = posts.length
 
 	.colophon {
 		padding-block: 26px clamp(40px, 5vw, 64px);
-		color: var(--muted-soft);
-		font-size: 0.71875rem;
+		color: var(--muted);
+		font-size: 0.8125rem;
 		line-height: 2;
 		letter-spacing: 0.04em;
 	}

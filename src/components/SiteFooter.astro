@@ -25,7 +25,8 @@ const year = new Date().getFullYear();
 		</nav>
 
 		<p class="site-footer__colophon">
-			Colophon — {SITE.footerNote} · 纸、墨与一点 JavaScript · 随日升日落切换（东八区 · 北纬 23°）
+			<span>Colophon — {SITE.footerNote}</span>
+			<span>纸、墨与一点 JavaScript · 随日升日落切换（东八区 · 北纬 23°）</span>
 		</p>
 	</div>
 </footer>
@@ -41,20 +42,21 @@ const year = new Date().getFullYear();
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 20px 34px;
+		gap: 18px 34px;
 		color: var(--muted);
-		font-size: 0.71875rem;
-		line-height: 1.9;
-		letter-spacing: 0.06em;
+		font-size: 0.8125rem;
+		line-height: 1.85;
+		letter-spacing: 0.04em;
 	}
 
 	.site-footer__nav {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px 18px;
+		gap: 2px 18px;
 	}
 
 	.site-footer__nav a {
+		padding-block: 3px;
 		transition: color 0.25s ease;
 	}
 
@@ -63,7 +65,12 @@ const year = new Date().getFullYear();
 	}
 
 	.site-footer__colophon {
+		max-width: 34rem;
 		text-align: right;
+	}
+
+	.site-footer__colophon span {
+		display: block;
 	}
 
 	@media (max-width: 48rem) {

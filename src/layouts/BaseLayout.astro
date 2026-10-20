@@ -11,36 +11,46 @@ import { ClientRouter } from 'astro:transitions';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import BackToTop from '../components/BackToTop.astro';
-import { SITE, withBase } from '../config';
+import { SITE, withBase, absoluteUrl } from '../config';
 
 interface Props {
 	/** Page title; the site name is appended automatically. */
 	title?: string;
 	description?: string;
+	/**
+	 * CSS selector for the element the reading-progress bar should follow.
+	 * Post pages pass `.post__body` so the bar finishes with the article
+	 * instead of running on through the prev/next strip.
+	 */
+	progressTarget?: string;
 }
 
-const { title, description = SITE.description } = Astro.props;
+const { title, description = SITE.description, progressTarget } = Astro.props;
 
 const pageTitle = title ? `${title} — ${SITE.title}` : SITE.title;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined;
+const ogImage = absoluteUrl('/og.jpg');
 ---
 
 <!doctype html>
-<html lang={SITE.lang}>
+<html lang={SITE.lang} data-edition="work">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#fff1d4" />
 
 		{/*
-			Before first paint: gate the reveal animation behind `.js`, and put the
-			right theme on <html> so nobody sees the wrong edition flash by.
+			Before first paint: gate the reveal animation behind `.js`, and put
+			the right theme and edition on <html> so nobody sees the wrong
+			issue flash by.
 
-			The stored preference wins. With no preference at all the page is about
-			to follow the sun (site.ts does the exact calculation with suncalc);
-			here a rough 06:00–18:00 day is enough to pick the right side before
-			the script bundle arrives. Inline and first in <head> because anything
-			later is too late.
+			A *manual* preference wins. Without one, the page is about to follow
+			the sun (site.ts does the exact calculation with suncalc); here a
+			rough 06:00–18:00 day is enough to pick the right side before the
+			script bundle arrives. The stored theme is ignored when it was only
+			written by the sun, or opening at noon would flash last night's
+			edition. Inline and first in <head> because anything later is too
+			late.
 		*/}
 		<script is:inline>
 			(() => {
@@ -49,15 +59,18 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 
 				const goNight = () => {
 					root.dataset.theme = 'night';
+					root.dataset.edition = 'life';
 					const meta = document.querySelector('meta[name="theme-color"]');
 					if (meta) meta.setAttribute('content', '#171812');
 				};
 
 				try {
+					const manual = localStorage.getItem('erga-theme-manual') === '1';
 					const stored = localStorage.getItem('erga-theme');
-					if (stored === 'night') {
-						goNight();
-					} else if (!stored) {
+
+					if (manual) {
+						if (stored === 'night') goNight();
+					} else {
 						const hour = Number(
 							new Intl.DateTimeFormat('en-GB', {
 								timeZone: 'Asia/Shanghai',
@@ -85,6 +98,11 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 		<meta name="generator" content={Astro.generator} />
 		<title>{pageTitle}</title>
 		<meta name="description" content={description} />
+		{/* The archived build under /experimental is unlisted and must not be
+		    indexed. Set EXPERIMENTAL=1 when building it. */}
+		{import.meta.env.EXPERIMENTAL === '1' && (
+			<meta name="robots" content="noindex, nofollow" />
+		)}
 		{canonical && <link rel="canonical" href={canonical.href} />}
 
 		<meta property="og:type" content="website" />
@@ -92,6 +110,19 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 		<meta property="og:description" content={description} />
 		<meta property="og:site_name" content={SITE.title} />
 		<meta property="og:locale" content="zh_CN" />
+		{canonical && <meta property="og:url" content={canonical.href} />}
+		<meta property="og:image" content={ogImage} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content={`${SITE.title} — ${SITE.description}`} />
+		<meta name="twitter:card" content="summary_large_image" />
+
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title={SITE.title}
+			href={withBase('/rss.xml')}
+		/>
 
 		{/*
 			The display face is Noto Serif SC, loaded from jsDelivr's Fontsource
@@ -114,13 +145,13 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
 	<body>
 		<a class="skip-link" href="#main">跳到主要内容</a>
 
-		<div class="scroll-progress" data-scroll-progress aria-hidden="true"></div>
+		<div class="scroll-progress" data-scroll-progress data-progress-target={progressTarget} aria-hidden="true"></div>
 		<div class="sky-wash" data-sky-wash aria-hidden="true"></div>
 
 		<div class="page">
 			<SiteHeader />
 
-			<main id="main">
+			<main id="main" tabindex="-1">
 				<slot />
 			</main>
 

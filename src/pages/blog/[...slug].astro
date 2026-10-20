@@ -48,7 +48,13 @@ interface Props {
 
 const { entry, prev, next } = Astro.props;
 const { data } = entry;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+
+/* A short table of contents for the posts that have one: h2/h3 only, capped
+   so a long essay cannot turn the sticky sidebar into a second page. */
+const toc = headings
+	.filter((heading) => heading.depth === 2 || heading.depth === 3)
+	.slice(0, 14);
 
 /* The sidebar card is whoever this post is by, linked to their page. */
 const author = authorOf(await getAuthorIndex(), data.author);
@@ -58,7 +64,7 @@ const cover = asset(data.cover);
 const minutes = readingMinutes(entry.body);
 ---
 
-<BaseLayout title={data.title} description={data.description}>
+<BaseLayout title={data.title} description={data.description} progressTarget=".post__body">
 	<article class="container post">
 		<header class="post__head">
 			<div class="post__bar">
@@ -123,6 +129,25 @@ const minutes = readingMinutes(entry.body);
 			</div>
 
 			<aside class="post__aside">
+				{
+					toc.length >= 2 && (
+						<nav class="post__toc" data-toc aria-label="文章目录">
+							<p class="post__toc-label">Contents / 目录</p>
+							<ol>
+								{toc.map((heading) => (
+									<li
+										class:list={[
+											'post__toc-item',
+											{ 'post__toc-item--sub': heading.depth === 3 },
+										]}
+									>
+										<a href={`#${heading.slug}`}>{heading.text}</a>
+									</li>
+								))}
+							</ol>
+						</nav>
+					)
+				}
 				<AuthorCard author={author} href={authorHref} />
 				<div class="post__search">
 					<SearchBox />
@@ -184,11 +209,11 @@ const minutes = readingMinutes(entry.body);
 	}
 
 	.post__back:hover {
-		color: var(--accent);
+		color: var(--accent-text);
 	}
 
 	.post__category {
-		color: var(--accent);
+		color: var(--accent-text);
 		font-size: 0.8125rem;
 		letter-spacing: 0.1em;
 	}
@@ -201,6 +226,7 @@ const minutes = readingMinutes(entry.body);
 		font-weight: 400;
 		line-height: 1.18;
 		letter-spacing: -0.055em;
+		text-wrap: balance;
 	}
 
 	.post__lede {
@@ -255,7 +281,53 @@ const minutes = readingMinutes(entry.body);
 	}
 
 	.post__tags a:hover {
-		color: var(--accent);
+		color: var(--accent-text);
+	}
+
+	.post__toc {
+		max-height: 40vh;
+		overflow-y: auto;
+		padding-block-start: 16px;
+		border-block-start: 1px solid var(--line-strong);
+	}
+
+	.post__toc-label {
+		color: var(--accent-text);
+		font-size: 0.75rem;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.post__toc ol {
+		display: grid;
+		margin-block-start: 12px;
+		gap: 8px;
+	}
+
+	.post__toc a {
+		display: block;
+		color: var(--muted);
+		font-size: 0.8125rem;
+		line-height: 1.55;
+		letter-spacing: 0.01em;
+		transition: color 0.2s ease;
+	}
+
+	.post__toc a:hover,
+	.post__toc a.is-active {
+		color: var(--ink);
+	}
+
+	.post__toc a.is-active {
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 4px;
+		text-decoration-color: var(--line-strong);
+	}
+
+	.post__toc-item--sub a {
+		padding-inline-start: 14px;
+		font-size: 0.78rem;
 	}
 
 	.post__aside {
@@ -298,7 +370,7 @@ const minutes = readingMinutes(entry.body);
 	}
 
 	.post__nav-item a:hover {
-		color: var(--accent);
+		color: var(--accent-text);
 	}
 
 	.post__nav-dir {
@@ -325,6 +397,11 @@ const minutes = readingMinutes(entry.body);
 			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 			gap: 20px;
 			align-items: start;
+		}
+
+		.post__toc {
+			grid-column: 1 / -1;
+			max-height: none;
 		}
 	}
 

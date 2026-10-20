@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchBox from '../components/SearchBox.astro';
 import { withBase } from '../config';
 ---
 
@@ -9,6 +10,10 @@ import { withBase } from '../config';
 		<p class="notfound__code">404</p>
 		<p class="notfound__text">这一页不在册子上。</p>
 		<p class="notfound__hint">也许是链接旧了，也许是它从来没有被写下过。</p>
+
+		<div class="notfound__search">
+			<SearchBox />
+		</div>
 
 		<nav class="notfound__links" aria-label="去处">
 			<a href={withBase('/')}>回到首页 <span aria-hidden="true">↗</span></a>
@@ -47,6 +52,12 @@ import { withBase } from '../config';
 		line-height: 1.9;
 	}
 
+	.notfound__search {
+		width: min(100%, 24rem);
+		margin-block-start: 10px;
+		text-align: start;
+	}
+
 	.notfound__links {
 		display: flex;
 		flex-wrap: wrap;
@@ -69,6 +80,6 @@ import { withBase } from '../config';
 	}
 
 	.notfound__links a:hover {
-		color: var(--accent);
+		color: var(--accent-text);
 	}
 </style>

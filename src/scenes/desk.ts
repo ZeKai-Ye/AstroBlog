@@ -27,7 +27,7 @@ const DAY = {
 	rugEdge: 0xfff1d4,
 	ink: 0x2a221b,
 	lamp: 0x2f2a24,
-	plinth: 0x2c2219,
+	plinth: 0x3a2e21,
 	brass: 0xc9a15b,
 	paper: 0xfff8ea,
 	rose: 0xf29191,
@@ -47,7 +47,7 @@ const NIGHT = {
 	rugEdge: 0x4a3a30,
 	ink: 0x14130f,
 	lamp: 0x1b1915,
-	plinth: 0x14110c,
+	plinth: 0x1e1a14,
 	brass: 0x6e5230,
 	paper: 0x2a2a22,
 	rose: 0x8a5654,
@@ -207,7 +207,7 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 1.04;
+	renderer.toneMappingExposure = 1.02;
 	renderer.domElement.setAttribute('aria-hidden', 'true');
 	host.appendChild(renderer.domElement);
 
@@ -315,13 +315,13 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		new THREE.SpriteMaterial({
 			map: radialTexture('rgba(255, 248, 226, 0.7)', 'rgba(255, 248, 226, 0)'),
 			transparent: true,
-			opacity: 0.32,
+			opacity: 0.16,
 			depthWrite: false,
 			blending: THREE.AdditiveBlending,
 		}),
 	);
 	windowGlow.position.set(-1.62, 1.95, -2.22);
-	windowGlow.scale.set(2.6, 2.9, 1);
+	windowGlow.scale.set(2.3, 2.6, 1);
 	scene.add(windowGlow);
 
 	/* --- Wall furniture -------------------------------------------------- */
@@ -617,13 +617,13 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 
 	/* --- Lights ---------------------------------------------------------- */
 
-	const ambient = new THREE.AmbientLight(0xfff1dc, 0.85);
+	const ambient = new THREE.AmbientLight(0xfff1dc, 0.76);
 	scene.add(ambient);
 
 	const hemi = new THREE.HemisphereLight(0xfff1d8, 0xd6bd9e, 0.8);
 	scene.add(hemi);
 
-	const sun = new THREE.DirectionalLight(0xfff3d6, 1.1);
+	const sun = new THREE.DirectionalLight(0xfff3d6, 1.24);
 	sun.position.set(-3.6, 4.6, 2.2);
 	scene.add(sun);
 
@@ -694,12 +694,12 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 	const applyMode = (t: number) => {
 		current = t;
 
-		ambient.intensity = lerp(0.85, 0.18, t);
+		ambient.intensity = lerp(0.76, 0.18, t);
 		hemi.intensity = lerp(0.8, 0.3, t);
 		hemi.color.lerpColors(colors.hemiSkyDay, colors.hemiSkyNight, t);
 		hemi.groundColor.lerpColors(colors.hemiGroundDay, colors.hemiGroundNight, t);
 
-		sun.intensity = lerp(1.1, 0.03, t);
+		sun.intensity = lerp(1.24, 0.03, t);
 		moon.intensity = lerp(0, 4.2, t);
 		lampLight.intensity = lerp(0, 22, t);
 		lampFill.intensity = lerp(0, 1.6, t);
@@ -746,7 +746,7 @@ export function createDeskScene(host: HTMLElement): DeskScene {
 		bookmark.visible = bookAmount > 0.5;
 		(bookmark.material as THREE.MeshToonMaterial).opacity = bookAmount;
 
-		renderer.toneMappingExposure = lerp(1.08, 0.99, t);
+		renderer.toneMappingExposure = lerp(1.02, 0.96, t);
 	};
 
 	/* --- On-demand rendering, ~24fps while transitioning ------------------ */

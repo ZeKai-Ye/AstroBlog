@@ -20,6 +20,8 @@ export interface WorkItem {
 	title: string;
 	meta: string;
 	image: string;
+	/** Optional one-line description shown under the title. */
+	description?: string;
 }
 
 export interface SiteSettings {
@@ -31,7 +33,7 @@ export interface SiteSettings {
 	nav: NavItem[];
 	/** File names inside `src/assets/`. `''` keeps the design placeholder. */
 	images: {
-		/** Masthead wordmark picture. `''` falls back to `title` as text. */
+		/** The 关于 page's plate. The masthead uses a type wordmark instead. */
 		logo: string;
 		heroWork: string;
 		heroDays: string;
@@ -55,6 +57,30 @@ export const withBase = (path: string) => {
 	const normalised = path.startsWith('/') ? path : `/${path}`;
 	return `${BASE}${normalised}` || '/';
 };
+
+/**
+ * The absolute origin used where the web needs one: `og:image`, the RSS feed
+ * and the sitemap. `SITE_URL` is the deliberate setting; Cloudflare's Git
+ * integration also exposes the deployment URL as `CF_PAGES_URL`, so a deploy
+ * gets a working feed even before a custom domain is configured. Local builds
+ * fall back to localhost, which is correct for checking the output.
+ */
+const configuredOrigin =
+	import.meta.env.SITE ?? process.env.SITE_URL ?? process.env.CF_PAGES_URL ?? '';
+
+export const SITE_ORIGIN = (() => {
+	if (configuredOrigin) {
+		try {
+			return new URL(configuredOrigin).origin;
+		} catch {
+			/* a bare domain without a protocol is not usable here */
+		}
+	}
+	return 'http://localhost:4321';
+})();
+
+/** A root-relative path as an absolute URL on the configured origin. */
+export const absoluteUrl = (path: string) => new URL(withBase(path), SITE_ORIGIN).href;
 
 /**
  * Resolves a file name to an image.

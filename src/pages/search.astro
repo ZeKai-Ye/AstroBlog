@@ -62,16 +62,41 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 		const statusEl = document.querySelector<HTMLParagraphElement>('[data-search-status]');
 		const input = document.querySelector<HTMLInputElement>('#site-search');
 
-		if (indexEl && resultsEl && statusEl) {
+		/* Everything is filtered in the browser, so the escape is for the
+		   highlight regex rather than for SQL. */
+		const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+		if (indexEl && resultsEl && statusEl && input) {
 			const entries: Entry[] = JSON.parse(indexEl.textContent || '[]');
 			const query = new URLSearchParams(location.search).get('q')?.trim() ?? '';
-
-			if (input) input.value = query;
+			input.value = query;
 
 			const haystack = (entry: Entry) =>
-				[entry.title, entry.description, ...entry.tags].join(' ').toLowerCase();
+				[entry.title, entry.description ?? '', ...entry.tags].join(' ').toLowerCase();
 
-			const render = (matches: Entry[]) => {
+			/* Build a fragment with the matched terms wrapped in <mark>. */
+			const mark = (text: string, terms: string[]) => {
+				const fragment = document.createDocumentFragment();
+				if (!terms.length) {
+					fragment.append(text);
+					return fragment;
+				}
+
+				const pattern = new RegExp(`(${terms.map(escape).join('|')})`, 'gi');
+				let last = 0;
+				for (const match of text.matchAll(pattern)) {
+					const index = match.index ?? 0;
+					if (index > last) fragment.append(text.slice(last, index));
+					const node = document.createElement('mark');
+					node.textContent = match[0];
+					fragment.append(node);
+					last = index + match[0].length;
+				}
+				if (last < text.length) fragment.append(text.slice(last));
+				return fragment;
+			};
+
+			const render = (matches: Entry[], terms: string[]) => {
 				resultsEl.replaceChildren(
 					...matches.map((entry) => {
 						const li = document.createElement('li');
@@ -85,7 +110,7 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 
 						const title = document.createElement('span');
 						title.className = 'search-row__title';
-						title.textContent = entry.title;
+						title.append(mark(entry.title, terms));
 
 						const date = document.createElement('time');
 						date.className = 'search-row__date';
@@ -98,7 +123,7 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 						if (entry.description) {
 							const excerpt = document.createElement('span');
 							excerpt.className = 'search-row__excerpt';
-							excerpt.textContent = entry.description;
+							excerpt.append(mark(entry.description, terms));
 							a.append(excerpt);
 						}
 
@@ -108,19 +133,48 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 				);
 			};
 
-			if (!query) {
-				statusEl.textContent = '输入关键词后回车。';
-				render([]);
-			} else {
-				const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-				const matches = entries.filter((entry) =>
-					terms.every((term) => haystack(entry).includes(term)),
-				);
-				statusEl.textContent = matches.length
-					? `找到 ${matches.length} 篇`
-					: `没有匹配「${query}」的文章`;
-				render(matches);
-			}
+			const update = (raw: string, { syncUrl = true } = {}) => {
+				const value = raw.trim();
+				const terms = value.toLowerCase().split(/\s+/).filter(Boolean);
+
+				if (!value) {
+					statusEl.textContent = `全部 ${entries.length} 篇`;
+					render(entries, []);
+				} else {
+					const matches = entries.filter((entry) =>
+						terms.every((term) => haystack(entry).includes(term)),
+					);
+					statusEl.textContent = matches.length
+						? `找到 ${matches.length} 篇`
+						: `没有匹配「${value}」的文章`;
+					render(matches, terms);
+				}
+
+				if (!syncUrl) return;
+				const next = new URL(location.href);
+				if (value) next.searchParams.set('q', value);
+				else next.searchParams.delete('q');
+				/* Keep Astro's router state: a bare null would drop the index
+				   the ClientRouter stores for back/forward navigation. */
+				history.replaceState(history.state, '', next);
+			};
+
+			/* No query is not an empty page: show everything. */
+			update(query, { syncUrl: false });
+
+			let timer = 0;
+			input.addEventListener('input', () => {
+				window.clearTimeout(timer);
+				timer = window.setTimeout(() => update(input.value), 160);
+			});
+
+			/* The list is live, so Enter should not reload the page. The form
+			   still works if this script never runs. */
+			input.form?.addEventListener('submit', (event) => {
+				event.preventDefault();
+				window.clearTimeout(timer);
+				update(input.value);
+			});
 		}
 	</script>
 </BaseLayout>
@@ -141,6 +195,12 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 		letter-spacing: 0.04em;
 	}
 
+	.search-page :global(mark) {
+		padding: 0 0.08em;
+		color: inherit;
+		background: var(--accent-soft);
+	}
+
 	.search-page__results {
 		margin-block-start: 22px;
 	}
@@ -158,7 +218,7 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 	}
 
 	:global(.search-row a:hover) {
-		color: var(--accent);
+		color: var(--accent-text);
 	}
 
 	:global(.search-row__head) {
