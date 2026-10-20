@@ -1,299 +1,101 @@
 ---
 /**
- * 工作 — the archive.
+ * 工作 / Ἔργα.
  *
- * Entries and pictures come from `works` in src/settings.json, so titles and
- * images are edited in one place. With no picture configured the card draws the
- * same CSS mark the home page uses, which keeps the section from looking broken
- * while the real work is still being added.
+ * The mockup links to this section from the hero pill but never draws it. The
+ * entries come from `works` in src/settings.json, so titles and pictures are
+ * edited in one place; on its own the list is just sample copy.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
+import WaveBand from '../components/WaveBand.astro';
 import Figure from '../components/Figure.astro';
 import { SITE, asset } from '../config';
-
-const works = SITE.works;
-
-/* The 工作 photograph configured in settings.json: a print on the page head. */
-const banner = asset(SITE.images.heroWork);
 ---
 
-<BaseLayout title="工作" description={`${SITE.title} 的工作档案：${works.length} 则。`}>
-	<header class="container page-head page-head--lined page-head--split">
-		<div class="page-head__text">
-			<p class="section-kicker">03 — Work / Erga</p>
-			<h1 class="page-head__title">做过的一些事。</h1>
-			<p class="page-head__lede">
-				不是完整的作品集，只是一些工作档案。条目、年份与图片都在
-				<code>src/settings.json</code> 的 <code>works</code> 里，这个页面会跟着变。
+<BaseLayout title="工作" surface="tan">
+	<div class="container intro">
+		<h1 class="section-label intro__label">工作</h1>
+		<p class="intro__sub">Ἔργα</p>
+	</div>
+
+	<WaveBand class="band">
+		<div class="container band-inner">
+			<ul class="works">
+				{
+					SITE.works.map((item) => (
+						<li class="works__item">
+							<Figure
+								class="works__media"
+								src={asset(item.image)}
+								alt={item.title}
+								label="图片"
+								ratio="4 / 3"
+							/>
+							<div class="works__text">
+								<h2 class="works__title">{item.title}</h2>
+								<p class="works__meta">{item.meta}</p>
+							</div>
+						</li>
+					))
+				}
+			</ul>
+
+			<p class="works__note">
+				上面三条是示例。在 <code>src/settings.json</code> 的 <code>works</code> 里改标题、说明和图片，
+				图片写 <code>src/assets/</code> 里的文件名即可；要更多条目就往数组里加。
 			</p>
 		</div>
-
-		{
-			banner && (
-				<figure class="print print--banner" style="--print-tilt: -1.8deg">
-					<Figure
-						src={banner}
-						alt="工作：一张桌面上的速写"
-						label="工作"
-						ratio="4 / 3"
-						sizes="(max-width: 62rem) 80vw, 20rem"
-					/>
-					<figcaption class="print__caption">
-						<span>工作 / Erga</span><span>WORK</span>
-					</figcaption>
-				</figure>
-			)
-		}
-	</header>
-
-	<div class="container works">
-		<ol class="works__grid">
-			{
-				works.map((item, index) => (
-					<li class="work" data-reveal style={`--reveal-delay:${index * 80}ms`}>
-						<div class="work__top">
-							<span class="work__index">{String(index + 1).padStart(2, '0')}</span>
-							<span class="work__meta">{item.meta}</span>
-						</div>
-
-						<div class="work__art">
-							{item.image ? (
-								<Figure
-									src={asset(item.image)}
-									alt={item.title}
-									label="图片"
-									ratio="4 / 3"
-									sizes="(max-width: 48rem) 100vw, 30vw"
-								/>
-							) : (
-								<div
-									class:list={['work__art-plain', `work__art-plain--${(index % 3) + 1}`]}
-									aria-hidden="true"
-								>
-									<span></span>
-									<span></span>
-								</div>
-							)}
-						</div>
-
-						<h2 class="work__title">{item.title}</h2>
-						<p class="work__type">{item.meta}</p>
-					</li>
-				))
-			}
-		</ol>
-
-		<p class="footnote">
-			这是三条示例。删掉不需要的、改成你自己的，首页的工作区会一起更新。
-		</p>
-	</div>
+	</WaveBand>
 </BaseLayout>
 
 <style>
-	.page-head code,
-	.footnote code {
-		font-family: var(--font-mono);
-		font-size: 0.9em;
-		padding: 0.1em 0.34em;
-		background: color-mix(in srgb, var(--paper-deep) 70%, transparent);
-	}
-
-	.works__grid {
+	.intro {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		border-block-start: 1px solid var(--line-strong);
-		border-block-end: 1px solid var(--line);
+		justify-items: center;
+		gap: 0.4rem;
+		padding-block: var(--section-pad);
 	}
 
-	.work {
-		display: flex;
-		flex-direction: column;
-		padding: 22px clamp(18px, 2.5vw, 34px) clamp(26px, 3vw, 38px) 0;
+	.intro__label {
+		text-align: center;
 	}
 
-	.work + .work {
-		padding-inline-start: clamp(18px, 2.5vw, 34px);
-		border-inline-start: 1px solid var(--line);
+	.intro__sub {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
+		letter-spacing: 0.06em;
 	}
 
-	.work__top {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 14px;
-		color: var(--muted);
-		font-size: 0.6875rem;
-		letter-spacing: 0.1em;
+	.works {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		gap: clamp(1.5rem, 4vw, 3rem);
+		margin: 0;
+		padding: 0;
+		list-style: none;
 	}
 
-	.work__index {
-		color: var(--accent);
-		font-family: var(--font-serif);
-		font-size: 0.8125rem;
+	.works__item {
+		display: grid;
+		gap: 1rem;
 	}
 
-	.work__art {
-		margin-block: clamp(22px, 3vw, 32px) clamp(22px, 3vw, 30px);
-	}
-
-	/* The same three marks as the home page. */
-	.work__art-plain {
-		position: relative;
-		aspect-ratio: 4 / 3;
-		overflow: hidden;
-		background: color-mix(in srgb, var(--paper) 42%, transparent);
-		border: 1px solid var(--line);
-	}
-
-	.work__art-plain span {
-		position: absolute;
-		display: block;
-		transition: transform 0.7s var(--ease);
-	}
-
-	.work__art-plain--1 span:nth-child(1) {
-		inset-block-start: 16%;
-		inset-inline-start: 16%;
-		width: 50%;
-		height: 58%;
-		background: var(--sheet);
-		border: 1px solid var(--line);
-		box-shadow: 0 14px 28px rgb(58 49 35 / 0.09);
-	}
-
-	.work__art-plain--1 span:nth-child(2) {
-		inset-inline-end: 16%;
-		inset-block-end: 15%;
-		width: 26%;
-		height: 33%;
-		background: var(--accent);
-		opacity: 0.9;
-	}
-
-	.work__art-plain--2 span:nth-child(1) {
-		inset-block-start: 15%;
-		inset-inline-start: 32%;
-		width: 40%;
-		aspect-ratio: 1;
-		border: 1px solid var(--line-strong);
-		border-radius: 50%;
-	}
-
-	.work__art-plain--2 span:nth-child(2) {
-		inset-block-start: 15%;
-		inset-inline-start: 52%;
-		width: 1px;
-		height: 40%;
-		background: var(--ink);
-		transform-origin: bottom;
-		transform: rotate(34deg);
-	}
-
-	.work__art-plain--3 span:nth-child(1) {
-		inset-block-start: 20%;
-		inset-inline-start: 15%;
-		width: 52%;
-		height: 46%;
-		background: var(--sheet);
-		border: 1px solid var(--line);
-		transform: rotate(-7deg);
-	}
-
-	.work__art-plain--3 span:nth-child(2) {
-		inset-inline-end: 15%;
-		inset-block-end: 18%;
-		width: 24%;
-		height: 2px;
-		background: var(--accent);
-		transform: rotate(5deg);
-	}
-
-	.work:hover .work__art-plain--1 span:nth-child(1) {
-		transform: translate(-5px, -4px);
-	}
-
-	.work:hover .work__art-plain--2 span:nth-child(2) {
-		transform: rotate(48deg);
-	}
-
-	.work:hover .work__art-plain--3 span:nth-child(1) {
-		transform: rotate(-10deg) translate(-4px, -3px);
-	}
-
-	.work__title {
-		font-family: var(--font-serif);
-		font-size: clamp(1.35rem, 2.2vw, 1.8rem);
-		font-weight: 400;
+	.works__title {
+		font-size: var(--fs-lead);
+		font-weight: 700;
 		line-height: 1.3;
-		letter-spacing: -0.035em;
 	}
 
-	.work__type {
-		margin-block-start: 8px;
-		color: var(--muted);
-		font-size: 0.8125rem;
-		letter-spacing: 0.04em;
+	.works__meta {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 	}
 
-	.footnote {
-		margin-block-start: clamp(26px, 4vw, 40px);
-		color: var(--muted);
-		font-size: 0.8125rem;
-		line-height: 1.9;
-	}
-
-	@media (max-width: 62rem) {
-		.works__grid {
-			grid-template-columns: 1fr;
-		}
-
-		.work {
-			display: grid;
-			grid-template-columns: 190px minmax(0, 1fr);
-			grid-template-rows: auto auto auto auto;
-			gap: 4px 26px;
-			padding: 22px 0 30px;
-		}
-
-		.work + .work {
-			padding-inline-start: 0;
-			border-block-start: 1px solid var(--line);
-			border-inline-start: 0;
-		}
-
-		.work__top {
-			grid-column: 1 / -1;
-		}
-
-		.work__art {
-			grid-column: 1;
-			grid-row: 2 / 5;
-			margin: 0;
-			align-self: start;
-		}
-
-		.work__title,
-		.work__type {
-			grid-column: 2;
-		}
-
-		.work__title {
-			margin-block-start: 16px;
-		}
-	}
-
-	@media (max-width: 48rem) {
-		.work {
-			display: block;
-			padding-block: 20px 26px;
-		}
-
-		.work__art {
-			margin-block: 22px 24px;
-		}
-
-		.work__title {
-			margin-block-start: 0;
-		}
+	.works__note {
+		margin-block-start: clamp(2rem, 4vw, 3rem);
+		padding-block-start: 1.15rem;
+		border-block-start: 1px solid var(--c-divider);
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 	}
 </style>

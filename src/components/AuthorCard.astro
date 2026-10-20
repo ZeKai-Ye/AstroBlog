@@ -1,11 +1,15 @@
 ---
 /**
- * Author card — the post page sidebar, reused as a tile in the 关于 page's
- * 作者一览 grid.
+ * Author card — the right-hand sidebar of a post page, reused as a tile in the
+ * 作者一览 grid on /about/.
  *
- * Paper design: a hairline box, square corners, the avatar cropped square, the
- * name in serif. Pass `href` to make the whole card a link; without it the card
- * stays an <aside>, which is what the post sidebar wants.
+ * Design (post page sidebar): 448x635 at x 1440, y 689 — 10px radius, 1px
+ * #808080 border on the #FCF4E3 fill. Inside: a 294x266 image slot (11.4% in
+ * from the top and sides, 85% of the content box wide) captioned 头像, then a
+ * centred block — name at 36px, bio at 24px — and 30% of breathing room below.
+ *
+ * Pass `href` to make the whole card a link (the 作者一览 tiles do); without it
+ * the card stays an <aside>, which is what the post sidebar wants.
  */
 import Figure from './Figure.astro';
 import { SITE, asset } from '../config';
@@ -36,81 +40,68 @@ const Tag = href ? 'a' : 'aside';
 			src={avatar}
 			alt={`${name} 的头像`}
 			label="头像"
-			ratio="1 / 1"
-			sizes="(max-width: 48rem) 30vw, 12rem"
+			ratio="294 / 266"
+			sizes="(max-width: 56rem) 60vw, 17rem"
 		/>
 	</div>
 
-	<div class="author__text">
-		{role && <p class="author__role">{role}</p>}
-		<p class="author__name">{name}</p>
-		{bio && <p class="author__bio">{bio}</p>}
-	</div>
-
+	<p class="author__name">{name}</p>
+	{role && <p class="author__role">{role}</p>}
+	{bio && <p class="author__bio">{bio}</p>}
 	{note && <p class="author__note">{note}</p>}
 </Tag>
 
 <style>
 	.author {
-		display: grid;
-		grid-template-columns: 3.5rem minmax(0, 1fr);
-		gap: 14px 16px;
-		align-items: start;
-		padding: 16px;
-		border: 1px solid var(--line);
+		/* 51 / 448 top+side, 136 / 448 bottom. */
+		padding: 11.4% 11.4% 30%;
+		background: var(--c-cream-soft);
+		border: 1px solid var(--c-rule);
+		border-radius: var(--radius);
+		text-align: center;
 	}
 
 	.author--link {
+		display: block;
 		transition:
-			border-color 0.25s ease,
-			transform 0.35s var(--ease);
+			border-color 0.2s var(--ease),
+			transform 0.2s var(--ease);
 	}
 
 	.author--link:hover {
-		border-color: var(--line-strong);
+		border-color: var(--c-ink);
 		transform: translateY(-3px);
 	}
 
 	.author__avatar {
-		grid-row: 1 / 3;
-	}
-
-	.author__role {
-		color: var(--accent);
-		font-size: 0.6875rem;
-		letter-spacing: 0.14em;
-		line-height: 1.4;
-		text-transform: uppercase;
+		width: 85%;
+		margin-inline: auto;
 	}
 
 	.author__name {
-		margin-block-start: 3px;
-		font-family: var(--font-serif);
-		font-size: 1.0625rem;
-		line-height: 1.35;
-		letter-spacing: -0.02em;
+		margin-block-start: 15.6%;
+		font-size: var(--fs-lead);
+		line-height: 1.25;
+	}
+
+	.author__role {
+		margin-block-start: 0.2em;
+		font-size: var(--fs-meta);
+		letter-spacing: 0.08em;
+		color: var(--c-rose-soft);
 	}
 
 	.author__bio {
-		margin-block-start: 6px;
-		color: var(--muted);
-		font-size: 0.8125rem;
-		line-height: 1.75;
+		margin-block-start: 0.35em;
+		font-size: var(--fs-meta);
+		line-height: 1.5;
+		color: var(--c-ink-muted);
 	}
 
 	.author__note {
-		grid-column: 2;
-		padding-block-start: 10px;
-		color: var(--muted-soft);
-		font-size: 0.71875rem;
-		letter-spacing: 0.08em;
-		border-block-start: 1px solid var(--line);
+		margin-block-start: 0.6em;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 		font-variant-numeric: tabular-nums;
-	}
-
-	/* The 作者一览 tiles sit in a grid and read better with a taller avatar. */
-	:global(.authors-grid) .author {
-		grid-template-columns: 4.5rem minmax(0, 1fr);
-		padding: 20px;
 	}
 </style>

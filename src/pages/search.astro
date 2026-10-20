@@ -4,7 +4,7 @@
  *
  * The static build has no server to query, so every post's title, description
  * and tags are inlined as a JSON index and filtered in the browser. The field in
- * a post's sidebar GETs here with `?q=`; tags on the 时日 page link here too.
+ * the post sidebar GETs to this page with `?q=`.
  */
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -12,7 +12,7 @@ import SearchBox from '../components/SearchBox.astro';
 import { withBase } from '../config';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
 
 const index = posts.map((post) => ({
@@ -27,23 +27,20 @@ const index = posts.map((post) => ({
 const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 ---
 
-<BaseLayout title="搜索" description="站内搜索">
-	<div class="container page-head page-head--lined">
-		<p class="section-kicker">Index / 搜索</p>
-		<h1 class="page-head__title">找一篇。</h1>
-		<p class="page-head__lede">
-			在这个站点的 {posts.length} 篇文章里查找。标题、摘要与标签都会参与匹配。
-		</p>
-	</div>
-
+<BaseLayout title="搜索" description="站内搜索" surface="cream">
 	<div class="container search-page">
+		<header class="search-page__head">
+			<h1 class="section-label">搜索</h1>
+			<p class="search-page__sub">在这个站点的 {posts.length} 篇文章里查找</p>
+		</header>
+
 		<div class="search-page__field">
 			<SearchBox />
 		</div>
 
 		<p class="search-page__status" data-search-status aria-live="polite"></p>
 
-		<ol class="rows search-page__results" data-search-results></ol>
+		<ol class="search-page__results" data-search-results></ol>
 	</div>
 
 	<script id="search-index" type="application/json" is:inline set:html={indexJson}></script>
@@ -75,36 +72,36 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 				resultsEl.replaceChildren(
 					...matches.map((entry) => {
 						const li = document.createElement('li');
-						li.className = 'search-row';
+						li.className = 'search-page__row';
 
 						const a = document.createElement('a');
 						a.href = entry.href;
 
 						const head = document.createElement('span');
-						head.className = 'search-row__head';
+						head.className = 'search-page__row-head';
 
 						const title = document.createElement('span');
-						title.className = 'search-row__title';
+						title.className = 'search-page__row-title';
 						title.textContent = entry.title;
 
 						const date = document.createElement('time');
-						date.className = 'search-row__date';
+						date.className = 'search-page__row-date';
 						date.dateTime = entry.date;
-						date.textContent = entry.date.replaceAll('-', '.');
+						date.textContent = entry.date;
 
 						head.append(title, date);
 						a.append(head);
 
 						if (entry.description) {
 							const excerpt = document.createElement('span');
-							excerpt.className = 'search-row__excerpt';
+							excerpt.className = 'search-page__row-excerpt';
 							excerpt.textContent = entry.description;
 							a.append(excerpt);
 						}
 
 						li.append(a);
 						return li;
-					}),
+					})
 				);
 			};
 
@@ -114,7 +111,7 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 			} else {
 				const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
 				const matches = entries.filter((entry) =>
-					terms.every((term) => haystack(entry).includes(term)),
+					terms.every((term) => haystack(entry).includes(term))
 				);
 				statusEl.textContent = matches.length
 					? `找到 ${matches.length} 篇`
@@ -127,65 +124,74 @@ const indexJson = JSON.stringify(index).replace(/</g, '\\u003c');
 
 <style>
 	.search-page {
-		padding-block-end: var(--section-pad);
+		padding-block: var(--section-pad);
+	}
+
+	.search-page__head {
+		display: grid;
+		gap: 0.5rem;
+		margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
+	}
+
+	.search-page__sub {
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 	}
 
 	.search-page__field {
-		max-width: 34rem;
+		max-width: 32rem;
 	}
 
 	.search-page__status {
-		margin-block-start: 18px;
-		color: var(--muted);
-		font-size: 0.8125rem;
-		letter-spacing: 0.04em;
+		margin-block-start: 1.5rem;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 	}
 
 	.search-page__results {
-		margin-block-start: 22px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
 	}
 
-	/* The rows are built in the browser, so they need global selectors. */
-	:global(.search-row) {
-		border-block-end: 1px solid var(--line);
+	/* Mirrors the 推荐 rows on the home page. */
+	:global(.search-page__row) {
+		border-block-start: 1px solid var(--c-divider);
 	}
 
-	:global(.search-row a) {
+	:global(.search-page__row a) {
 		display: grid;
-		gap: 6px;
-		padding-block: 20px;
-		transition: color 0.25s ease;
+		gap: 0.35em;
+		padding-block: 1.15rem;
+		transition: opacity 0.2s var(--ease);
 	}
 
-	:global(.search-row a:hover) {
-		color: var(--accent);
+	:global(.search-page__row a:hover) {
+		opacity: 0.6;
 	}
 
-	:global(.search-row__head) {
+	:global(.search-page__row-head) {
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
 		gap: 1.5rem;
 	}
 
-	:global(.search-row__title) {
-		font-family: var(--font-serif);
-		font-size: clamp(1.1rem, 1.7vw, 1.45rem);
-		line-height: 1.4;
-		letter-spacing: -0.025em;
+	:global(.search-page__row-title) {
+		font-size: var(--fs-lead);
+		line-height: 1.35;
 	}
 
-	:global(.search-row__date) {
+	:global(.search-page__row-date) {
 		flex: none;
-		color: var(--muted);
-		font-size: 0.75rem;
-		letter-spacing: 0.04em;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 		font-variant-numeric: tabular-nums;
 	}
 
-	:global(.search-row__excerpt) {
-		color: var(--muted);
-		font-size: 0.84375rem;
-		line-height: 1.85;
+	:global(.search-page__row-excerpt) {
+		font-size: var(--fs-meta);
+		line-height: 1.6;
+		color: var(--c-ink-muted);
 	}
 </style>

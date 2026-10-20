@@ -1,0 +1,85 @@
+---
+/**
+ * The full-bleed cream band from the design.
+ *
+ * Each cream section is a 1920x1080 band whose top *and* bottom edges carry the
+ * same shallow wave — the band dips about a fifth of the way in and crests near
+ * x=1600, so it reads as a ribbon drifting down the page.
+ *
+ * Both edges reuse one path, the bottom one flipped: that keeps them in phase
+ * (the band moves down on the left and up on the right, as in the export). The
+ * negative space is left transparent so the page background shows through.
+ */
+interface Props {
+	/** Any CSS colour. Defaults to the design's cream band. */
+	fill?: string;
+	/** Extra classes on the <section>. */
+	class?: string;
+}
+
+const { fill = 'var(--c-cream)', class: className = '' } = Astro.props;
+
+/**
+ * Traced point-by-point off the export: the top edge was sampled every 40px and
+ * the result fitted into a 1920x96 box, so the values are design pixels below
+ * the band's nominal top edge.
+ *
+ *   x      0    340    1600   1920
+ *   y     64     95       7     62
+ *
+ * The dip at x=340 and the crest at x=1600 both sit on horizontal tangents, and
+ * the two inner joins are given matching slopes, so the edge is one continuous
+ * curve rather than four arcs butted together.
+ */
+const WAVE =
+	'M0,64 C60,80 200,96 340,95 C718,95 1222,30 1600,7 C1710,0 1810,18 1920,62 L1920,96 L0,96 Z';
+---
+
+<section class:list={['wave-band', className]} style={`--wave-fill: ${fill}`}>
+	<svg
+		class="wave-band__edge"
+		viewBox="0 0 1920 96"
+		preserveAspectRatio="none"
+		aria-hidden="true"
+		focusable="false"
+	>
+		<path d={WAVE} fill="currentColor"></path>
+	</svg>
+
+	<div class="wave-band__body">
+		<slot />
+	</div>
+
+	<svg
+		class="wave-band__edge wave-band__edge--bottom"
+		viewBox="0 0 1920 96"
+		preserveAspectRatio="none"
+		aria-hidden="true"
+		focusable="false"
+	>
+		<path d={WAVE} fill="currentColor"></path>
+	</svg>
+</section>
+
+<style>
+	.wave-band {
+		/* Transparent: the page background shows through the wave's notches. */
+		background: none;
+	}
+
+	.wave-band__edge {
+		display: block;
+		width: 100%;
+		height: var(--wave-h);
+		/* `fill="currentColor"` on the path picks this up. */
+		color: var(--wave-fill);
+	}
+
+	.wave-band__edge--bottom {
+		transform: scaleY(-1);
+	}
+
+	.wave-band__body {
+		background: var(--wave-fill);
+	}
+</style>

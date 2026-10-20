@@ -1,11 +1,18 @@
 ---
 /**
- * A single post.
+ * Post page — frame 2 of `ui设计.free`.
  *
- * The reading column follows the demo's reading sheet: a small meta line, an
- * oversized serif title, a lede hung on an accent rule, then body copy set in
- * the serif face at a comfortable measure. The sidebar keeps this site's own
- * furniture — the author card and the search field — and goes away below 62rem.
+ * The mockup is a 1920x4320 sheet on the #FCF4E3 fill (the masthead becomes a
+ * translucent cream plate, CCFFF1D4). Below it sits a two-column grid:
+ *
+ *   left   x    0–1382   the article: a meta row at y 456–596 — a stacked
+ *                        3-line date, a 1px vertical rule, then the title —
+ *                        and the body (mocked up as a grey block labelled 正文)
+ *   right  x 1440–1888   a 448px sidebar: the search field at y 478–574, then
+ *                        the author card at y 689–1324
+ *
+ * Everything is scaled into the site's 1280px column with the sidebar held at
+ * the same 24% share; the mockup's grey body block carries the real article.
  */
 import { getCollection, render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
@@ -14,20 +21,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import AuthorCard from '../../components/AuthorCard.astro';
 import Figure from '../../components/Figure.astro';
 import SearchBox from '../../components/SearchBox.astro';
-import {
-	SITE,
-	asset,
-	categoryOf,
-	formatDateDot,
-	isoDate,
-	readingMinutes,
-	withBase,
-} from '../../config';
-import { authorOf, getAuthorIndex } from '../../authors';
+import { SITE, formatDateParts, withBase, asset } from '../../config';
+import { getAuthorIndex, authorOf } from '../../authors';
 
 export async function getStaticPaths() {
 	const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
-		(a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf(),
+		(a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf()
 	);
 
 	return posts.map((entry, index) => ({
@@ -50,106 +49,97 @@ const { entry, prev, next } = Astro.props;
 const { data } = entry;
 const { Content } = await render(entry);
 
-/* The sidebar card is whoever this post is by, linked to their page. */
+/* The card in the sidebar is whoever this post is by, linked to their page. */
 const author = authorOf(await getAuthorIndex(), data.author);
 const authorHref = author ? withBase(`/authors/${author.id}/`) : undefined;
 
-const cover = asset(data.cover);
-const minutes = readingMinutes(entry.body);
+const date = formatDateParts(data.pubDate);
+const updated = data.updatedDate ? formatDateParts(data.updatedDate) : null;
 ---
 
-<BaseLayout title={data.title} description={data.description}>
-	<article class="container post">
-		<header class="post__head">
-			<div class="post__bar">
-				<a class="post__back" href={withBase('/blog/')}>
-					<span aria-hidden="true">←</span> 时日
-				</a>
+<BaseLayout title={data.title} description={data.description} surface="cream">
+	<div class="container post">
+		<!-- Meta row: stacked date | rule | title. -->
+		<header class="post__meta">
+			<time class="post__date" datetime={date.iso}>
+				<span>{date.year}</span>
+				<span>{date.month}</span>
+				<span>{date.day}</span>
+			</time>
 
-				<p class="meta-line post__meta">
-					<span class="post__category">{categoryOf(entry)}</span>
-					<time datetime={isoDate(data.pubDate)}>{formatDateDot(data.pubDate)}</time>
-					<span>{minutes} 分钟阅读</span>
-				</p>
+			<span class="post__rule" aria-hidden="true"></span>
+
+			<div class="post__heading">
+				<h1 class="post__title">{data.title}</h1>
+				{data.description && <p class="post__lede">{data.description}</p>}
 			</div>
-
-			<h1 class="post__title">{data.title}</h1>
-
-			{data.description && <p class="post__lede">{data.description}</p>}
-
-			<p class="meta-line post__byline">
-				<span>文 / {author?.data.name ?? SITE.author.name}</span>
-				{data.updatedDate && (
-					<span>修订于 {formatDateDot(data.updatedDate)}</span>
-				)}
-			</p>
 		</header>
 
-		{
-			cover && (
-				<div class="post__cover">
-					<Figure
-						src={cover}
-						alt={data.coverAlt || data.title}
-						label="题图"
-						ratio="16 / 9"
-						sizes="(max-width: 80rem) 100vw, 1280px"
-					/>
-				</div>
-			)
-		}
-
-		<div class="post__grid">
-			<div class="post__main">
-				<div class="prose post__body">
-					<Content />
-				</div>
-
-				{
-					data.tags.length > 0 && (
-						<ul class="post__tags">
-							{data.tags.map((tag) => (
-								<li>
-									<a
-										href={`${withBase('/search/')}?q=${encodeURIComponent(tag)}`}
-									>
-										#{tag}
-									</a>
-								</li>
-							))}
-						</ul>
-					)
-				}
-			</div>
-
-			<aside class="post__aside">
-				<AuthorCard author={author} href={authorHref} />
-				<div class="post__search">
-					<SearchBox />
-				</div>
-			</aside>
+		<!-- Sidebar, first row: search. -->
+		<div class="post__search">
+			<SearchBox />
 		</div>
-	</article>
 
+		<!-- Article body. -->
+		<article class="prose post__body">
+			{
+				data.cover && (
+					<div class="post__cover">
+						<Figure
+							src={asset(data.cover)}
+							alt={data.coverAlt || data.title}
+							ratio="16 / 9"
+							sizes="(max-width: 56rem) 100vw, 60rem"
+						/>
+					</div>
+				)
+			}
+
+			<Content />
+
+			{
+				data.tags.length > 0 && (
+					<ul class="post__tags">
+						{data.tags.map((tag) => (
+							<li>{tag}</li>
+						))}
+					</ul>
+				)
+			}
+
+			{
+				updated && (
+					<p class="post__updated">
+						修订于 <time datetime={updated.iso}>{updated.iso}</time>
+					</p>
+				)
+			}
+		</article>
+
+		<!-- Sidebar, second row: author. -->
+		<div class="post__aside">
+			<AuthorCard author={author} href={authorHref} />
+		</div>
+	</div>
+
+	<!-- Neighbour links, using the same hairline rows as 推荐 on the home page. -->
 	<nav class="container post__nav" aria-label="上下篇">
 		<ul class="post__nav-list">
 			{
-				prev ? (
+				prev && (
 					<li class="post__nav-item">
 						<a href={withBase(`/blog/${prev.id}/`)}>
-							<span class="post__nav-dir">← 上一篇</span>
+							<span class="post__nav-dir">上一篇</span>
 							<span class="post__nav-title">{prev.data.title}</span>
 						</a>
 					</li>
-				) : (
-					<li class="post__nav-item post__nav-item--empty" aria-hidden="true"></li>
 				)
 			}
 			{
 				next && (
 					<li class="post__nav-item post__nav-item--next">
 						<a href={withBase(`/blog/${next.id}/`)}>
-							<span class="post__nav-dir">下一篇 →</span>
+							<span class="post__nav-dir">下一篇</span>
 							<span class="post__nav-title">{next.data.title}</span>
 						</a>
 					</li>
@@ -161,194 +151,181 @@ const minutes = readingMinutes(entry.body);
 
 <style>
 	.post {
-		padding-block-start: clamp(34px, 4.5vw, 56px);
+		display: grid;
+		/* Sidebar is 23.7% of the mockup's 1888px content span. */
+		grid-template-columns: minmax(0, 1fr) 20rem;
+		column-gap: clamp(2rem, 4vw, 3.5rem);
+		row-gap: clamp(2rem, 3vw, 3rem);
+		padding-block: var(--section-pad) 0;
 	}
 
-	/* --- Head ------------------------------------------------------------- */
-
-	.post__bar {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 12px 24px;
-		padding-block-end: 26px;
-		border-block-end: 1px solid var(--line);
+	/* --- Meta row --------------------------------------------------------- */
+	.post__meta {
+		grid-column: 1;
+		display: grid;
+		grid-template-columns: auto 1px minmax(0, 1fr);
+		gap: clamp(1.25rem, 3vw, 2.5rem);
+		align-items: center;
 	}
 
-	.post__back {
-		color: var(--muted);
-		font-size: 0.8125rem;
-		letter-spacing: 0.09em;
-		transition: color 0.25s ease;
+	/* 275px wide in the mockup, three centred lines at the 36px lead size. */
+	.post__date {
+		display: grid;
+		justify-items: center;
+		min-width: 6.5em;
+		font-size: var(--fs-lead);
+		line-height: 1.25;
+		font-variant-numeric: tabular-nums;
 	}
 
-	.post__back:hover {
-		color: var(--accent);
+	/* 1px x 140px vertical rule between the date and the title. */
+	.post__rule {
+		align-self: stretch;
+		background: var(--c-divider);
 	}
 
-	.post__category {
-		color: var(--accent);
-		font-size: 0.8125rem;
-		letter-spacing: 0.1em;
+	.post__heading {
+		display: grid;
+		gap: 0.6em;
+		text-align: center;
 	}
 
 	.post__title {
-		max-width: 22ch;
-		margin-block-start: clamp(30px, 4vw, 46px);
-		font-family: var(--font-serif);
-		font-size: clamp(2.1rem, 4.6vw, 3.9rem);
-		font-weight: 400;
-		line-height: 1.18;
-		letter-spacing: -0.055em;
+		font-size: var(--fs-lead);
+		font-weight: 700;
+		line-height: 1.3;
 	}
 
 	.post__lede {
-		max-width: 38rem;
-		margin-block-start: clamp(22px, 2.6vw, 30px);
-		padding-inline-start: 20px;
-		color: var(--ink-soft);
-		font-family: var(--font-serif);
-		font-size: clamp(1.02rem, 1.35vw, 1.25rem);
-		line-height: 1.85;
-		border-inline-start: 1px solid var(--accent);
+		font-size: var(--fs-meta);
+		line-height: 1.6;
+		color: var(--c-ink-muted);
 	}
 
-	.post__byline {
-		margin-block-start: 24px;
+	/* --- Body + sidebar --------------------------------------------------- */
+	.post__body {
+		grid-column: 1;
+		min-width: 0;
 	}
-
-		/* --- Cover ------------------------------------------------------------ */
 
 	.post__cover {
-		margin-block-start: clamp(30px, 3.6vw, 46px);
-	}
-
-	/* --- Body + aside ----------------------------------------------------- */
-
-	.post__grid {
-		display: grid;
-		grid-template-columns: minmax(0, var(--measure)) minmax(12rem, 16rem);
-		justify-content: space-between;
-		gap: clamp(40px, 6vw, 84px);
-		padding-block-start: clamp(38px, 4.6vw, 58px);
-	}
-
-	.post__main {
-		min-width: 0;
+		margin-block-end: 1.6em;
 	}
 
 	.post__tags {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px 16px;
-		margin-block-start: clamp(36px, 4vw, 52px);
-		padding-block-start: 16px;
-		color: var(--muted);
-		font-size: 0.8125rem;
-		letter-spacing: 0.04em;
-		border-block-start: 1px solid var(--line);
+		gap: 0.6rem;
+		margin-block-start: 2.5em;
+		padding: 0;
+		list-style: none;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 	}
 
-	.post__tags a {
-		transition: color 0.2s ease;
+	.post__tags li::before {
+		content: '#';
+		margin-inline-end: 0.15em;
 	}
 
-	.post__tags a:hover {
-		color: var(--accent);
+	.post__updated {
+		margin-block-start: 1.2em;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 	}
 
+	.post__search,
 	.post__aside {
-		position: sticky;
-		inset-block-start: 112px;
-		display: grid;
-		gap: 26px;
-		align-content: start;
+		grid-column: 2;
 	}
 
 	/* --- Prev / next ------------------------------------------------------ */
-
 	.post__nav {
-		padding-block: clamp(40px, 5vw, 64px) var(--section-pad);
+		padding-block: var(--section-pad);
 	}
 
 	.post__nav-list {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		border-block-start: 1px solid var(--line-strong);
+		margin: 0;
+		padding: 0;
+		list-style: none;
 	}
 
-	.post__nav-item + .post__nav-item {
-		border-inline-start: 1px solid var(--line);
-	}
-
-	.post__nav-item a {
-		display: grid;
-		gap: 6px;
-		padding: 18px 0;
-		transition: color 0.25s ease;
-	}
-
-	.post__nav-item + .post__nav-item a {
-		padding-inline-start: clamp(18px, 2.5vw, 30px);
+	.post__nav-item {
+		border-block-start: 1px solid var(--c-divider);
 	}
 
 	.post__nav-item--next a {
 		text-align: end;
 	}
 
+	.post__nav-item a {
+		display: grid;
+		gap: 0.3em;
+		padding-block: 1.15rem;
+		transition: opacity 0.2s var(--ease);
+	}
+
 	.post__nav-item a:hover {
-		color: var(--accent);
+		opacity: 0.6;
 	}
 
 	.post__nav-dir {
-		color: var(--muted);
-		font-size: 0.71875rem;
-		letter-spacing: 0.1em;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 	}
 
 	.post__nav-title {
-		font-family: var(--font-serif);
-		font-size: 1.0625rem;
-		line-height: 1.45;
-		letter-spacing: -0.02em;
+		font-size: var(--fs-lead);
+		line-height: 1.3;
 	}
 
-	@media (max-width: 62rem) {
-		.post__grid {
-			grid-template-columns: minmax(0, 1fr);
-			gap: 44px;
-		}
-
-		.post__aside {
-			position: static;
-			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-			gap: 20px;
-			align-items: start;
-		}
-	}
-
-	@media (max-width: 48rem) {
-		.post__title {
-			max-width: none;
-			font-size: clamp(1.9rem, 8.4vw, 2.6rem);
-		}
-
-		.post__aside {
+	/* --- Narrow screens --------------------------------------------------- */
+	@media (max-width: 56rem) {
+		.post {
 			grid-template-columns: minmax(0, 1fr);
 		}
 
+		.post__meta,
+		.post__body,
+		.post__search,
+		.post__aside {
+			grid-column: 1;
+		}
+
+		/* Search sits under the meta row; the author card closes the page. */
+		.post__search {
+			order: 1;
+		}
+
+		.post__body {
+			order: 2;
+		}
+
+		.post__aside {
+			order: 3;
+		}
+
+		.post__meta {
+			grid-template-columns: 1fr;
+			justify-items: center;
+			gap: 1.5rem;
+		}
+
+		.post__rule {
+			display: none;
+		}
+
+		.post__date {
+			grid-auto-flow: column;
+			gap: 0.6em;
+		}
+	}
+
+	@media (max-width: 40rem) {
 		.post__nav-list {
 			grid-template-columns: minmax(0, 1fr);
-		}
-
-		.post__nav-item + .post__nav-item {
-			border-inline-start: 0;
-			border-block-start: 1px solid var(--line);
-		}
-
-		.post__nav-item + .post__nav-item a {
-			padding-inline-start: 0;
 		}
 
 		.post__nav-item--next a {

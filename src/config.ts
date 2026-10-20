@@ -29,6 +29,7 @@ export interface SiteSettings {
 	footerNote: string;
 	author: { name: string; bio: string };
 	nav: NavItem[];
+	features: NavItem[];
 	/** File names inside `src/assets/`. `''` keeps the design placeholder. */
 	images: {
 		/** Masthead wordmark picture. `''` falls back to `title` as text. */
@@ -118,74 +119,16 @@ export const asset = (name?: string): ImageMetadata | undefined => {
 	);
 };
 
-/**
- * `2026.10.19` — the date form the ledger rows, meta lines and masthead use.
- *
- * Local getters, not `toISOString()`: a post dated 2024-03-03 should read
- * 03.03 everywhere, and the ISO string shifts by a day for anyone east of
- * Greenwich once midnight has passed.
- */
-export function formatDateDot(date: Date) {
-	const month = String(date.getMonth() + 1).padStart(2, '0');
-	const day = String(date.getDate()).padStart(2, '0');
-	return `${date.getFullYear()}.${month}.${day}`;
+/** Splits a date into the three stacked lines the design puts beside a title. */
+export function formatDateParts(date: Date) {
+	const monthNames = [
+		'January', 'February', 'March', 'April', 'May', 'June',
+		'July', 'August', 'September', 'October', 'November', 'December',
+	];
+	return {
+		year: String(date.getFullYear()),
+		month: monthNames[date.getMonth()],
+		day: String(date.getDate()).padStart(2, '0'),
+		iso: date.toISOString().slice(0, 10),
+	};
 }
-
-/** `10.19` — the short form the 时日 timeline puts in its left column. */
-export function formatMonthDay(date: Date) {
-	const month = String(date.getMonth() + 1).padStart(2, '0');
-	const day = String(date.getDate()).padStart(2, '0');
-	return `${month}.${day}`;
-}
-
-/** `2026-10-19`, for a `<time datetime>` attribute. */
-export function isoDate(date: Date) {
-	const month = String(date.getMonth() + 1).padStart(2, '0');
-	const day = String(date.getDate()).padStart(2, '0');
-	return `${date.getFullYear()}-${month}-${day}`;
-}
-
-/**
- * A rough reading time for one post, in minutes.
- *
- * CJK prose is read by the character, Latin by the word; 400 characters or 220
- * words a minute are the usual slow-read figures, which suits a site that is
- * deliberately not in a hurry. The body is the raw markdown/HTML source, so
- * markup inflates the count a little — the number is a hint, not a promise.
- */
-export function readingMinutes(body?: string) {
-	if (!body) return 1;
-
-	const text = body
-		.replace(/<[^>]+>/g, ' ')
-		.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-		.replace(/```[\s\S]*?```/g, ' ');
-
-	const cjk = (text.match(/[\u3400-\u9fff]/g) ?? []).length;
-	const words = (text.replace(/[\u3400-\u9fff]/g, ' ').match(/[A-Za-z0-9]+/g) ?? []).length;
-
-	return Math.max(1, Math.round(cjk / 400 + words / 220));
-}
-
-export const categoryOf = (post: { data: { tags: string[] } }) => post.data.tags[0] ?? '笔记';
-
-/**
- * Copy that is design, not configuration.
- *
- * These strings belong to the page's voice — the hero headline, the volume
- * line, the two tiny mode labels — so they live in one place instead of being
- * scattered through templates. `SITE.title` and `SITE.description` still drive
- * the masthead, the metadata and the search index.
- */
-export const UI = {
-	/** The Greek phrase the site is named after, set small above the headline. */
-	heroGreek: 'Ἔργα καὶ Ἡμέραι',
-	/** The headline itself, split for its two lines. */
-	heroLines: ['工作，', '与时日。'],
-	/** Little subtitle next to the masthead wordmark. */
-	brandSub: '工作与时日 / WORK & DAYS',
-	/** The volume line in the hero's top corner. */
-	volume: 'VOL. 01',
-	/** Clock label; the time itself is Asia/Shanghai (see src/scripts/site.ts). */
-	timeLabel: '此刻',
-};

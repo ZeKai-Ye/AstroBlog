@@ -670,15 +670,15 @@
 						<fieldset>
 							<legend>站标</legend>
 							<div class="grid">
-								${imageField('报头题图', 'logo', s.images?.logo, '报头左上角的小尺寸题图（960×181 原图，显示时不超过原尺寸）；「关于」页顶部也会用到它。')}
+								${imageField('顶部标题图', 'logo', s.images?.logo, '留空则显示站名文字。设计稿那块是 960×181。')}
 							</div>
 						</fieldset>
 
 						<fieldset>
-							<legend>栏目题图</legend>
+							<legend>首页图片</legend>
 							<div class="grid">
-								${imageField('工作页照片', 'heroWork', s.images?.heroWork, '「工作」页右上角那张纸质照片；留空就只显示文字。')}
-								${imageField('时日页照片', 'heroDays', s.images?.heroDays, '「时日」页右上角那张纸质照片；留空就只显示文字。')}
+								${imageField('左边（工作）', 'heroWork', s.images?.heroWork, '留空则用最新一篇文章的封面。')}
+								${imageField('右边（时日）', 'heroDays', s.images?.heroDays, '留空则用第二新的文章封面。')}
 								${imageField('兜底头像', 'avatar', s.images?.avatar, '只在作者没有自己的头像时用。')}
 							</div>
 						</fieldset>

@@ -1,74 +1,52 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import WaveBand from '../components/WaveBand.astro';
 import { withBase } from '../config';
 ---
 
-<BaseLayout title="页面不存在" description="这一页不在册子上。">
+<BaseLayout title="页面不存在" surface="tan">
 	<div class="container notfound">
-		<p class="section-kicker">Error / 404</p>
-		<p class="notfound__code">404</p>
+		<p class="section-label section-label--rose">404</p>
 		<p class="notfound__text">这一页不在册子上。</p>
-		<p class="notfound__hint">也许是链接旧了，也许是它从来没有被写下过。</p>
-
-		<nav class="notfound__links" aria-label="去处">
-			<a href={withBase('/')}>回到首页 <span aria-hidden="true">↗</span></a>
-			<a href={withBase('/blog/')}>看看时日 <span aria-hidden="true">↗</span></a>
-			<a href={withBase('/search/')}>搜一搜 <span aria-hidden="true">↗</span></a>
-		</nav>
 	</div>
+
+	<WaveBand class="band">
+		<div class="container band-inner notfound__links">
+			<a href={withBase('/')}>回到首页</a>
+			<a href={withBase('/blog/')}>看看时日</a>
+		</div>
+	</WaveBand>
 </BaseLayout>
 
 <style>
 	.notfound {
 		display: grid;
 		justify-items: center;
-		gap: 14px;
-		padding-block: clamp(90px, 16vh, 200px) var(--section-pad);
-		text-align: center;
-	}
-
-	.notfound__code {
-		font-family: var(--font-serif);
-		font-size: clamp(5rem, 16vw, 12rem);
-		line-height: 1;
-		letter-spacing: -0.07em;
-		color: var(--accent);
+		gap: 1rem;
+		padding-block: var(--section-pad);
 	}
 
 	.notfound__text {
-		font-family: var(--font-serif);
-		font-size: clamp(1.3rem, 2.6vw, 2rem);
-		letter-spacing: -0.03em;
-	}
-
-	.notfound__hint {
-		color: var(--muted);
-		font-size: 0.84375rem;
-		line-height: 1.9;
+		font-size: var(--fs-lead);
+		color: var(--c-ink-muted);
 	}
 
 	.notfound__links {
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: center;
-		gap: 14px 30px;
-		margin-block-start: 26px;
-		padding-block-start: 22px;
-		width: min(100%, 30rem);
-		border-block-start: 1px solid var(--line);
-		font-size: 0.84375rem;
-		letter-spacing: 0.06em;
+		gap: 1.5rem;
+		font-size: var(--fs-lead);
 	}
 
 	.notfound__links a {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		color: var(--muted);
-		transition: color 0.25s ease;
+		text-decoration: underline;
+		text-decoration-color: var(--c-divider);
+		text-underline-offset: 0.25em;
+		transition: text-decoration-color 0.2s var(--ease);
 	}
 
 	.notfound__links a:hover {
-		color: var(--accent);
+		text-decoration-color: currentColor;
 	}
 </style>

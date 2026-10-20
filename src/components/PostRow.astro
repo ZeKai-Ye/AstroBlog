@@ -1,163 +1,82 @@
 ---
 /**
- * One row of a ledger — the demo's article row, used by the home page, the 时日
- * index and an author's page.
+ * One row of the 推荐 list on the home page.
  *
- * Five columns: number, title, category, date, arrow. The hover wash is a
- * pseudo-element rather than a background so it can bleed past the text column,
- * and the whole row is one link so nothing inside needs its own hit area.
- *
- * The row also carries its own card as data attributes (`data-preview-*`).
- * The home page's preview panel copies those across — one source of truth, no
- * duplicated copy in the markup.
+ * The mockup draws four stacked placeholders at x 960–1677, each 169px tall
+ * with a 1px #BDBDBD rule along its top edge — a hairline-separated list rather
+ * than boxed cards. Nothing inside the blocks is specified, so the row carries
+ * a title, a one-line excerpt and a date.
  */
 import type { CollectionEntry } from 'astro:content';
-import { formatDateDot, isoDate, withBase } from '../config';
+import { formatDateParts, withBase } from '../config';
 
 interface Props {
 	post: CollectionEntry<'blog'>;
-	/** Zero-based position; rendered as 01, 02, … */
-	index?: number;
 }
 
-const { post, index = 0 } = Astro.props;
+const { post } = Astro.props;
 const { data } = post;
+const date = formatDateParts(data.pubDate);
 const href = withBase(`/blog/${post.id}/`);
-const number = String(index + 1).padStart(2, '0');
-const category = data.tags[0] ?? '笔记';
 ---
 
 <li class="row">
-	<a
-		class="row__link"
-		href={href}
-		data-preview
-		data-preview-index={number}
-		data-preview-category={category}
-		data-preview-title={data.title}
-		data-preview-excerpt={data.description}
-		data-preview-meta={formatDateDot(data.pubDate)}
-	>
-		<span class="row__index" aria-hidden="true">{number}</span>
-		<span class="row__title">{data.title}</span>
-		<span class="row__category">{category}</span>
-		<time class="row__date" datetime={isoDate(data.pubDate)}>
-			{formatDateDot(data.pubDate)}
-		</time>
-		<span class="circle-link row__arrow" aria-hidden="true">↗</span>
+	<a class="row__link" href={href}>
+		<span class="row__head">
+			<span class="row__title">{data.title}</span>
+			<time class="row__date" datetime={date.iso}>
+				{date.year}.{String(data.pubDate.getMonth() + 1).padStart(2, '0')}
+			</time>
+		</span>
+		{data.description && <span class="row__excerpt">{data.description}</span>}
 	</a>
 </li>
 
 <style>
 	.row {
-		border-block-end: 1px solid var(--line);
+		border-block-start: 1px solid var(--c-divider);
 	}
 
 	.row__link {
-		position: relative;
-		isolation: isolate;
 		display: grid;
-		grid-template-columns: 2.4rem minmax(0, 1fr) 5rem 6.2rem 28px;
-		gap: 15px;
-		align-items: center;
-		padding-block: 21px;
-		text-align: left;
+		gap: 0.35em;
+		/*
+			The mockup's rows run on a 206px pitch at 1920 — a 166px block plus a
+			40px gap, each opened by a 1px #BDBDBD rule. Centring the content in a
+			206px box reproduces that rhythm without a separate margin.
+		*/
+		min-height: clamp(5.5rem, 1.5rem + 9vw, 12.5rem);
+		padding-block: 1.15rem;
+		align-content: center;
+		transition: opacity 0.2s var(--ease);
 	}
 
-	/* The hover wash, allowed to bleed a little past the column. */
-	.row__link::before {
-		position: absolute;
-		inset: 0 calc(var(--pad) * -0.16);
-		z-index: -1;
-		content: '';
-		background: var(--paper-soft);
-		opacity: 0;
-		transition: opacity 0.35s ease;
+	.row__link:hover {
+		opacity: 0.6;
 	}
 
-	.row__link:hover::before,
-	.row__link:focus-visible::before {
-		opacity: 0.8;
-	}
-
-	.row__index {
-		color: var(--accent);
-		font-family: var(--font-serif);
-		font-size: 0.84375rem;
-		line-height: 1.4;
+	.row__head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1.5rem;
 	}
 
 	.row__title {
-		font-family: var(--font-serif);
-		font-size: clamp(1.2rem, 0.95rem + 0.9vw, 1.85rem);
+		font-size: var(--fs-lead);
 		line-height: 1.35;
-		letter-spacing: -0.03em;
-		transition: transform 0.4s var(--ease);
-	}
-
-	.row__category,
-	.row__date {
-		color: var(--muted);
-		font-size: 0.8125rem;
-		letter-spacing: 0.05em;
 	}
 
 	.row__date {
-		text-align: right;
+		flex: none;
+		font-size: var(--fs-meta);
+		color: var(--c-ink-muted);
 		font-variant-numeric: tabular-nums;
 	}
 
-	.row__arrow {
-		justify-self: end;
-	}
-
-	.row__link:hover .row__title,
-	.row__link:focus-visible .row__title {
-		transform: translateX(7px);
-	}
-
-	.row__link:hover .row__arrow,
-	.row__link:focus-visible .row__arrow {
-		color: var(--paper);
-		background: var(--ink);
-		border-color: var(--ink);
-		transform: rotate(45deg);
-	}
-
-	@media (max-width: 48rem) {
-		.row__link {
-			grid-template-columns: 1.7rem minmax(0, 1fr) 28px;
-			gap: 12px;
-			padding-block: 18px;
-		}
-
-		.row__index {
-			align-self: start;
-			padding-block-start: 0.45em;
-		}
-
-		.row__title {
-			font-size: 1.15rem;
-		}
-
-		.row__category {
-			grid-column: 2;
-			margin-block-start: -8px;
-			font-size: 0.75rem;
-		}
-
-		.row__date {
-			display: none;
-		}
-
-		.row__arrow {
-			grid-column: 3;
-			grid-row: 1 / 3;
-			align-self: center;
-		}
-
-		.row__link:hover .row__title {
-			transform: translateX(3px);
-		}
+	.row__excerpt {
+		font-size: var(--fs-meta);
+		line-height: 1.6;
+		color: var(--c-ink-muted);
 	}
 </style>

@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "embedded-1.md",
+                "file": "em-DLC.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "embedded-1"
+              "title": "em-DLC"
             }
           }
         ],
@@ -205,15 +205,14 @@
   },
   "active": "132ab6f033d528d4",
   "lastOpenFiles": [
-    "embedded-2.md",
-    "2026-10-13.md",
-    "em-DLC2.md",
-    "em-DLC.md",
-    "embedded-1.md",
     "__math-test.md",
+    "embedded-2.md",
     "draft/why.html",
     "draft",
     "未命名.md",
+    "embedded-1.md",
+    "em-DLC2.md",
+    "em-DLC.md",
     "notes-on-slow-tools.md",
     "assets/GPIO_basic.png",
     "assets/81a1fd18584dfbe4762ea18bf7df201d.png",
