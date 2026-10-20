@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Erga kai Hemerai</title>
+    <link>http://localhost:4321/experimental/</link>
+    <description>一个以文字与图像记录工作与时日的个人站点。</description>
+    <language>zh-CN</language>
+    <atom:link href="http://localhost:4321/experimental/rss.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 20 Oct 2026 04:26:46 GMT</lastBuildDate>
+    <item>
+      <title>【嵌入式学习/02】 蜂鸣器好折磨人</title>
+      <link>http://localhost:4321/experimental/blog/embedded-2/</link>
+      <guid isPermaLink="true">http://localhost:4321/experimental/blog/embedded-2/</guid>
+      <pubDate>Sat, 17 Oct 2026 00:00:00 GMT</pubDate>
+      <description>嵌入式学习的第二篇笔记</description>
+    </item>
+    <item>
+      <title>【嵌入式学习/DLC】 可以停更吗，你的工程真的很难读😥</title>
+      <link>http://localhost:4321/experimental/blog/em-dlc/</link>
+      <guid isPermaLink="true">http://localhost:4321/experimental/blog/em-dlc/</guid>
+      <pubDate>Tue, 13 Oct 2026 00:00:00 GMT</pubDate>
+      <description>关于文件管理的DLC</description>
+    </item>
+    <item>
+      <title>两种写法：Markdown 与 HTML，以及图片该放在哪</title>
+      <link>http://localhost:4321/experimental/blog/two-ways-to-write-a-post/</link>
+      <guid isPermaLink="true">http://localhost:4321/experimental/blog/two-ways-to-write-a-post/</guid>
+      <pubDate>Tue, 13 Oct 2026 00:00:00 GMT</pubDate>
+      <description>这个站上的文章有两条路可走，图片有两种放法。这是我把源码和实际渲染结果对过一遍之后写的说明。</description>
+    </item>
+    <item>
+      <title>【嵌入式学习/01】yeah! 亮灯</title>
+      <link>http://localhost:4321/experimental/blog/embedded-1/</link>
+      <guid isPermaLink="true">http://localhost:4321/experimental/blog/embedded-1/</guid>
+      <pubDate>Thu, 08 Oct 2026 00:00:00 GMT</pubDate>
+      <description>嵌入式学习的第一篇笔记</description>
+    </item>
+    <item>
+      <title>关于慢工具</title>
+      <link>http://localhost:4321/experimental/blog/notes-on-slow-tools/</link>
+      <guid isPermaLink="true">http://localhost:4321/experimental/blog/notes-on-slow-tools/</guid>
+      <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>
+      <description>一件工具如果让人愿意多花一点时间，那多半不是缺点，而是它被设计出来的理由。</description>
+    </item>
+    <item>
+      <title>记一本随身的册子</title>
+      <link>http://localhost:4321/experimental/blog/on-keeping-a-notebook/</link>
+      <guid isPermaLink="true">http://localhost:4321/experimental/blog/on-keeping-a-notebook/</guid>
+      <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>
+      <description>从一本被翻旧的笔记说起——记录这件事本身，比记录的内容更早地改变了日子。</description>
+    </item>
+    <item>
+      <title>冬天读什么</title>
+      <link>http://localhost:4321/experimental/blog/reading-in-winter/</link>
+      <guid isPermaLink="true">http://localhost:4321/experimental/blog/reading-in-winter/</guid>
+      <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>
+      <description>天冷了，注意力也跟着收拢。这份书单里的每一本都适合在日照最短的那几周翻开。</description>
+    </item>
+    <item>
+      <title>工作日的形状</title>
+      <link>http://localhost:4321/experimental/blog/the-shape-of-a-working-day/</link>
+      <guid isPermaLink="true">http://localhost:4321/experimental/blog/the-shape-of-a-working-day/</guid>
+      <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>
+      <description>一天并不是均匀的二十四小时。它有凸起的部分，也有塌陷的部分，找到它们比管理时间更有用。</description>
+    </item>
+  </channel>
+</rss>

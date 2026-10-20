@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="zh-CN" data-edition="work"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#fff1d4"><script>
+			(() => {
+				const root = document.documentElement;
+				root.classList.add('js');
+
+				const goNight = () => {
+					root.dataset.theme = 'night';
+					root.dataset.edition = 'life';
+					const meta = document.querySelector('meta[name="theme-color"]');
+					if (meta) meta.setAttribute('content', '#171812');
+				};
+
+				try {
+					const manual = localStorage.getItem('erga-theme-manual') === '1';
+					const stored = localStorage.getItem('erga-theme');
+
+					if (manual) {
+						if (stored === 'night') goNight();
+					} else {
+						const hour = Number(
+							new Intl.DateTimeFormat('en-GB', {
+								timeZone: 'Asia/Shanghai',
+								hour: '2-digit',
+								hourCycle: 'h23',
+							}).format(new Date())
+						);
+						if (hour < 6 || hour >= 18) goNight();
+					}
+				} catch (error) {
+					/* private mode, storage disabled — keep the paper default */
+				}
+			})();
+		</script><link rel="icon" type="image/svg+xml" href="/experimental/favicon.svg"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/experimental/_astro/ClientRouter.astro_astro_type_script_index_0_lang.CYDbzu1r.js"></script><meta name="generator" content="Astro v7.3.5"><title>【嵌入式学习/DLC】 可以停更吗，你的工程真的很难读😥 — Erga kai Hemerai</title><meta name="description" content="关于文件管理的DLC"><meta name="robots" content="noindex, nofollow"><meta property="og:type" content="website"><meta property="og:title" content="【嵌入式学习/DLC】 可以停更吗，你的工程真的很难读😥 — Erga kai Hemerai"><meta property="og:description" content="关于文件管理的DLC"><meta property="og:site_name" content="Erga kai Hemerai"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="http://localhost:4321/experimental/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Erga kai Hemerai — 一个以文字与图像记录工作与时日的个人站点。"><meta name="twitter:card" content="summary_large_image"><link rel="alternate" type="application/rss+xml" title="Erga kai Hemerai" href="/experimental/rss.xml"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5/400.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5/600.css"><link rel="stylesheet" href="/experimental/_astro/katex.DYwlIC0J.css"><link rel="stylesheet" href="/experimental/_astro/BaseLayout.DRUaMLp1.css"><style>.slot[data-astro-cid-khyig4bw]{aspect-ratio:var(--slot-ratio);background:var(--paper-deep);border:1px solid var(--line);margin:0;position:relative;overflow:hidden}.slot[data-astro-cid-khyig4bw] img{object-fit:cover;width:100%;height:100%}.slot__empty[data-astro-cid-khyig4bw]{place-items:center;height:100%;display:grid;position:relative}.slot__cross[data-astro-cid-khyig4bw]{background:linear-gradient(90deg, transparent 49.9%, var(--line) 50%, transparent 50.1%), linear-gradient(0deg, transparent 49.9%, var(--line) 50%, transparent 50.1%);opacity:.7;position:absolute;inset:0}.slot__label[data-astro-cid-khyig4bw]{color:var(--muted);font-family:var(--font-serif);letter-spacing:.22em;text-indent:.22em;font-size:clamp(1.1rem,2vw,1.75rem);position:relative}.slot__marker[data-astro-cid-khyig4bw]{color:var(--muted);letter-spacing:.18em;font-size:.75rem;position:absolute;inset-block-start:12px;inset-inline-start:14px}
+.author[data-astro-cid-2tgtkdc7]{border:1px solid var(--line);grid-template-columns:3.5rem minmax(0,1fr);align-items:start;gap:14px 16px;padding:16px;display:grid}.author--link[data-astro-cid-2tgtkdc7]{transition:border-color .25s ease, transform .35s var(--ease)}.author--link[data-astro-cid-2tgtkdc7]:hover{border-color:var(--line-strong);transform:translateY(-3px)}.author__avatar[data-astro-cid-2tgtkdc7]{grid-row:1/3}.author__role[data-astro-cid-2tgtkdc7]{color:var(--accent-text);letter-spacing:.14em;text-transform:uppercase;font-size:.75rem;line-height:1.4}.author__name[data-astro-cid-2tgtkdc7]{font-family:var(--font-serif);letter-spacing:-.02em;margin-block-start:3px;font-size:1.0625rem;line-height:1.35}.author__bio[data-astro-cid-2tgtkdc7]{color:var(--muted);margin-block-start:6px;font-size:.8125rem;line-height:1.75}.author__note[data-astro-cid-2tgtkdc7]{color:var(--muted);letter-spacing:.08em;border-block-start:1px solid var(--line);font-variant-numeric:tabular-nums;grid-column:2;padding-block-start:10px;font-size:.75rem}.authors-grid .author[data-astro-cid-2tgtkdc7]{grid-template-columns:4.5rem minmax(0,1fr);padding:20px}
+.search[data-astro-cid-av774hkb]{border-block-end:1px solid var(--line-strong);align-items:center;gap:12px;transition:border-color .3s;display:flex}.search[data-astro-cid-av774hkb]:focus-within{border-color:var(--accent)}.search__input[data-astro-cid-av774hkb]{min-width:0;font-family:var(--font-sans);letter-spacing:.02em;color:var(--ink);background:0 0;border:0;outline:none;flex:1;padding-block:11px;font-size:.9375rem}.search__input[data-astro-cid-av774hkb]::placeholder{color:var(--muted);opacity:1}.search__input[data-astro-cid-av774hkb]::-webkit-search-cancel-button{appearance:none}.search__button[data-astro-cid-av774hkb]{width:1.5rem;height:1.5rem;color:var(--muted);flex:none;place-items:center;transition:color .2s;display:grid}.search__button[data-astro-cid-av774hkb]:hover{color:var(--ink)}.search__button[data-astro-cid-av774hkb] svg[data-astro-cid-av774hkb]{width:100%;height:100%}
+</style><link rel="stylesheet" href="/experimental/_astro/_..DACVoBKJ.css"></head><body><a class="skip-link" href="#main">跳到主要内容</a><div class="scroll-progress" data-scroll-progress data-progress-target=".post__body" aria-hidden="true"></div><div class="sky-wash" data-sky-wash aria-hidden="true"></div><div class="page"><header class="site-header" data-site-header data-astro-cid-fzpbxy5g><a class="brand" href="/experimental/" aria-label="Erga kai Hemerai，回到首页" data-astro-cid-fzpbxy5g><span class="brand__name" lang="el" data-astro-cid-fzpbxy5g>Ἔργα καὶ Ἡμέραι</span><span class="brand__sub" data-astro-cid-fzpbxy5g>工作与时日 / WORK &amp; DAYS</span></a><nav class="site-nav" id="site-nav" aria-label="主导航" data-astro-cid-fzpbxy5g><a class="site-nav__link" href="/experimental/" data-astro-cid-fzpbxy5g><span class="site-nav__zh" data-astro-cid-fzpbxy5g>首页</span><span class="site-nav__el" lang="el" data-astro-cid-fzpbxy5g>οἶκος</span></a><a class="site-nav__link" href="/experimental/works/" data-astro-cid-fzpbxy5g><span class="site-nav__zh" data-astro-cid-fzpbxy5g>工作</span><span class="site-nav__el" lang="el" data-astro-cid-fzpbxy5g>Ἔργα</span></a><a class="site-nav__link is-active" href="/experimental/blog/" aria-current="page" data-astro-cid-fzpbxy5g><span class="site-nav__zh" data-astro-cid-fzpbxy5g>时日</span><span class="site-nav__el" lang="el" data-astro-cid-fzpbxy5g>Ἡμέραι</span></a><a class="site-nav__link" href="/experimental/about/" data-astro-cid-fzpbxy5g><span class="site-nav__zh" data-astro-cid-fzpbxy5g>关于</span><span class="site-nav__el" lang="el" data-astro-cid-fzpbxy5g>περί</span></a><a class="site-nav__link site-nav__link--panel" href="/experimental/search/" data-astro-cid-fzpbxy5g><span class="site-nav__zh" data-astro-cid-fzpbxy5g>搜索</span><span class="site-nav__el" data-astro-cid-fzpbxy5g>Search</span></a></nav><div class="header-tools" data-astro-cid-fzpbxy5g><span class="header-clock" data-clock data-astro-cid-fzpbxy5g>此刻 00:00</span><a class="header-search" href="/experimental/search/" aria-label="搜索文章" data-astro-cid-fzpbxy5g><svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" data-astro-cid-fzpbxy5g><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" stroke-width="1.4" data-astro-cid-fzpbxy5g></circle><path d="M15.6 15.6 21 21" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" data-astro-cid-fzpbxy5g></path></svg></a><button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="生活版" title="翻到生活版（熄灯）" data-astro-cid-fzpbxy5g><span class="mode-label mode-label--work" data-astro-cid-fzpbxy5g>工作版</span><span class="theme-orb" aria-hidden="true" data-astro-cid-fzpbxy5g><svg class="orb-sun" viewBox="0 0 24 24" data-astro-cid-fzpbxy5g><circle cx="12" cy="12" r="3.7" data-astro-cid-fzpbxy5g></circle><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" data-astro-cid-fzpbxy5g></path></svg><svg class="orb-moon" viewBox="0 0 24 24" data-astro-cid-fzpbxy5g><path d="M15.2 3.8a8.3 8.3 0 1 0 5 13.3 7 7 0 0 1-5-13.3Z" data-astro-cid-fzpbxy5g></path></svg></span><span class="mode-label mode-label--days" data-astro-cid-fzpbxy5g>生活版</span></button><button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav" data-astro-cid-fzpbxy5g>目录</button></div></header><main id="main" tabindex="-1"><article class="container post" data-astro-cid-jo55ryrt><header class="post__head" data-astro-cid-jo55ryrt><div class="post__bar" data-astro-cid-jo55ryrt><a class="post__back" href="/experimental/blog/" data-astro-cid-jo55ryrt><span aria-hidden="true" data-astro-cid-jo55ryrt>←</span> 时日</a><p class="meta-line post__meta" data-astro-cid-jo55ryrt><span class="post__category" data-astro-cid-jo55ryrt>C文件管理</span><time datetime="2026-10-13" data-astro-cid-jo55ryrt>2026.10.13</time><span data-astro-cid-jo55ryrt>2 分钟阅读</span></p></div><h1 class="post__title" data-astro-cid-jo55ryrt>【嵌入式学习/DLC】 可以停更吗，你的工程真的很难读😥</h1><p class="post__lede" data-astro-cid-jo55ryrt>关于文件管理的DLC</p><p class="meta-line post__byline" data-astro-cid-jo55ryrt><span data-astro-cid-jo55ryrt>文 / 雫</span></p></header><div class="post__grid" data-astro-cid-jo55ryrt><div class="post__main" data-astro-cid-jo55ryrt><div class="prose post__body" data-astro-cid-jo55ryrt><h1 id="文件管理">文件管理</h1>
+<p>文件管理应该是我的短板，一直以来我都是直接全部稀里糊涂的都堆在一个文件夹里面，如果内容少一点还好，但是东西稍微多一点简直就是灾难了。</p>
+<p>gemini，<em>讲解下一个基本的c语言工程该如何建立正确的文件结构</em>：</p>
+<blockquote>
+<p>建立一个清晰、规范的 C 语言工程文件结构，是保证代码可维护性和可扩展性的核心。无论是小型练习还是大型项目，将源码、头文件、编译产物和第三方库分离是通用的最佳实践。
+以下是标准的 C 语言项目目录结构：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>my_c_project/</span></span>
+<span class="line"><span>├── bin/            # 存放最终生成的可执行文件 (Executable)</span></span>
+<span class="line"><span>├── build/          # 存放编译时产生的中间文件 (.o 目标文件)</span></span>
+<span class="line"><span>├── include/        # 存放项目所有的公共头文件 (.h)</span></span>
+<span class="line"><span>├── src/            # 存放所有的源文件 (.c)</span></span>
+<span class="line"><span>├── tests/          # 存放测试代码</span></span>
+<span class="line"><span>├── lib/            # 存放第三方库或依赖 (Vendor/Third-party)</span></span>
+<span class="line"><span>├── docs/           # 项目说明文档、API文档</span></span>
+<span class="line"><span>├── .gitignore      # 配置 Git 忽略的文件 (如 bin/ 和 build/)</span></span>
+<span class="line"><span>├── Makefile        # 构建脚本 (或者使用 CMakeLists.txt)</span></span>
+<span class="line"><span>└── README.md       # 项目的总体说明</span></span></code></pre>
+</blockquote>
+<p><strong><del>叽里咕噜说啥呢，我都是直接放在一个文件夹的</del></strong></p>
+<p>不能这样的，这样的话上午做的东西下午连文件在哪都不知道了。</p>
+<p><img alt="Keil µVision 里的工程结构" loading="lazy" decoding="async" width="2002" height="1403" src="/experimental/_astro/em-dlc-1.CntcOJx1_Zj8qsb.webp">
+这个看起来很有序是吧，但是其实是ai整理的。
+总不能每次搞得一团乱码再交给ai处理烂摊子吧。</p>
+<p>所以还是来认真学习下文件的架构。</p>
+<p>为了用git高效的管理项目，文件根据大小基本可以分为两类：</p>
+<ul>
+<li>大文件：可执行文件（bin）和编译中间产物（build）</li>
+<li>小文件：源代码，文档，readme，依赖
+好像还满简单的吧。但是如果出现了不在这一分类下的咋办呢。比如一个pdf技术文档很大，而有些编译中间产物还蛮小的……</li>
+</ul>
+<p>思考🤔
+感觉有两种方案：</p>
+<ol>
+<li>保持原有结构，当作例外处理</li>
+<li>管他这那的，反正太大的一律gitignore，需要例外的情况就用其他的来管理</li>
+</ol>
+<p>那当然是第二种啦，git就是用来追踪纯文本等小文件来管理版本的，如果不小心塞太多东西进去的话……已经提交到git上的文件将会很难清除的。<del>git push -f origin main</del></p>
+<p>自己的仓库还可以这么干，但是如果要和别人协作的话，还是一开始就别提交大文件上去吧。切记。</p>
+<h1 id="头文件">头文件</h1>
+<p>简单学下头文件要放什么东西，不要每次建了就发懵，然后东西.c .h这写一点那写一点, 搞出来一堆redefine error，还不如最开始全部写到main里面呢。（详见嵌入式笔记2）</p>
+<h2 id="1-头文件保护">1. 头文件保护</h2>
+<pre class="astro-code astro-code-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e; overflow-x: auto;" tabindex="0" data-language="c"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F97583">#ifndef</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0"> PROJECT_MODE_H</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F97583">#define</span><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0"> PROJECT_MODE_H</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F97583">#endif</span></span></code></pre>
+<p>这样就不会出现重复定义的头文件了。</p>
+<h2 id="2--定义only">2.  定义only</h2>
+<p>在头文件当中是用来放定义来方便编译器编译的，同时也作为对外的声明让别人知道这里有什么。所以里面一般来说就是：</p>
+<ul>
+<li>
+<p>函数声明（如 <code>void do_something();</code>）</p>
+</li>
+<li>
+<p>外部变量声明（如 <code>extern int count;</code>）</p>
+</li>
+<li>
+<p>结构体/枚举声明（如 <code>struct Node { ... };</code>）</p>
+</li>
+<li>
+<p>宏定义和 <code>typedef</code></p>
+</li>
+</ul>
+<h2 id="3-自包含">3. 自包含</h2>
+<p>这个不常听到，但是其实就是这个头文件里面的声明用到的其他头文件提前在这个头文件当中#include进去，这样其他文件需要用到的时候只要include这个头文件就ok了，不需要去猜还要放什么其他依赖进来。</p>
+<p>ok，这下应该就好了。
+如果还是读不懂那么就不是我的问题了。</p>
+<p><img alt="野乃花哈气" loading="lazy" decoding="async" width="1632" height="1069" src="/experimental/_astro/nonoka_ha.fQX4rFIt_2BDt7.webp">
+<del>(等下，这个图片好大欸，我真的要把它推送到github上面吗？)</del>
+好了，压缩成webp格式了，实践大成功。</p>
+</div><ul class="post__tags" data-astro-cid-jo55ryrt><li data-astro-cid-jo55ryrt><a href="/experimental/search/?q=C%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86" data-astro-cid-jo55ryrt>#C文件管理</a></li><li data-astro-cid-jo55ryrt><a href="/experimental/search/?q=%E5%B7%A5%E4%BD%9C" data-astro-cid-jo55ryrt>#工作</a></li></ul></div><aside class="post__aside" data-astro-cid-jo55ryrt><nav class="post__toc" data-toc aria-label="文章目录" data-astro-cid-jo55ryrt><p class="post__toc-label" data-astro-cid-jo55ryrt>Contents / 目录</p><ol data-astro-cid-jo55ryrt><li class="post__toc-item" data-astro-cid-jo55ryrt><a href="#1-头文件保护" data-astro-cid-jo55ryrt>1. 头文件保护</a></li><li class="post__toc-item" data-astro-cid-jo55ryrt><a href="#2--定义only" data-astro-cid-jo55ryrt>2.  定义only</a></li><li class="post__toc-item" data-astro-cid-jo55ryrt><a href="#3-自包含" data-astro-cid-jo55ryrt>3. 自包含</a></li></ol></nav><a href="/experimental/authors/shizuku/" data-astro-cid-2tgtkdc7="true" class="author author--link"><div class="author__avatar" data-astro-cid-2tgtkdc7><figure class="slot" style="--slot-ratio: 1 / 1" data-astro-cid-khyig4bw><img src="/experimental/_astro/myk%20osake.DO2UiJQa_2oRevP.webp" srcset="/experimental/_astro/myk%20osake.DO2UiJQa_2h0pBf.webp 480w, /experimental/_astro/myk%20osake.DO2UiJQa_ZO6yE5.webp 800w, /experimental/_astro/myk%20osake.DO2UiJQa_Z219BVz.webp 1200w" alt="雫 的头像" sizes="(max-width: 48rem) 30vw, 12rem" data-astro-cid-khyig4bw="true" loading="lazy" decoding="async" width="1600" height="1200"></figure></div><div class="author__text" data-astro-cid-2tgtkdc7><p class="author__role" data-astro-cid-2tgtkdc7>编辑</p><p class="author__name" data-astro-cid-2tgtkdc7>雫</p><p class="author__bio" data-astro-cid-2tgtkdc7>也许是赛博伪人。</p></div></a><div class="post__search" data-astro-cid-jo55ryrt><form class="search" action="/experimental/search/" method="get" role="search" data-astro-cid-av774hkb><label class="sr-only" for="site-search" data-astro-cid-av774hkb>搜索</label><input class="search__input" id="site-search" type="search" name="q" placeholder="搜索文章…" autocomplete="off" data-astro-cid-av774hkb><button class="search__button" type="submit" data-astro-cid-av774hkb><span class="sr-only" data-astro-cid-av774hkb>提交搜索</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" data-astro-cid-av774hkb><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" stroke-width="1.4" data-astro-cid-av774hkb></circle><path d="M15.6 15.6 21 21" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" data-astro-cid-av774hkb></path></svg></button></form></div></aside></div></article><nav class="container post__nav" aria-label="上下篇" data-astro-cid-jo55ryrt><ul class="post__nav-list" data-astro-cid-jo55ryrt><li class="post__nav-item" data-astro-cid-jo55ryrt><a href="/experimental/blog/embedded-1/" data-astro-cid-jo55ryrt><span class="post__nav-dir" data-astro-cid-jo55ryrt>← 上一篇</span><span class="post__nav-title" data-astro-cid-jo55ryrt>【嵌入式学习/01】yeah! 亮灯</span></a></li><li class="post__nav-item post__nav-item--next" data-astro-cid-jo55ryrt><a href="/experimental/blog/two-ways-to-write-a-post/" data-astro-cid-jo55ryrt><span class="post__nav-dir" data-astro-cid-jo55ryrt>下一篇 →</span><span class="post__nav-title" data-astro-cid-jo55ryrt>两种写法：Markdown 与 HTML，以及图片该放在哪</span></a></li></ul></nav></main><footer class="site-footer" data-astro-cid-nns7i3if><div class="container site-footer__inner" data-astro-cid-nns7i3if><p class="site-footer__copy" data-astro-cid-nns7i3if>© <span data-year data-astro-cid-nns7i3if>2026</span> Erga kai Hemerai</p><nav class="site-footer__nav" aria-label="页脚导航" data-astro-cid-nns7i3if><a href="/experimental/" data-astro-cid-nns7i3if>首页</a><a href="/experimental/works/" data-astro-cid-nns7i3if>工作</a><a href="/experimental/blog/" data-astro-cid-nns7i3if>时日</a><a href="/experimental/about/" data-astro-cid-nns7i3if>关于</a><a href="/experimental/search/" data-astro-cid-nns7i3if>搜索</a></nav><p class="site-footer__colophon" data-astro-cid-nns7i3if><span data-astro-cid-nns7i3if>Colophon — 底边栏</span><span data-astro-cid-nns7i3if>纸、墨与一点 JavaScript · 随日升日落切换（东八区 · 北纬 23°）</span></p></div></footer></div><button class="to-top" type="button" data-to-top data-astro-cid-vy5be4ad><span class="sr-only" data-astro-cid-vy5be4ad>回到顶部</span><svg class="to-top__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" data-astro-cid-vy5be4ad><path d="M12 19V5M12 5 6 11M12 5l6 6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-vy5be4ad></path></svg></button><script type="module" src="/experimental/_astro/BaseLayout.astro_astro_type_script_index_0_lang.UUoyIWpb.js"></script></body></html>
